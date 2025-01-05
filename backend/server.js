@@ -1,7 +1,9 @@
 const express = require("express");
 const mysql = require("mysql2");
-const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
+const helmet = require("helmet");
+const cors = require("cors");
+const logger = require("./logger"); // Import the logger
 
 // Initialize environment variables
 dotenv.config();
@@ -10,11 +12,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Security Middleware
+app.use(helmet());
+app.use(cors());
 
-// MySQL Database Connection
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use((err, req, res, next) => {
+  const statusCode = err.status || 500;
+  logger.error("❌ Error:", err.stack);
+  res.status(statusCode).send({ message: "Internal Server Error", error: err.message });
+});
+
+
+// // MySQL Database Connection
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
@@ -22,13 +35,16 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME || "e_post_office",
 });
 
+
 db.connect((err) => {
   if (err) {
-    console.error("Database connection failed:", err.message);
-    process.exit(1);
+    logger.error("❌ Database connection failed:", err.message);
+    
   }
-  console.log("Connected to MySQL database.");
+  logger.info("✅ Connected to MySQL database.");
 });
+
+
 
 // Routes
 app.get("/", (req, res) => {
@@ -48,11 +64,11 @@ app.use("/api/staff", staffRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send({ message: "Internal Server Error" });
+  logger.error("❌ Error:", err.stack);
+  res.status(500).send({ message: "Internal Server Error", error: err.message });
 });
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  logger.info(`🚀 Server is running on http://localhost:${PORT}`);
 });

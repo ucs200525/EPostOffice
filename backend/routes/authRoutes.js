@@ -1,102 +1,112 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const winston = require("winston");
-
 const router = express.Router();
+const pool = require("../config/database"); // Corrected pool reference
+const logger = require("../logger"); // Import the logger
 
-// User model (a simple structure, you'd replace it with an actual DB model)
-const users = []; // This is just for demonstration purposes.
+// Environment variables
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Secret key for JWT
 
-const secret = process.env.JWT_SECRET || "323gfasewrtwyrwhcasdrtyhbgerweyrtyrtgfbgry5trgtr6urffbjtuyriurtgfbhryy5434545yhswreytrbdfrteh";
-
-// Set up winston logging
-const logger = winston.createLogger({
-  level: "info",
-  transports: [
-    new winston.transports.Console({ format: winston.format.simple() }),
-    new winston.transports.File({ filename: "auth.log", level: "info" }),
-  ],
-});
-
-// User Registration Route (Create)
+// @route   POST /api/auth/register
+// @desc    Register a new admin
+// @access  Public
 router.post("/register", async (req, res) => {
+  const { name, email, password, phone, role } = req.body;
+
+  // Validate input
+  if (!name || !email || !password || !phone || !role) {
+    logger.warn("Missing required fields in registration.");
+    return res.status(400).json({ message: "Please provide all fields" });
+  }
+
   try {
-    const { username, password } = req.body;
-    const existingUser = users.find((user) => user.username === username);
-    if (existingUser) {
-      logger.warn(`Registration failed for ${username}: User already exists`);
-      return res.status(400).json({ message: "User already exists" });
+    // Check if email already exists
+    const [results] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
+    if (results.length > 0) {
+      logger.warn(`Email already registered: ${email}`);
+      return res.status(400).json({ message: "Email is already registered" });
     }
+
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = { username, password: hashedPassword };
-    users.push(newUser);
-    logger.info(`User ${username} registered successfully`);
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (error) {
-    logger.error(`Registration error: ${error.message}`);
-    res.status(500).json({ message: "Server error" });
+
+    // Insert new admin into the database
+    const [insertResults] = await pool.execute("INSERT INTO users (name, email, password, phone, role) VALUES (?, ?, ?, ?, ?)", 
+      [name, email, hashedPassword, phone, role]);
+
+    logger.info(`Admin registered successfully: ID ${insertResults.insertId}`);
+    res.status(201).json({ message: "Admin registered successfully", id: insertResults.insertId });
+  } catch (err) {
+    logger.error(`Error during registration: ${err.message}`);
+    res.status(500).json({ message: "Error registering admin" });
   }
 });
 
-// User Login Route (Read)
+// @route   POST /api/auth/login
+// @desc    Login an admin
+// @access  Public
 router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validate input
+  if (!email || !password) {
+    logger.warn("Missing required fields in login.");
+    return res.status(400).json({ message: "Please provide email and password" });
+  }
+
   try {
-    const { username, password } = req.body;
-    const user = users.find((user) => user.username === username);
-    if (!user) {
-      logger.warn(`Login failed for ${username}: User not found`);
+    // Check if admin exists
+    const [results] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
+    if (results.length === 0) {
+      logger.warn(`Admin not found for email: ${email}`);
       return res.status(400).json({ message: "Invalid credentials" });
     }
-    const isMatch = await bcrypt.compare(password, user.password);
+
+    const admin = results[0];
+
+    // Compare hashed password
+    const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      logger.warn(`Login failed for ${username}: Incorrect password`);
+      logger.warn(`Invalid login attempt for email: ${email}`);
       return res.status(400).json({ message: "Invalid credentials" });
     }
-    const token = jwt.sign({ username }, secret, { expiresIn: "1h" });
-    logger.info(`User ${username} logged in successfully`);
-    res.status(200).json({ token });
-  } catch (error) {
-    logger.error(`Login error: ${error.message}`);
-    res.status(500).json({ message: "Server error" });
+
+    // Generate JWT token
+    const token = jwt.sign({ id: admin.id, role: admin.role }, JWT_SECRET, { expiresIn: "1h" });
+
+    logger.info(`Admin logged in successfully: ${email}`);
+    res.status(200).json({ message: "Login successful", token ,admin});
+  } catch (err) {
+    logger.error(`Error during login: ${err.message}`);
+    res.status(500).json({ message: "Database error" });
   }
 });
 
-// User Logout Route (Update) - We can simulate it by just invalidating the token
-router.post("/logout", (req, res) => {
-  // In real-world scenarios, you would blacklist the JWT token
-  res.status(200).json({ message: "Logged out successfully" });
-  logger.info("User logged out");
+// @route   GET /api/auth/protected
+// @desc    Protected route (Admin only)
+// @access  Private
+router.get("/protected", verifyToken, (req, res) => {
+  res.status(200).json({ message: "This is a protected route", user: req.user });
 });
 
-// Password Reset Route (Update)
-router.post("/reset-password", async (req, res) => {
-  try {
-    const { username, oldPassword, newPassword } = req.body;
-    const user = users.find((user) => user.username === username);
-    if (!user) {
-      logger.warn(`Password reset failed for ${username}: User not found`);
-      return res.status(400).json({ message: "User not found" });
-    }
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) {
-      logger.warn(`Password reset failed for ${username}: Incorrect old password`);
-      return res.status(400).json({ message: "Incorrect old password" });
-    }
-    user.password = await bcrypt.hash(newPassword, 10);
-    logger.info(`Password reset successfully for ${username}`);
-    res.status(200).json({ message: "Password reset successfully" });
-  } catch (error) {
-    logger.error(`Password reset error: ${error.message}`);
-    res.status(500).json({ message: "Server error" });
+// Middleware to verify JWT token
+async function verifyToken(req, res, next) {
+  const token = req.header("Authorization");
+
+  if (!token) {
+    logger.warn("No token provided for protected route.");
+    return res.status(401).json({ message: "Access denied. No token provided." });
   }
-});
 
-// Check Auth Status Route (Read)
-router.get("/status", (req, res) => {
-  // Check token status (in a real app, you'd verify the token)
-  res.status(200).json({ message: "User is authenticated" });
-  logger.info("User authentication status checked");
-});
+  try {
+    const decoded = jwt.verify(token.split(" ")[1], JWT_SECRET); // Extract token after "Bearer"
+    req.user = decoded; // Attach user data to the request object
+    next();
+  } catch (err) {
+    logger.error(`Token verification failed: ${err.message}`);
+    res.status(400).json({ message: "Invalid token" });
+  }
+}
 
 module.exports = router;
