@@ -16,10 +16,11 @@ const Register = () => {
     confirmPassword: '',
     address: '',
     phone: '',
-    coordinates: null, 
-    role: 'user' // Added default role
+    coordinates: null,
+    role: 'customer',
   });
   const [errors, setErrors] = useState({});
+  const [manualAddress, setManualAddress] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -36,21 +37,60 @@ const Register = () => {
     if (!formData.phone.match(/^\d{10}$/)) {
       newErrors.phone = 'Invalid phone number format';
     }
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    // if (manualAddress && !isValidAddress(formData.address)) {
+    //   newErrors.address = 'Address must include pincode, city, state, and area';
+    // }
     return newErrors;
   };
 
+  // const isValidAddress = (address) => {
+  //   // const hasPincode = /\b\d{5,6}\b/.test(address);
+  //   // const hasCity = /[a-zA-Z]+/.test(address); // Add more validation if needed
+  //   // const hasState = /[a-zA-Z]+/.test(address);
+  //   // return hasPincode && hasCity && hasState;
+  // };
+
+  const fetchCoordinates = async (address) => {
+    try {
+      const response = await fetch(
+        `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
+          address
+        )}&key=YOUR_API_KEY`
+      );
+      const data = await response.json();
+      if (data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry;
+        return { lat, lng };
+      }
+    } catch (err) {
+      console.error('Error fetching coordinates:', err);
+    }
+    return null;
+  };
+
   const handleLocationSelect = ({ address, coordinates }) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       address: address,
-      coordinates: coordinates
+      coordinates: coordinates,
     }));
+    setManualAddress(false);
+  };
+
+  const handleAddressChange = async (e) => {
+    const address = e.target.value;
+    setFormData((prev) => ({ ...prev, address }));
+    // if (isValidAddress(address)) {
+    //   const coordinates = await fetchCoordinates(address);
+    //   setFormData((prev) => ({ ...prev, coordinates }));
+    // }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formErrors = validateForm();
-    
+
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
       return;
@@ -60,10 +100,12 @@ const Register = () => {
     try {
       const result = await register({
         ...formData,
-        role: 'user' // Ensure role is sent
+        role: 'customer',
       });
       if (result.success) {
-        navigate('/login', { state: { message: 'Registration successful! Please login.' } });
+        navigate('/login', {
+          state: { message: 'Registration successful! Please login.' },
+        });
       }
     } catch (err) {
       setErrors({ submit: 'Registration failed. Please try again.' });
@@ -89,7 +131,9 @@ const Register = () => {
                 type="text"
                 name="name"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Full Name"
               />
             </div>
@@ -103,7 +147,9 @@ const Register = () => {
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="Email Address"
               />
             </div>
@@ -118,11 +164,15 @@ const Register = () => {
                   type="password"
                   name="password"
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   placeholder="Password"
                 />
               </div>
-              {errors.password && <span className="error-text">{errors.password}</span>}
+              {errors.password && (
+                <span className="error-text">{errors.password}</span>
+              )}
             </div>
 
             <div className="form-group">
@@ -132,11 +182,15 @@ const Register = () => {
                   type="password"
                   name="confirmPassword"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, confirmPassword: e.target.value })
+                  }
                   placeholder="Confirm Password"
                 />
               </div>
-              {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+              {errors.confirmPassword && (
+                <span className="error-text">{errors.confirmPassword}</span>
+              )}
             </div>
           </div>
 
@@ -146,12 +200,25 @@ const Register = () => {
               <textarea
                 name="address"
                 value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
+                onChange={manualAddress ? handleAddressChange : undefined}
                 placeholder="Address"
-                readOnly
+                readOnly={!manualAddress}
               />
             </div>
-            <LocationPicker onLocationSelect={handleLocationSelect} />
+            <button
+              type="button"
+              onClick={() => setManualAddress(!manualAddress)}
+            >
+              {manualAddress
+                ? 'Use Map to Add Address'
+                : 'Type Address Manually'}
+            </button>
+            {!manualAddress && (
+              <LocationPicker onLocationSelect={handleLocationSelect} />
+            )}
+            {errors.address && (
+              <span className="error-text">{errors.address}</span>
+            )}
           </div>
 
           <div className="form-group">
@@ -161,7 +228,9 @@ const Register = () => {
                 type="tel"
                 name="phone"
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 placeholder="Phone Number"
               />
             </div>
@@ -174,7 +243,9 @@ const Register = () => {
         </form>
 
         <div className="login-prompt">
-          <p>Already have an account? <a href="/login">Sign in</a></p>
+          <p>
+            Already have an account? <a href="/login">Sign in</a>
+          </p>
         </div>
       </div>
     </div>

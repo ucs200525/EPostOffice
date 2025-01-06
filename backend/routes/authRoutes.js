@@ -1,112 +1,144 @@
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const logger = require('../utils/logger');
+const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
-const pool = require("../config/database"); // Corrected pool reference
-const logger = require("../logger"); // Import the logger
 
-// Environment variables
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Secret key for JWT
+const JWT=process.env.JWT_SECRET || '4278730a297bd11c81de9d180300a0762b72ab2db17c1957bd7e92f4d23a8bf86a31abb506d1801449add58ebf2af3d2c0cb64fabb2059443cf44eafe8701f96b41ac7142d1928330e93c059a7d5c81bb5fc6721d183207bb4a2f0949417940082eef9a8c036a906d10448160b265e9bfa55499d58d1ca52bbfadf4b7c08bacff361045e5ac0ae5f30a0b9f6695bc2e5e2a701bc07bafa0ba2737de080dd826ffc08c983a48251073a82f7986216aec2bab7946cff20e2e7841b92e591bcaa12410d85c564de2b40b5f8499d6a471431b826757d029170d217149193e71858ac4c6bbf11221d4b75b0f92cd867a154e6a9a22a026a3a7e470700e65bd128da2b7c209e6b4c4358d1c422b63ffe2fd3e1a4c84ce2ba03f80d1b45feaf5d60754a'
 
-// @route   POST /api/auth/register
-// @desc    Register a new admin
-// @access  Public
-router.post("/register", async (req, res) => {
-  const { name, email, password, phone, role } = req.body;
-
-  // Validate input
-  if (!name || !email || !password || !phone || !role) {
-    logger.warn("Missing required fields in registration.");
-    return res.status(400).json({ message: "Please provide all fields" });
-  }
-
+// Register user
+router.post('/register', async (req, res) => {
   try {
-    // Check if email already exists
-    const [results] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
-    if (results.length > 0) {
-      logger.warn(`Email already registered: ${email}`);
-      return res.status(400).json({ message: "Email is already registered" });
-    }
+      const { name, email, password, phone, address, coordinates } = req.body;
+      
+      // Default role as 'customer'
+      const role = 'customer';
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+      // Check if user exists
+      const userExists = await User.findOne({ email });
+      if (userExists) {
+          logger.warn(`Registration attempt with existing email: ${email}`);
+          return res.status(400).json({ message: 'User already exists' });
+      }
 
-    // Insert new admin into the database
-    const [insertResults] = await pool.execute("INSERT INTO users (name, email, password, phone, role) VALUES (?, ?, ?, ?, ?)", 
-      [name, email, hashedPassword, phone, role]);
+      // Validate address and fetch coordinates if not provided
+      let resolvedCoordinates = coordinates;
+      if (!coordinates) {
+          if (!address) {
+              return res.status(400).json({ message: 'Address is required if coordinates are not provided' });
+          }
 
-    logger.info(`Admin registered successfully: ID ${insertResults.insertId}`);
-    res.status(201).json({ message: "Admin registered successfully", id: insertResults.insertId });
-  } catch (err) {
-    logger.error(`Error during registration: ${err.message}`);
-    res.status(500).json({ message: "Error registering admin" });
+          // Fetch coordinates using geocode service
+          resolvedCoordinates = await geocodeService.getCoordinatesFromAddress(address);
+          if (!resolvedCoordinates) {
+              return res.status(400).json({ message: 'Failed to fetch coordinates from address. Please provide valid address.' });
+          }
+      }
+
+      // Create user with coordinates and default role
+      const user = await User.create({
+          name,
+          email,
+          password,
+          phone,
+          role,
+          address,
+          coordinates: resolvedCoordinates
+      });
+
+      // Generate JWT
+      const token = jwt.sign({ id: user._id, role: user.role }, JWT, { expiresIn: '1h' });
+
+      logger.info(`New user registered: ${email}`);
+      res.status(201).json({
+          success: true,
+          token,
+          user: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              coordinates: user.coordinates
+          }
+      });
+  } catch (error) {
+      logger.error(`Registration error: ${error.message}`);
+      res.status(500).json({ 
+          message: 'Server error', 
+          error: error.message,
+          details: error.errors // Add validation error details
+      });
   }
 });
 
-// @route   POST /api/auth/login
-// @desc    Login an admin
-// @access  Public
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
 
-  // Validate input
-  if (!email || !password) {
-    logger.warn("Missing required fields in login.");
-    return res.status(400).json({ message: "Please provide email and password" });
-  }
-
+// Login user
+router.post('/login', async (req, res) => {
   try {
-    // Check if admin exists
-    const [results] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
-    if (results.length === 0) {
-      logger.warn(`Admin not found for email: ${email}`);
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+      const { email, password } = req.body;
 
-    const admin = results[0];
+      // Validate input
+      if (!email || !password) {
+          return res.status(400).json({ message: 'Email and password are required' });
+      }
 
-    // Compare hashed password
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      logger.warn(`Invalid login attempt for email: ${email}`);
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+      // Find user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+          logger.warn(`Login attempt with non-existent email: ${email}`);
+          return res.status(401).json({ message: 'Invalid email or password' });
+      }
 
-    // Generate JWT token
-    const token = jwt.sign({ id: admin.id, role: admin.role }, JWT_SECRET, { expiresIn: "1h" });
+      // Validate password
+      if (user.password !== password) {
+          logger.warn(`Failed login attempt for user: ${email}`);
+          return res.status(401).json({ message: 'Invalid email or password' });
+      }
 
-    logger.info(`Admin logged in successfully: ${email}`);
-    res.status(200).json({ message: "Login successful", token ,admin});
-  } catch (err) {
-    logger.error(`Error during login: ${err.message}`);
-    res.status(500).json({ message: "Database error" });
+      // Generate JWT
+      const token = jwt.sign({ id: user._id, role: user.role },JWT,{ expiresIn: '1h' }
+);
+
+      logger.info(`User logged in successfully: ${email}`);
+      res.status(200).json({
+          success: true,
+          token,
+          user: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              address:user.address
+          }
+      });
+  } catch (error) {
+      logger.error(`Login error: ${error.message}`);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+// Get user profile
+router.get('/profile', async (req, res) => {
+  try {
+      // Fetch the user by ID and exclude the password field
+      const user = await User.findById(req.user.id).select('-password');
+      
+      // If user is not found, return a 404 error
+      if (!user) {
+          logger.warn(`User not found: ID ${req.user.id}`);
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Successfully fetched user profile
+      res.status(200).json(user);
+  } catch (error) {
+      logger.error(`❌ Profile fetch error: ${error.message}`);
+      res.status(500).json({
+          message: 'Server error',
+          error: error.message || 'An unknown error occurred',
+      });
   }
 });
 
-// @route   GET /api/auth/protected
-// @desc    Protected route (Admin only)
-// @access  Private
-router.get("/protected", verifyToken, (req, res) => {
-  res.status(200).json({ message: "This is a protected route", user: req.user });
-});
-
-// Middleware to verify JWT token
-async function verifyToken(req, res, next) {
-  const token = req.header("Authorization");
-
-  if (!token) {
-    logger.warn("No token provided for protected route.");
-    return res.status(401).json({ message: "Access denied. No token provided." });
-  }
-
-  try {
-    const decoded = jwt.verify(token.split(" ")[1], JWT_SECRET); // Extract token after "Bearer"
-    req.user = decoded; // Attach user data to the request object
-    next();
-  } catch (err) {
-    logger.error(`Token verification failed: ${err.message}`);
-    res.status(400).json({ message: "Invalid token" });
-  }
-}
 
 module.exports = router;

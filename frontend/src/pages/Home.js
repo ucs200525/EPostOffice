@@ -150,25 +150,29 @@ const Home = () => {
     navigate(path);
   };
 
+  
+  useEffect(() => {
+    setCustomerData(user);
+  }, [user]);
   const fetchProfile = async () => {
-    try {
-      // Get customer ID from localStorage or another source
-      const customerId = localStorage.getItem('userId');
+    // try {
+    //   // Get customer ID from localStorage or another source
+    //   const customerId = localStorage.getItem('userId');
       
-      const response = await axios.get(
-        `http://localhost:4000/api/customers/${user.id}`,
-        {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }
-      );
+    //   const response = await axios.get(
+    //     `http://localhost:4000/api/customers/1`,
+    //     {
+    //       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    //     }
+    //   );
       
-      setCustomerData(response.data);
-      setError(null);
-    } catch (err) {
-      console.error('Profile fetch failed:', err);
-      setError(err.response?.data?.message || 'Failed to fetch profile');
-      setCustomerData(null);
-    }
+    //   setCustomerData(response.data);
+    //   setError(null);
+    // } catch (err) {
+    //   console.error('Profile fetch failed:', err);
+    //   setError(err.response?.data?.message || 'Failed to fetch profile');
+    //   setCustomerData(null);
+    // }
   };
 
   // useEffect(() => {
@@ -404,7 +408,7 @@ const Home = () => {
         <div className="profile-section">
           <FaUser className="profile-icon" />
           <div className="profile-info">
-            <h1>Welcome back, {customerData.name}</h1>
+            <h1>Welcome back, {customerData?.name}</h1>
             <p>{customerData.email}</p>
             <p><FaMapMarkerAlt /> {customerData.address}</p>
           </div>

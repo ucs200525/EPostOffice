@@ -1,108 +1,57 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const db = require("../server"); // Assuming the database connection is exported in server.js
-const logger = require("../logger"); // Import the existing logger
+const User = require('../models/User');
+const Parcel = require('../models/Parcel');
+const Feedback = require('../models/Feedback');
+const { authenticateToken } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
-/**
- * @route   GET /api/customers
- * @desc    Get all customers
- * @access  Public
- */
-router.get("/", (req, res) => {
-  const query = "SELECT * FROM customers";
-  db.query(query, (err, results) => {
-    if (err) {
-      logger.error(`Error fetching customers: ${err.message}`);
-      return res.status(500).json({ message: "Database query failed" });
+// Create new parcel
+router.post('/parcels', authenticateToken, async (req, res) => {
+    try {
+        const parcel = new Parcel({
+            sender: req.user.id,
+            ...req.body
+        });
+        await parcel.save();
+        
+        logger.info(`New parcel created: ${parcel.trackingNumber}`);
+        res.status(201).json(parcel);
+    } catch (error) {
+        logger.error(`Parcel creation error: ${error.message}`);
+        res.status(500).json({ message: error.message });
     }
-    logger.info("Fetched all customers successfully");
-    res.status(200).json(results);
-  });
 });
 
-/**
- * @route   POST /api/customers
- * @desc    Add a new customer
- * @access  Public
- */
-router.post("/", (req, res) => {
-  const { name, email, phone } = req.body;
-  const query = "INSERT INTO customers (name, email, phone) VALUES (?, ?, ?)";
-  db.query(query, [name, email, phone], (err, results) => {
-    if (err) {
-      logger.error(`Error adding customer: ${err.message}`);
-      return res.status(500).json({ message: "Database insertion failed" });
+// Get customer's parcels
+router.get('/parcels', authenticateToken, async (req, res) => {
+    try {
+        const parcels = await Parcel.find({ sender: req.user.id })
+                                  .populate('assignedTo', 'name');
+        res.json(parcels);
+    } catch (error) {
+        logger.error(`Error fetching parcels: ${error.message}`);
+        res.status(500).json({ message: error.message });
     }
-    logger.info(`Customer added successfully with ID: ${results.insertId}`);
-    res.status(201).json({ message: "Customer added successfully", id: results.insertId });
-  });
 });
 
-/**
- * @route   GET /api/customers/:id
- * @desc    Get customer by ID
- * @access  Public
- */
-router.get("/:id", (req, res) => {
-  const { id } = req.params;
-  const query = "SELECT * FROM customers WHERE id = ?";
-  db.query(query, [id], (err, results) => {
-    if (err) {
-      logger.error(`Error fetching customer by ID: ${err.message}`);
-      return res.status(500).json({ message: "Database query failed" });
+// Submit feedback
+router.post('/feedback', authenticateToken, async (req, res) => {
+    try {
+        const feedback = new Feedback({
+            customer: req.user.id,
+            ...req.body
+        });
+        await feedback.save();
+        
+        logger.info(`New feedback submitted by user: ${req.user.id}`);
+        res.status(201).json(feedback);
+    } catch (error) {
+        logger.error(`Feedback submission error: ${error.message}`);
+        res.status(500).json({ message: error.message });
     }
-    if (results.length === 0) {
-      logger.warn(`Customer with ID: ${id} not found`);
-      return res.status(404).json({ message: "Customer not found" });
-    }
-    logger.info(`Fetched customer with ID: ${id}`);
-    res.status(200).json(results[0]);
-  });
 });
 
-/**
- * @route   PUT /api/customers/:id
- * @desc    Update a customer by ID
- * @access  Public
- */
-router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const { name, email, phone } = req.body;
-  const query = "UPDATE customers SET name = ?, email = ?, phone = ? WHERE id = ?";
-  db.query(query, [name, email, phone, id], (err, results) => {
-    if (err) {
-      logger.error(`Error updating customer: ${err.message}`);
-      return res.status(500).json({ message: "Database update failed" });
-    }
-    if (results.affectedRows === 0) {
-      logger.warn(`Customer with ID: ${id} not found`);
-      return res.status(404).json({ message: "Customer not found" });
-    }
-    logger.info(`Customer with ID: ${id} updated successfully`);
-    res.status(200).json({ message: "Customer updated successfully" });
-  });
-});
-
-/**
- * @route   DELETE /api/customers/:id
- * @desc    Delete a customer by ID
- * @access  Public
- */
-router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  const query = "DELETE FROM customers WHERE id = ?";
-  db.query(query, [id], (err, results) => {
-    if (err) {
-      logger.error(`Error deleting customer: ${err.message}`);
-      return res.status(500).json({ message: "Database deletion failed" });
-    }
-    if (results.affectedRows === 0) {
-      logger.warn(`Customer with ID: ${id} not found`);
-      return res.status(404).json({ message: "Customer not found" });
-    }
-    logger.info(`Customer with ID: ${id} deleted successfully`);
-    res.status(200).json({ message: "Customer deleted successfully" });
-  });
-});
+// ...additional routes as needed...
 
 module.exports = router;
