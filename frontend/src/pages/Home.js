@@ -17,7 +17,7 @@ const SendPackageSection = () => {
           <FaBox className="card-icon" />
           <h3>Domestic Shipping</h3>
           <p>Send packages anywhere within the country</p>
-          <button onClick={() => navigate('/send-package/domestic')}>
+          <button onClick={() => navigate('/send-package')}>
             Send Now
           </button>
         </div>
@@ -409,13 +409,13 @@ const Home = () => {
           <FaUser className="profile-icon" />
           <div className="profile-info">
             <h1>Welcome back, {customerData?.name}</h1>
-            <p>{customerData.email}</p>
-            <p><FaMapMarkerAlt /> {customerData.address}</p>
+            <p>{customerData?.email}</p>
+            <p><FaMapMarkerAlt /> {customerData?.address}</p>
           </div>
         </div>
         <div className="balance-section">
           <h3>Wallet Balance</h3>
-          <p className="balance-amount">${customerData.balance}</p>
+          <p className="balance-amount">${customerData?.balance}</p>
         </div>
       </header>
 {/* 

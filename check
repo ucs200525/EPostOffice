@@ -1,0 +1,21 @@
+
+To analyze your code, based on your description that only the "address" field is updating and others are not, the problem could be related to the state updates and how the inputs are being rendered. Let’s go step by step to find the issue.
+
+Issue Breakdown:
+You're using the useState hook for managing form data. However, only the "address" field appears to be updating, and the rest don't.
+This suggests that either the input fields are not properly bound to the state, or something is interfering with the state updates for fields other than the address.
+Observations from the provided code:
+Controlled Components: All input fields (name, email, password, etc.) are controlled, meaning they rely on state values (formData) to hold their values.
+State Update for Address: The address field is updated with a setFormData call, and it seems that this is the only field showing changes.
+What Needs Checking:
+State Update for All Fields: You're using the formData object to store all form values, but only the address field is being updated directly with setFormData in the handleAddressChange. The other fields (e.g., name, email, etc.) should follow the same approach to ensure state updates are working for all inputs.
+
+Make sure you are updating all form fields in the same manner. For example:<input
+  type="text"
+  name="name"
+  value={formData.name}
+  onChange={(e) =>
+    setFormData({ ...formData, name: e.target.value })
+  }
+  placeholder="Full Name"
+/>

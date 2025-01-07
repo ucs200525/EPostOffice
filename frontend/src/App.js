@@ -7,6 +7,9 @@ import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import PostalCalculator from './pages/PostalCalculator';
+// import Payment from './pages/Payment';
+import Payment from './pages/SendPackage';
+
 // import Services from './pages/Services';
 // import About from './pages/About';
 
@@ -25,6 +28,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/calculator" element={<PostalCalculator />} />
+              <Route path="/payment" element={<Payment />} />
               {/*
               <Route path="/services" element={<Services />} />
               <Route path="/about" element={<About />} />

@@ -35,11 +35,20 @@ const userSchema = new mongoose.Schema({
         },
         required: function() { return this.role === 'customer' || this.role === 'staff'; }
     },
+    walletBalance: {
+        type: Number,
+        default: 0
+    },
     createdAt: {
         type: Date,
         default: Date.now
     }
 });
+// Method to update wallet balance
+userSchema.methods.updateWalletBalance = async function (amount) {
+    this.walletBalance += amount; // amount can be positive (credit) or negative (debit)
+    await this.save();
+};
 
 // // Pre-save validation for address structure
 // userSchema.pre('save', function(next) {

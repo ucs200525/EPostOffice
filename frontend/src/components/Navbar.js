@@ -146,7 +146,7 @@ const Navbar = () => {
                   <div className={`dropdown-menu ${showUserMenu ? 'show' : ''}`}>
                     <Link to="/dashboard">Dashboard</Link>
                     <Link to="/shipments">My Shipments</Link>
-                    <Link to="/payments">Payments</Link>
+                    <Link to="/payment">Payments</Link>
                     <Link to="/settings">Settings</Link>
                     <div className="divider"></div>
                     <button onClick={logout} className="logout">Sign Out</button>
