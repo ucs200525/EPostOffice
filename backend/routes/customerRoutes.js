@@ -102,22 +102,25 @@ router.get('/:customerId/wallet', async (req, res) => {
     try {
         const { customerId } = req.params;
 
-        // Fetch all transactions for the customer
-        const transactions = await Transaction.find({ customerId });
-
-        // Calculate wallet balance
-        let walletBalance = 0;
-        transactions.forEach(transaction => {
-            if (transaction.type === 'credit') {
-                walletBalance += transaction.amount;  // Add credits
-            } else if (transaction.type === 'debit') {
-                walletBalance -= transaction.amount;  // Subtract debits
-            }
-        });
+        // // Fetch all transactions for the customer
+        // const transactions = await Transaction.find({ customerId });
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+        // // Calculate wallet balance
+        // let walletBalance = 0;
+        // transactions.forEach(transaction => {
+        //     if (transaction.type === 'credit') {
+        //         walletBalance += transaction.amount;  // Add credits
+        //     } else if (transaction.type === 'debit') {
+        //         walletBalance -= transaction.amount;  // Subtract debits
+        //     }
+        // });
 
         res.status(200).json({
             customerId,
-            balance : transactions.walletBalanceAfterTransaction
+            balance :  customer.walletBalance
         });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching wallet balance', error: error.message });

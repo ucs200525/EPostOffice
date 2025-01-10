@@ -1,0 +1,142 @@
+.shipments-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+.tracking-section {
+    margin-bottom: 2rem;
+}
+
+.tracking-form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.tracking-form input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.new-package-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #1e3c72;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+}
+
+.shipments-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-box, .filter-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shipment-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.checkboxes {
+    display: flex;
+    gap: 2rem;
+}
+
+.estimated-cost {
+    margin: 1rem 0;
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #1e3c72;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #1e3c72;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background: #2a5298;
+}
+
+@media (max-width: 768px) {
+    .shipments-controls {
+        flex-direction: column;
+    }
+
+    .tracking-form {
+        flex-direction: column;
+    }
+}

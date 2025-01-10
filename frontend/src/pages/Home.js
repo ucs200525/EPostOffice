@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import './Home.css';
-import { FaBox, FaTruck, FaMoneyBill, FaUser, FaBell, FaMapMarkerAlt, FaFileAlt, FaStar, FaSearch, FaQuestionCircle, FaArrowRight, FaCalculator, FaClock, FaShieldAlt } from 'react-icons/fa';
+import { FaBox, FaTruck, FaMoneyBill, FaUser, FaBell, FaMapMarkerAlt, FaFileAlt, FaStar, FaSearch, FaQuestionCircle, FaArrowRight, FaCalculator, FaClock, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { useShipments } from '../context/ShipmentContext';
 
 const SendPackageSection = () => {
   const navigate = useNavigate();
@@ -124,6 +125,8 @@ const Home = () => {
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState(0);
   const [faqSearch, setFaqSearch] = useState('');
+  const [walletBalance, setWalletBalance] = useState(0);
+  const { stats } = useShipments();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -132,7 +135,8 @@ const Home = () => {
         Promise.all([
             fetchProfile(),
             fetchOrders(),
-            fetchNotifications()
+            fetchNotifications(),
+            fetchWalletBalance()
         ])
         .then(() => setLoading(false))
         .catch(err => {
@@ -142,7 +146,7 @@ const Home = () => {
     } else {
         setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // Safe navigation function
   const handleNavigation = (path) => (e) => {
@@ -207,6 +211,18 @@ const Home = () => {
       setNotifications(response.data);
     } catch (err) {
       console.error('Notifications fetch failed:', err);
+    }
+  };
+
+  const fetchWalletBalance = async () => {
+    try {
+        const response = await axios.get(
+            `http://localhost:4000/api/customer/${user.id}/wallet`,
+            { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
+        );
+        setWalletBalance(response.data.balance);
+    } catch (err) {
+        console.error('Failed to fetch wallet balance', err);
     }
   };
 
@@ -415,7 +431,7 @@ const Home = () => {
         </div>
         <div className="balance-section">
           <h3>Wallet Balance</h3>
-          <p className="balance-amount">${customerData?.balance}</p>
+          <p className="balance-amount">${walletBalance?.toFixed(2)}</p>
         </div>
       </header>
 {/* 
@@ -438,21 +454,21 @@ const Home = () => {
           <FaBox className="stat-icon" />
           <div className="stat-info">
             <h3>Active Orders</h3>
-            <p>{orders.filter(o => o.status === 'active').length}</p>
+            <p>{stats.active}</p>
           </div>
         </div>
         <div className="stat-card">
           <FaTruck className="stat-icon" />
           <div className="stat-info">
             <h3>In Transit</h3>
-            <p>{orders.filter(o => o.status === 'transit').length}</p>
+            <p>{stats.transit}</p>
           </div>
         </div>
         <div className="stat-card">
-          <FaFileAlt className="stat-icon" />
+          <FaCheckCircle className="stat-icon" />
           <div className="stat-info">
             <h3>Completed</h3>
-            <p>{orders.filter(o => o.status === 'delivered').length}</p>
+            <p>{stats.delivered}</p>
           </div>
         </div>
       </section>

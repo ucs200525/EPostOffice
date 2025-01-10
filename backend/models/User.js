@@ -44,6 +44,7 @@ const userSchema = new mongoose.Schema({
         default: Date.now
     }
 });
+
 // Method to update wallet balance
 userSchema.methods.updateWalletBalance = async function (amount) {
     this.walletBalance += amount; // amount can be positive (credit) or negative (debit)

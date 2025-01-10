@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import './SendPackage.css';
 import { FaBox, FaMapMarkerAlt, FaTruck, FaMoneyBill } from 'react-icons/fa';
+import { useShipments } from '../context/ShipmentContext';
 
 const SendPackage = () => {
     const { user } = useAuth();
@@ -26,6 +27,7 @@ const SendPackage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [estimatedCost, setEstimatedCost] = useState(null);
+    const { addShipment } = useShipments();
 
     const packageTypes = [
         'Document',
@@ -103,12 +105,8 @@ const SendPackage = () => {
             );
 
             if (response.data.success) {
-                navigate('/payment', { 
-                    state: { 
-                        orderId: response.data.orderId,
-                        amount: estimatedCost 
-                    }
-                });
+                addShipment(response.data.package);
+                navigate('/shipments');
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send package');
