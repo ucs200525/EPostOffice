@@ -8,8 +8,35 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Add verifyToken function
+    const verifyToken = async (token) => {
+        try {
+            const response = await axios.get('http://localhost:4000/api/auth/verify', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            return response.data.user;
+        } catch (error) {
+            throw new Error('Token verification failed');
+        }
+    };
+
     useEffect(() => {
-        checkAuth();
+        const token = localStorage.getItem('token');
+        if (token) {
+            verifyToken(token)
+                .then(userData => {
+                    setUser(userData);
+                    setIsAuthenticated(true);
+                })
+                .catch(() => {
+                    logout();
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        } else {
+            setLoading(false); // Make sure to set loading to false when no token exists
+        }
     }, []);
 
     const checkAuth = async () => {
@@ -52,6 +79,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
         setUser(null);
+        // Add any other cleanup needed
     };
 
     const register = async (userData) => {

@@ -27,6 +27,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/customer', require('./routes/customerRoutes'));
 app.use('/api/packages', require('./routes/packageRoutes'));
+app.use('/api/user/settings', require('./routes/userSettings'));
 // app.use('/api/admin', require('./routes/adminRoutes'));
 // app.use('/api/staff', require('./routes/staffRoutes'));
 

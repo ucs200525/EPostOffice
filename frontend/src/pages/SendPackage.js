@@ -92,12 +92,19 @@ const SendPackage = () => {
         setError(null);
 
         try {
+            const finalCost = calculateCost();
             const response = await axios.post(
                 'http://localhost:4000/api/packages/send',
                 {
                     ...packageDetails,
                     senderId: user.id,
-                    estimatedCost
+                    estimatedCost: finalCost,
+                    weight: parseFloat(packageDetails.weight),
+                    dimensions: {
+                        length: parseFloat(packageDetails.dimensions.length),
+                        width: parseFloat(packageDetails.dimensions.width),
+                        height: parseFloat(packageDetails.dimensions.height)
+                    }
                 },
                 {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }

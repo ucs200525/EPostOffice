@@ -1,7 +1,11 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    name: {
+    firstName: {
+        type: String,
+        required: true
+    },
+    lastName: {
         type: String,
         required: true
     },
@@ -42,6 +46,19 @@ const userSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    notifications: {
+        type: Boolean,
+        default: true
+    },
+    language: {
+        type: String,
+        enum: ['en', 'bn'],
+        default: 'en'
+    },
+    darkMode: {
+        type: Boolean,
+        default: false
     }
 });
 

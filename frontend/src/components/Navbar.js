@@ -6,7 +6,8 @@ import './Navbar.css';
 import { 
   FaUser, FaBars, FaTimes, FaSearch, FaBell, 
   FaGlobe, FaChevronDown, FaEnvelope, FaBox, 
-  FaPhone, FaMoneyBill, FaMapMarkerAlt 
+  FaPhone, FaMoneyBill, FaMapMarkerAlt, FaQuestionCircle,
+  FaSignOutAlt 
 } from 'react-icons/fa';
 
 const Navbar = () => {
@@ -45,19 +46,19 @@ const Navbar = () => {
       <div className="top-bar">
         <div className="container">
           <div className="contact-info">
-            <FaPhone /> <span>0123456</span>
-            <FaEnvelope /> <span>support@epost.office</span>
+            <div className="contact-info-item">
+              <FaPhone />
+              <span>0123456</span>
+            </div>
+            <div className="contact-info-item email">
+              <FaEnvelope />
+              <span>support@epost.office</span>
+            </div>
           </div>
           <div className="top-actions">
-            <div className="language-selector">
-              <FaGlobe />
-              <select>
-                <option value="en">English</option>
-                {/* <option value="bn">বাংলা</option> */}
-              </select>
-            </div>
             <Link to="/help" className="help-link">
-              Help Center
+              <FaQuestionCircle />
+              <span>Help Center</span>
             </Link>
           </div>
         </div>
@@ -75,31 +76,38 @@ const Navbar = () => {
             </Link>
           </div>
 
-          <div className="nav-search">
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              navigate(`/track?id=${searchQuery}`);
-            }}>
-              <input
-                type="text"
-                placeholder="Enter tracking number..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button type="submit">
-                <FaSearch />
-              </button>
-            </form>
-          </div>
-          <div className="mobile-actions">
-                <button className="mobile-notification">
-                <FaBell />
-                <span className="notification-badge">2</span>
+          {isAuthenticated ? (
+            <div className="nav-search">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                navigate(`/track?id=${searchQuery}`);
+              }}>
+                <input
+                  type="text"
+                  placeholder="Enter tracking number..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button type="submit">
+                  <FaSearch />
                 </button>
-                <button className="mobile-account">
-                <FaUser />
-                </button>
-          </div>
+              </form>
+            </div>
+          ) : null}
+
+
+          {isAuthenticated ? (
+            <div className="mobile-actions">
+                          <button className="mobile-notification">
+                          <FaBell />
+                          <span className="notification-badge">2</span>
+                          </button>
+                          <button className="mobile-account">
+                          <FaUser />
+                          </button>
+                    </div>
+                    ) : null}
+
 
           <div className={`nav-menu ${isOpen ? 'active' : ''}`}>
             <ul className="nav-items">
@@ -132,11 +140,14 @@ const Navbar = () => {
             </ul>
 
             <div className="nav-actions">
-              <button className="notification-btn">
-                <FaBell />
-                <span className="badge">2</span>
-              </button>
-              
+
+
+              {isAuthenticated ? (
+                  <button className="notification-btn">
+                  <FaBell />
+                  <span className="badge">2</span>
+                </button>
+                    ) : null}
               {isAuthenticated ? (
                 <div className="user-menu" onMouseEnter={() => setShowUserMenu(true)} onMouseLeave={() => setShowUserMenu(false)}>
                   <button className="user-btn">
@@ -149,7 +160,9 @@ const Navbar = () => {
                     <Link to="/payment">Payments</Link>
                     <Link to="/settings">Settings</Link>
                     <div className="divider"></div>
-                    <button onClick={logout} className="logout">Sign Out</button>
+                    <button onClick={logout} className="logout">
+                      <FaSignOutAlt /> Sign Out
+                    </button>
                   </div>
                 </div>
               ) : (

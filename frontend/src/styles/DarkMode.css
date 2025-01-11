@@ -1,0 +1,518 @@
+:root {
+    --transition-duration: 0.3s;
+}
+
+[data-theme='dark'],
+body.dark-mode {
+    --bg-primary: #1a202c;
+    --bg-secondary: #2d3748;
+    --text-primary: #e2e8f0;
+    --text-secondary: #a0aec0;
+    --border-color: #4a5568;
+    --input-bg: #2d3748;
+    --hover-bg: #4a5568;
+}
+
+[data-theme='light'],
+body:not(.dark-mode) {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f7fafc;
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --border-color: #e2e8f0;
+}
+
+/* Apply variables */
+body.dark-mode {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+body.dark-mode .card,
+body.dark-mode .navbar {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .card-header {
+    background-color: var(--bg-secondary);
+    border-bottom-color: var(--border-color);
+}
+
+body.dark-mode .form-control {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-mode .form-control:focus {
+    background-color: var(--bg-secondary);
+    border-color: #63b3ed;
+    color: var(--text-primary);
+}
+
+body.dark-mode .form-label,
+body.dark-mode .nav-link {
+    color: var(--text-primary);
+}
+
+body.dark-mode .btn-primary {
+    background-color: #4299e1;
+    border-color: #4299e1;
+}
+
+body.dark-mode .btn-primary:hover {
+    background-color: #3182ce;
+    border-color: #3182ce;
+}
+
+/* Additional styles for better dark mode visibility */
+body.dark-mode .alert {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .form-select {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .table {
+    color: var(--text-primary);
+}
+
+/* Global dark mode styles */
+.dark-mode * {
+    color: var(--text-primary);
+    transition: background-color var(--transition-duration), 
+                color var(--transition-duration), 
+                border-color var(--transition-duration);
+}
+
+.dark-mode {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Input elements */
+.dark-mode input,
+.dark-mode textarea,
+.dark-mode select {
+    background-color: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Tables */
+.dark-mode table,
+.dark-mode th,
+.dark-mode td {
+    border-color: var(--border-color);
+}
+
+.dark-mode tr:hover {
+    background-color: var(--hover-bg) !important;
+}
+
+/* Links */
+.dark-mode a {
+    color: #63b3ed;
+}
+
+.dark-mode a:hover {
+    color: #4299e1;
+}
+
+/* Modals and dropdowns */
+.dark-mode .modal-content,
+.dark-mode .dropdown-menu {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+/* Headers */
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6 {
+    color: var(--text-primary);
+}
+
+/* Lists */
+.dark-mode ul,
+.dark-mode ol {
+    color: var(--text-primary);
+}
+
+/* Root level dark mode */
+html[data-theme='dark'],
+#root[data-theme='dark'],
+#app[data-theme='dark'],
+[data-theme='dark'],
+.dark-mode {
+    --bg-primary: #1a202c !important;
+    --bg-secondary: #2d3748 !important;
+    --text-primary: #e2e8f0 !important;
+    --text-secondary: #a0aec0 !important;
+    --border-color: #4a5568 !important;
+    --input-bg: #2d3748 !important;
+    --hover-bg: #4a5568 !important;
+}
+
+/* Force dark mode on all elements */
+[data-theme='dark'] *,
+.dark-mode * {
+    background-color: inherit;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Specific element overrides */
+[data-theme='dark'] div,
+.dark-mode div,
+[data-theme='dark'] section,
+.dark-mode section,
+[data-theme='dark'] main,
+.dark-mode main {
+    background-color: var(--bg-primary) !important;
+}
+
+/* Component specific overrides */
+[data-theme='dark'] .card,
+[data-theme='dark'] .navbar,
+[data-theme='dark'] .modal,
+[data-theme='dark'] .dropdown-menu,
+[data-theme='dark'] .sidebar,
+.dark-mode .card,
+.dark-mode .navbar,
+.dark-mode .modal,
+.dark-mode .dropdown-menu,
+.dark-mode .sidebar {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Form elements */
+[data-theme='dark'] input,
+[data-theme='dark'] textarea,
+[data-theme='dark'] select,
+.dark-mode input,
+.dark-mode textarea,
+.dark-mode select {
+    background-color: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Override any light theme specifics */
+[data-theme='dark'] [class*="bg-light"],
+.dark-mode [class*="bg-light"] {
+    background-color: var(--bg-secondary) !important;
+}
+
+[data-theme='dark'] [class*="text-dark"],
+.dark-mode [class*="text-dark"] {
+    color: var(--text-primary) !important;
+}
+
+/* Ensure transitions */
+* {
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s !important;
+}
+
+/* Override force dark mode for specific elements */
+[data-theme='dark'] *:not(.btn):not(.dashboard-header *):not(.wallet-card *):not(.hero-section *):not(.hero-text *),
+.dark-mode *:not(.btn):not(.dashboard-header *):not(.wallet-card *):not(.hero-section *):not(.hero-text *) {
+    background-color: inherit;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Preserve button styles */
+.dark-mode .btn {
+    transition: all 0.3s ease;
+}
+
+.dark-mode .btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Preserve dashboard header */
+.dark-mode .dashboard-header,
+.dark-mode .dashboard-header * {
+    background-color: initial !important;
+    color: initial !important;
+}
+
+/* Preserve original styling for wallet-card */
+.dark-mode .wallet-card,
+.dark-mode .wallet-card * {
+    background-color: initial !important;
+    color: initial !important;
+    border-color: initial !important;
+}
+
+/* Preserve hero-section styling */
+.dark-mode .hero-section,
+.dark-mode .hero-section * {
+    background-color: initial !important;
+    color: initial !important;
+    border-color: initial !important;
+}
+
+/* Preserve hero text styling */
+.dark-mode .hero-text,
+.dark-mode .hero-text h1,
+.dark-mode .hero-text p,
+.dark-mode .hero-text .cta-buttons,
+.dark-mode .hero-text .cta-btn {
+    background-color: initial !important;
+    color: initial !important;
+    border-color: initial !important;
+}
+
+/* Preserve specific hero text button styles */
+.dark-mode .hero-text .cta-btn.primary,
+.dark-mode .hero-text .cta-btn.secondary {
+    background-color: initial !important;
+    color: initial !important;
+    border-color: initial !important;
+    opacity: 1 !important;
+}
+
+.dark-mode .hero-text .cta-btn:hover {
+    transform: initial !important;
+    opacity: 0.9 !important;
+}
+
+/* Reset background for elements inside hero-section */
+.dark-mode .hero-section .card,
+.dark-mode .hero-section .container,
+.dark-mode .hero-section .row {
+    background-color: initial !important;
+}
+
+/* Fix button hover states */
+.dark-mode .btn-primary {
+    background-color: #4299e1 !important;
+    border-color: #4299e1 !important;
+    color: white !important;
+}
+
+.dark-mode .btn-primary:hover {
+    background-color: #3182ce !important;
+    border-color: #3182ce !important;
+    color: white !important;
+}
+
+.dark-mode .btn-secondary {
+    background-color: #718096 !important;
+    border-color: #718096 !important;
+    color: white !important;
+}
+
+.dark-mode .btn-secondary:hover {
+    background-color: #4a5568 !important;
+    border-color: #4a5568 !important;
+    color: white !important;
+}
+
+/* Ensure white text stays white where needed */
+.dark-mode .btn-primary *,
+.dark-mode .btn-secondary *,
+.dark-mode [class*="text-white"] {
+    color: white !important;
+}
+
+/* Reset background for cards inside dashboard header */
+.dark-mode .dashboard-header .card {
+    background-color: initial !important;
+}
+
+/* Reset background for cards inside wallet-card */
+.dark-mode .wallet-card .card {
+    background-color: initial !important;
+}
+
+/* Hero section specific dark mode styling */
+.dark-mode .hero-section {
+    background: linear-gradient(rgba(26, 32, 44, 0.9), rgba(26, 32, 44, 0.95)), 
+                var(--hero-background-image) !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+.dark-mode .hero-text {
+    background-color: transparent !important;
+}
+
+.dark-mode .hero-text h1 {
+    color: #ffffff !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark-mode .hero-text p {
+    color: #e2e8f0 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Hero buttons dark mode */
+.dark-mode .hero-text .cta-btn.primary {
+    background-color: #4299e1 !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark-mode .hero-text .cta-btn.secondary {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+.dark-mode .hero-text .cta-btn:hover {
+    transform: translateY(-2px) !important;
+    transition: all 0.3s ease !important;
+}
+
+.dark-mode .hero-text .cta-btn.primary:hover {
+    background-color: #3182ce !important;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark-mode .hero-text .cta-btn.secondary:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Feature Card Dark Mode Styles */
+.dark-mode .feature-card {
+    background: rgba(45, 55, 72, 0.6) !important;
+    border: 1px solid rgba(74, 85, 104, 0.4) !important;
+    backdrop-filter: blur(8px) !important;
+    padding: 2rem !important;
+    border-radius: 1rem !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Hover effects */
+.dark-mode .feature-card:hover {
+    transform: translateY(-6px) !important;
+    background: rgba(45, 55, 72, 0.8) !important;
+    border-color: rgba(66, 153, 225, 0.4) !important;
+    box-shadow: 
+        0 12px 20px -10px rgba(26, 32, 44, 0.3),
+        0 0 20px 0 rgba(66, 153, 225, 0.1) !important;
+}
+
+/* Icon styles */
+.dark-mode .feature-card .feature-icon {
+    font-size: 2.5rem !important;
+    color: #4299e1 !important;
+    margin-bottom: 1.5rem !important;
+    transition: all 0.4s ease !important;
+    background: linear-gradient(135deg, #4299e1, #3182ce) !important;
+    background-clip: text !important;
+    background-clip: text !important;
+    background-clip: text !important;
+    background-clip: text !important;
+    background-clip: text !important;
+    background-clip: text !important;
+    background-clip: text !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+.dark-mode .feature-card:hover .feature-icon {
+    transform: scale(1.1) !important;
+    background: linear-gradient(135deg, #63b3ed, #4299e1) !important;
+    -webkit-background-clip: text !important;
+}
+
+/* Enhanced Feature Card Heading Styles */
+.dark-mode .feature-card h3 {
+    color: #ffffff !important;
+    font-size: 1.375rem !important;
+    font-weight: 700 !important;
+    margin: 1rem 0 0.75rem !important;
+    letter-spacing: 0.025em !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    position: relative !important;
+}
+
+.dark-mode .feature-card:hover h3 {
+    background: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%) !important;
+    -webkit-background-clip: text !important;
+    transform: translateY(-1px) !important;
+    text-shadow: 0 2px 4px rgba(66, 153, 225, 0.2) !important;
+}
+
+/* Ensure paragraph text contrast */
+.dark-mode .feature-card p {
+    color: #cbd5e0 !important;
+    font-size: 1rem !important;
+    line-height: 1.625 !important;
+    font-weight: 400 !important;
+}
+
+/* Paragraph styles */
+.dark-mode .feature-card p {
+    color: #a0aec0 !important;
+    line-height: 1.625 !important;
+    margin: 0 !important;
+    transition: color 0.3s ease !important;
+}
+
+.dark-mode .feature-card:hover p {
+    color: #e2e8f0 !important;
+}
+
+/* Add subtle gradient border effect on hover */
+.dark-mode .feature-card::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    bottom: -2px !important;
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 50%, transparent 100%) !important;
+    border-radius: inherit !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    transition: opacity 0.4s ease !important;
+}
+
+.dark-mode .feature-card:hover::before {
+    opacity: 0.3 !important;
+}
+
+/* Add subtle shine effect */
+.dark-mode .feature-card::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.05),
+        transparent
+    ) !important;
+    transition: 0.5s !important;
+}
+
+.dark-mode .feature-card:hover::after {
+    left: 100% !important;
+}

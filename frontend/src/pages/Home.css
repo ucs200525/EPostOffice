@@ -716,3 +716,73 @@
     width: 100%;
   }
 }
+
+/* ...existing styles... */
+
+.faq-item {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.faq-question {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: var(--white);
+  transition: background-color 0.3s ease;
+}
+
+.faq-question:hover {
+  background: var(--gray-light);
+}
+
+.faq-question h4 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  background: var(--white);
+  padding: 0 1rem;
+}
+
+.faq-answer.expanded {
+  max-height: 500px;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.show-more-container {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.show-more-btn {
+  background: var(--primary-color);
+  color: var(--white);
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.show-more-btn:hover {
+  background: var(--secondary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ...rest of existing styles... */

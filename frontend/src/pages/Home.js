@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import './Home.css';
-import { FaBox, FaTruck, FaMoneyBill, FaUser, FaBell, FaMapMarkerAlt, FaFileAlt, FaStar, FaSearch, FaQuestionCircle, FaArrowRight, FaCalculator, FaClock, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
+import { FaBox, FaTruck, FaMoneyBill, FaUser, FaBell, FaMapMarkerAlt, FaFileAlt, FaStar, FaSearch, FaQuestionCircle, FaArrowRight, FaCalculator, FaClock, FaShieldAlt, FaCheckCircle, FaPlus, FaMinus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useShipments } from '../context/ShipmentContext';
 
@@ -96,22 +96,22 @@ const ShippingCalculator = () => {
 };
 
 const Home = () => {
-  const { user } = useAuth();
-    const navigate = useNavigate();
-    const [error, setError] = useState(null); // Add error state
+  const { user, isAuthenticated, loading: authLoading } = useAuth(); // Add authLoading
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false); // Change to false initially
 
-    // Add CSS variables
-    const cssVariables = {
-        '--primary-color': '#1a237e',
-        '--secondary-color': '#0d47a1',
-        '--white': '#ffffff',
-        '--gray-light': '#f8f9fa',
-        '--text-dark': '#333333',
-        '--text-light': '#666666',
-        '--shadow': '0 2px 8px rgba(0,0,0,0.1)'
-    };
+  // Add CSS variables
+  const cssVariables = {
+    '--primary-color': '#1a237e',
+    '--secondary-color': '#0d47a1',
+    '--white': '#ffffff',
+    '--gray-light': '#f8f9fa',
+    '--text-dark': '#333333',
+    '--text-light': '#666666',
+    '--shadow': '0 2px 8px rgba(0,0,0,0.1)'
+  };
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [customerData, setCustomerData] = useState({
     name: '',
     email: '',
@@ -120,33 +120,38 @@ const Home = () => {
   });
   const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState(0);
   const [faqSearch, setFaqSearch] = useState('');
   const [walletBalance, setWalletBalance] = useState(0);
   const { stats } = useShipments();
+  const [packageStats, setPackageStats] = useState({
+    active: 0,
+    transit: 0,
+    delivered: 0,
+    total: 0
+  });
+  const [visibleFaqs, setVisibleFaqs] = useState(5); // Add this state
+  const [expandedFaq, setExpandedFaq] = useState(null); // Add this state
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        setIsAuthenticated(true);
-        Promise.all([
-            fetchProfile(),
-            fetchOrders(),
-            fetchNotifications(),
-            fetchWalletBalance()
-        ])
-        .then(() => setLoading(false))
-        .catch(err => {
-            setError(err.message);
-            setLoading(false);
-        });
-    } else {
+    if (isAuthenticated && user) {
+      setLoading(true); // Only set loading true when fetching authenticated user data
+      Promise.all([
+        fetchProfile(),
+        fetchOrders(),
+        fetchNotifications(),
+        fetchWalletBalance(),
+        fetchPackageStats()
+      ])
+      .then(() => setLoading(false))
+      .catch(err => {
+        setError(err.message);
         setLoading(false);
+      });
     }
-  }, [user]);
+  }, [isAuthenticated, user]);
 
   // Safe navigation function
   const handleNavigation = (path) => (e) => {
@@ -225,6 +230,40 @@ const Home = () => {
         console.error('Failed to fetch wallet balance', err);
     }
   };
+
+  const fetchPackageStats = async () => {
+    try {
+        if (!user || !user.id) {
+            console.log('No user ID available');
+            return;
+        }
+
+        const response = await axios.get(
+            `http://localhost:4000/api/packages/${user.id}/stats`,
+            { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
+        );
+        
+        if (response.data.success) {
+            setPackageStats(response.data.stats);
+        } else {
+            console.error('Failed to fetch stats:', response.data.message);
+        }
+    } catch (err) {
+        console.error('Stats fetch error:', err.message);
+        setPackageStats({
+            active: 0,
+            transit: 0,
+            delivered: 0,
+            total: 0
+        });
+    }
+};
+
+useEffect(() => {
+    if (user && user.id) {
+        fetchPackageStats();
+    }
+}, [user]);
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
@@ -350,6 +389,14 @@ const Home = () => {
       answer: "Deliveries may be delayed during severe weather. Check our service alerts page for updates." }
   ];
 
+  const toggleFaq = (index) => {
+    setExpandedFaq(expandedFaq === index ? null : index);
+  };
+
+  const handleShowMore = () => {
+    setVisibleFaqs(prev => prev + 5);
+  };
+
   const BeforeLoginView = () => (
     <div className="home-guest-container" style={cssVariables}>
       <section className="hero-section">
@@ -415,161 +462,179 @@ const Home = () => {
     </div>
   );
 
-  if (loading) return <div className="loader">Loading...</div>;
+  if (authLoading) return <div className="loader">Loading...</div>;
   if (error) return <div className="error-message">{error}</div>;
 
   return isAuthenticated ? (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="profile-section">
-          <FaUser className="profile-icon" />
-          <div className="profile-info">
-            <h1>Welcome back, {customerData?.name}</h1>
-            <p>{customerData?.email}</p>
-            <p><FaMapMarkerAlt /> {customerData?.address}</p>
-          </div>
-        </div>
-        <div className="balance-section">
-          <h3>Wallet Balance</h3>
-          <p className="balance-amount">${walletBalance?.toFixed(2)}</p>
-        </div>
-      </header>
-{/* 
-      <section className="quick-actions">
-        <div className="tracking-box">
-          <input 
-            type="text"
-            value={trackingNumber}
-            onChange={(e) => setTrackingNumber(e.target.value)}
-            placeholder="Enter tracking number"
-          />
-          <button className="track-btn">Track Package</button>
-        </div>
-        <button className="action-btn send-btn">Send Package</button>
-        <button className="action-btn pay-btn">Pay Bills</button>
-      </section> */}
-
-      <section className="stats-overview">
-        <div className="stat-card">
-          <FaBox className="stat-icon" />
-          <div className="stat-info">
-            <h3>Active Orders</h3>
-            <p>{stats.active}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <FaTruck className="stat-icon" />
-          <div className="stat-info">
-            <h3>In Transit</h3>
-            <p>{stats.transit}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <FaCheckCircle className="stat-icon" />
-          <div className="stat-info">
-            <h3>Completed</h3>
-            <p>{stats.delivered}</p>
-          </div>
-        </div>
-      </section>
-
-      <div className="services-container">
-        <SendPackageSection />
-        <PickupSection />
-        <ShippingCalculator />
-      </div>
-
-      <section className="services-highlights">
-        <h2>Our Services</h2>
-        <div className="services-grid">
-          <div className="service-card">
-            <FaTruck className="service-icon" />
-            <h3>Express Delivery</h3>
-            <p>Next-day delivery guaranteed</p>
-          </div>
-          <div className="service-card">
-            <FaBox className="service-icon" />
-            <h3>Secure Packaging</h3>
-            <p>Professional packaging service</p>
-          </div>
-          <div className="service-card">
-            <FaMoneyBill className="service-icon" />
-            <h3>Bill Payments</h3>
-            <p>Pay utilities & more</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="recent-activities">
-        <h2>Recent Activities</h2>
-        <div className="activities-grid">
-          {notifications.map(notif => (
-            <div key={notif.id} className="activity-card">
-              <FaBell className="notif-icon" />
-              <div className="notif-content">
-                <h4>{notif.title}</h4>
-                <p>{notif.message}</p>
-                <small>{new Date(notif.createdAt).toLocaleDateString()}</small>
+      {loading ? (
+        <div className="loader">Loading dashboard...</div>
+      ) : (
+        <>
+          <header className="dashboard-header">
+            <div className="profile-section">
+              <FaUser className="profile-icon" />
+              <div className="profile-info">
+                <h1>Welcome back, {customerData?.name}</h1>
+                <p>{customerData?.email}</p>
+                <p><FaMapMarkerAlt /> {customerData?.address}</p>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="balance-section">
+              <h3>Wallet Balance</h3>
+              <p className="balance-amount">${walletBalance?.toFixed(2)}</p>
+            </div>
+          </header>
 
-      <section className="faq-section">
-        <h2>Frequently Asked Questions</h2>
-        <div className="faq-search">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            value={faqSearch}
-            onChange={(e) => setFaqSearch(e.target.value)}
-            placeholder="Search FAQs..."
-          />
-        </div>
-        <div className="faq-list">
-          {faqs
-            .filter(faq => 
-              faq.question.toLowerCase().includes(faqSearch.toLowerCase()) ||
-              faq.answer.toLowerCase().includes(faqSearch.toLowerCase())
-            )
-            .map((faq, index) => (
-              <div key={index} className="faq-item">
-                <h4><FaQuestionCircle /> {faq.question}</h4>
-                <p>{faq.answer}</p>
+          <section className="stats-overview">
+            <div className="stat-card">
+              <FaBox className="stat-icon" />
+              <div className="stat-info">
+                <h3>Active Orders</h3>
+                <p>{packageStats.active}</p>
               </div>
-            ))}
-        </div>
-      </section>
+            </div>
+            <div className="stat-card">
+              <FaTruck className="stat-icon" />
+              <div className="stat-info">
+                <h3>In Transit</h3>
+                <p>{packageStats.transit}</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <FaCheckCircle className="stat-icon" />
+              <div className="stat-info">
+                <h3>Completed</h3>
+                <p>{packageStats.delivered}</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <FaBox className="stat-icon" />
+              <div className="stat-info">
+                <h3>Total Shipments</h3>
+                <p>{packageStats.total}</p>
+              </div>
+            </div>
+          </section>
 
-      <section className="feedback-section">
-        <h2>Your Feedback Matters</h2>
-        <form onSubmit={handleFeedbackSubmit} className="feedback-form">
-          <div className="rating-stars">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <FaStar
-                key={`star-${star}`}
-                className={star <= rating ? 'star active' : 'star'}
-                onClick={() => setRating(star)}
-              />
-            ))}
+          <div className="services-container">
+            <SendPackageSection />
+            <PickupSection />
+            <ShippingCalculator />
           </div>
-          <textarea
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            placeholder="Share your experience with us..."
-          />
-          <button type="submit" className="submit-btn">Submit Feedback</button>
-        </form>
-      </section>
 
-      <footer className="dashboard-footer">
-        <div className="footer-links">
-          <a onClick={handleNavigation('/help')} href="/help">Help Center</a>
-          <a onClick={handleNavigation('/contact')} href="/contact">Contact Support</a>
-          <a onClick={handleNavigation('/terms')} href="/terms">Terms of Service</a>
-        </div>
-      </footer>
+          <section className="services-highlights">
+            <h2>Our Services</h2>
+            <div className="services-grid">
+              <div className="service-card">
+                <FaTruck className="service-icon" />
+                <h3>Express Delivery</h3>
+                <p>Next-day delivery guaranteed</p>
+              </div>
+              <div className="service-card">
+                <FaBox className="service-icon" />
+                <h3>Secure Packaging</h3>
+                <p>Professional packaging service</p>
+              </div>
+              <div className="service-card">
+                <FaMoneyBill className="service-icon" />
+                <h3>Bill Payments</h3>
+                <p>Pay utilities & more</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="recent-activities">
+            <h2>Recent Activities</h2>
+            <div className="activities-grid">
+              {notifications.map(notif => (
+                <div key={notif.id} className="activity-card">
+                  <FaBell className="notif-icon" />
+                  <div className="notif-content">
+                    <h4>{notif.title}</h4>
+                    <p>{notif.message}</p>
+                    <small>{new Date(notif.createdAt).toLocaleDateString()}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <div className="faq-search">
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                value={faqSearch}
+                onChange={(e) => setFaqSearch(e.target.value)}
+                placeholder="Search FAQs..."
+              />
+            </div>
+            <div className="faq-list">
+              {faqs
+                .filter(faq => 
+                  faq.question.toLowerCase().includes(faqSearch.toLowerCase()) ||
+                  faq.answer.toLowerCase().includes(faqSearch.toLowerCase())
+                )
+                .slice(0, visibleFaqs)
+                .map((faq, index) => (
+                  <div key={index} className="faq-item">
+                    <div 
+                      className="faq-question"
+                      onClick={() => toggleFaq(index)}
+                    >
+                      <h4>
+                        <FaQuestionCircle /> 
+                        {faq.question}
+                      </h4>
+                      {expandedFaq === index ? <FaMinus /> : <FaPlus />}
+                    </div>
+                    <div className={`faq-answer ${expandedFaq === index ? 'expanded' : ''}`}>
+                      <p>{faq.answer}</p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            {visibleFaqs < faqs.length && !faqSearch && (
+              <div className="show-more-container">
+                <button onClick={handleShowMore} className="show-more-btn">
+                  Show More FAQs
+                </button>
+              </div>
+            )}
+          </section>
+
+          <section className="feedback-section">
+            <h2>Your Feedback Matters</h2>
+            <form onSubmit={handleFeedbackSubmit} className="feedback-form">
+              <div className="rating-stars">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FaStar
+                    key={`star-${star}`}
+                    className={star <= rating ? 'star active' : 'star'}
+                    onClick={() => setRating(star)}
+                  />
+                ))}
+              </div>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Share your experience with us..."
+              />
+              <button type="submit" className="submit-btn">Submit Feedback</button>
+            </form>
+          </section>
+
+          <footer className="dashboard-footer">
+            <div className="footer-links">
+              <a onClick={handleNavigation('/help')} href="/help">Help Center</a>
+              <a onClick={handleNavigation('/contact')} href="/contact">Contact Support</a>
+              <a onClick={handleNavigation('/terms')} href="/terms">Terms of Service</a>
+            </div>
+          </footer>
+        </>
+      )}
     </div>
   ) : (
     <BeforeLoginView />

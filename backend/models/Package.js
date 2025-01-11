@@ -47,10 +47,30 @@ const packageSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    trackingNumber: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'in_transit', 'delivered', 'cancelled'],
+        default: 'pending'
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    trackingHistory: [{
+        status: String,
+        location: String,
+        timestamp: Date,
+        description: String
+    }],
     createdAt: {
         type: Date,
         default: Date.now
     }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Package', packageSchema);

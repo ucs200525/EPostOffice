@@ -18,6 +18,7 @@ const Shipments = () => {
     const [trackedPackage, setTrackedPackage] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [estimatedCost, setEstimatedCost] = useState(null);
     const [newPackage, setNewPackage] = useState({
         type: 'document',
         weight: '',
@@ -69,23 +70,28 @@ const Shipments = () => {
                 'http://localhost:4000/api/packages/send',
                 {
                     ...newPackage,
-                    senderId: user.id
+                    senderId: user.id,
+                    estimatedCost
                 },
                 { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
             );
-            setShipments([...shipments, response.data.package]);
-            setShowNewPackageModal(false);
-            setNewPackage({
-                type: 'document',
-                weight: '',
-                dimensions: { length: '', width: '', height: '' },
-                recipientName: '',
-                recipientPhone: '',
-                recipientAddress: '',
-                serviceType: 'standard',
-                fragile: false,
-                insurance: false
-            });
+
+            if (response.data.package) {
+                setShipments([response.data.package, ...shipments]);
+                setShowNewPackageModal(false);
+                // Reset form
+                setNewPackage({
+                    type: 'document',
+                    weight: '',
+                    dimensions: { length: '', width: '', height: '' },
+                    recipientName: '',
+                    recipientPhone: '',
+                    recipientAddress: '',
+                    serviceType: 'standard',
+                    fragile: false,
+                    insurance: false
+                });
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send package');
         }
@@ -96,8 +102,12 @@ const Shipments = () => {
         const weightRate = parseFloat(newPackage.weight) * 2;
         const insuranceRate = newPackage.insurance ? 20 : 0;
         const fragileRate = newPackage.fragile ? 15 : 0;
-        return baseRate + weightRate + insuranceRate + fragileRate;
+        setEstimatedCost(baseRate + weightRate + insuranceRate + fragileRate);
     };
+
+    useEffect(() => {
+        calculateShippingCost();
+    }, [newPackage.serviceType, newPackage.weight, newPackage.insurance, newPackage.fragile]);
 
     const getStatusColor = (status) => {
         const colors = {
@@ -111,7 +121,7 @@ const Shipments = () => {
 
     const filteredShipments = shipments.filter(shipment => {
         const matchesStatus = filterStatus === 'all' || shipment.status === filterStatus;
-        const matchesSearch = shipment.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = shipment.trackingNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             shipment.recipientName.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesStatus && matchesSearch;
     });
@@ -155,12 +165,12 @@ const Shipments = () => {
             <section className="shipments-section">
                 <div className="section-header">
                     <h2><FaShippingFast /> My Shipments</h2>
-                    <button 
+                    {/* <button 
                         className="new-package-btn"
                         onClick={() => setShowNewPackageModal(true)}
                     >
                         <FaPlus /> New Package
-                    </button>
+                    </button> */}
                 </div>
 
                 <div className="shipments-controls">
@@ -400,7 +410,7 @@ const Shipments = () => {
                             </div>
 
                             <div className="estimated-cost">
-                                Estimated Cost: ${calculateShippingCost()}
+                                Estimated Cost: ${estimatedCost || 0}
                             </div>
 
                             <button type="submit" className="submit-btn">
