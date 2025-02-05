@@ -1,0 +1,370 @@
+.shipments-page-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 4rem);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e3e8ef;
+}
+
+.section-header h2 {
+    font-size: 2rem;
+    color: #1e3c72;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.section-header h2 svg {
+    font-size: 1.5rem;
+    color: #1e3c72;
+    margin-right: 0.5rem;
+}
+
+.new-package-btn {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(30, 60, 114, 0.2);
+}
+
+.new-package-btn svg {
+    font-size: 1rem;
+}
+
+.new-package-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+    background: linear-gradient(135deg, #2a5298, #1e3c72);
+}
+
+/* Tracking section specific to shipments */
+.shipments-tracking-section {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.shipments-tracking-form {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+/* Enhanced controls section with better icon placement */
+.shipments-controls {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.shipments-search-box,
+.shipments-filter-box {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #f8f9fa;
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid #e3e8ef;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.shipments-search-box svg,
+.shipments-filter-box svg {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #546e7a;
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+.shipments-search-box:focus-within,
+.shipments-filter-box:focus-within {
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+}
+
+.shipments-search-box input,
+.shipments-filter-box select {
+    width: 100%;
+    padding: 0.5rem;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: #37474f;
+    outline: none;
+    padding-left: 2.5rem; /* Make room for the icon */
+}
+
+/* Enhanced shipment cards */
+.shipments-list {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.shipment-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.8rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border: 1px solid #e3e8ef;
+}
+
+.shipment-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.shipment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e3e8ef;
+}
+
+.tracking-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e3c72;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.status-badge svg {
+    font-size: 0.9rem;
+}
+
+.shipment-details {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: #546e7a;
+    padding: 0.5rem 0;
+}
+
+.detail-item svg {
+    color: #1e3c72;
+    font-size: 1.2rem;
+    min-width: 1.2rem; /* Prevents icon from shrinking */
+    height: 1.2rem;
+}
+
+.shipment-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e3e8ef;
+}
+
+.track-btn {
+    background: #e3f2fd;
+    color: #1e3c72;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.track-btn:hover {
+    background: #bbdefb;
+}
+
+/* Modal styles */
+.shipments-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.shipments-modal-content {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+}
+
+.close-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #546e7a;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.close-btn:hover {
+    background: #f5f5f5;
+    color: #1e3c72;
+}
+
+/* Form styles */
+.shipments-form-group {
+    margin-bottom: 2rem;
+}
+
+.shipments-form-group label {
+    display: block;
+    margin-bottom: 0.8rem;
+    color: #37474f;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.shipments-form-group input,
+.shipments-form-group select,
+.shipments-form-group textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1.5px solid #e3e8ef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    color: #37474f;
+}
+
+.shipments-form-group input:focus,
+.shipments-form-group select:focus,
+.shipments-form-group textarea:focus {
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    outline: none;
+}
+
+/* Timeline event icons */
+.tracking-timeline .event-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #e3f2fd;
+    color: #1e3c72;
+    margin-right: 1rem;
+}
+
+.tracking-timeline .event-icon svg {
+    font-size: 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .shipments-page-container {
+        padding: 1rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .shipments-controls {
+        padding: 1rem;
+    }
+
+    .shipments-tracking-form {
+        flex-direction: column;
+    }
+
+    .shipments-search-box,
+    .shipments-filter-box {
+        width: 100%;
+        padding-left: 3rem; /* Increase padding for better mobile touch targets */
+    }
+
+    .shipments-search-box svg,
+    .shipments-filter-box svg {
+        left: 1.2rem;
+        font-size: 1.2rem;
+    }
+
+    .shipments-modal-content {
+        padding: 1.5rem;
+        width: 95%;
+    }
+
+    .shipment-card {
+        padding: 1.2rem;
+    }
+}

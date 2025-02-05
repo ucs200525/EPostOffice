@@ -362,12 +362,13 @@ input[type="text"][placeholder="Enter tracking number..."] {
 /* User Menu Styles */
 .user-menu {
   position: relative;
+  padding-bottom: 20px; /* Add padding to create hover space */
 }
 
 /* Updated User Menu & Dropdown Styles */
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% - 20px); /* Adjust to account for padding */
   right: -10px;
   background: var(--white);
   min-width: 240px;
@@ -392,6 +393,17 @@ input[type="text"][placeholder="Enter tracking number..."] {
   transform: rotate(45deg);
   border-left: 1px solid rgba(0, 0, 0, 0.08);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Add a invisible area to maintain hover */
+.dropdown-menu::after {
+  content: '';
+  position: absolute;
+  top: -20px; /* Match padding-bottom of user-menu */
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: transparent;
 }
 
 .dropdown-menu.show {
@@ -434,8 +446,19 @@ input[type="text"][placeholder="Enter tracking number..."] {
 }
 
 .logout {
+  width: 100%;
   color: #e74c3c !important;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
 }
 
 .logout:hover {
@@ -445,6 +468,7 @@ input[type="text"][placeholder="Enter tracking number..."] {
 
 .logout svg {
   color: #e74c3c !important;
+  font-size: 1.1rem;
 }
 
 /* Update the user button styles */

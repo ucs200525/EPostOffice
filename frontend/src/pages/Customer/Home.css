@@ -414,7 +414,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  background: url('../assets/hero-pattern.png'); /* Updated path */
+  background: url('../../assets/hero-pattern.png'); /* Updated path */
   opacity: 0.1;
 }
 

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import './SendPackage.css';
 import { FaBox, FaMapMarkerAlt, FaTruck, FaMoneyBill } from 'react-icons/fa';
-import { useShipments } from '../context/ShipmentContext';
+import { useShipments } from '../../context/ShipmentContext';
 
 const SendPackage = () => {
     const { user } = useAuth();

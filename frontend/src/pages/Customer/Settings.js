@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Form, Button, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import axios from 'axios';
-import '../styles/Settings.css';
-import { useDarkMode } from '../context/DarkModeContext';
+import './styles/Settings.css';
+import { useDarkMode } from '../../context/DarkModeContext';
 
 
 
@@ -27,7 +27,7 @@ const Settings = () => {
 
     useEffect(() => {
         fetchUserData();
-        // Set initial dark mode state from context
+        // Sync dark mode state with form data
         setFormData(prev => ({
             ...prev,
             darkMode: isDarkMode
@@ -95,18 +95,14 @@ const Settings = () => {
         const { name, value, type, checked } = e.target;
         const newValue = type === 'checkbox' ? checked : value;
         
+        if (name === 'darkMode') {
+            toggleDarkMode(); // Use context's toggle function
+        }
+        
         setFormData(prevState => ({
             ...prevState,
             [name]: newValue
         }));
-
-        // Use context's toggle for dark mode
-        if (name === 'darkMode') {
-            toggleDarkMode();
-        }
-        if (name === 'language') {
-            applyLanguage(value);
-        }
 
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));

@@ -1,0 +1,200 @@
+.staff-dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+.staff-navbar {
+  width: 250px;
+  background: #2c3e50;
+  color: white;
+  padding: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.activity-list {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.nav-links {
+  list-style: none;
+  padding: 0;
+}
+
+.nav-links li a {
+  color: white;
+  text-decoration: none;
+  padding: 10px 0;
+  display: block;
+}
+
+.welcome-section {
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.welcome-section h1 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.quick-actions {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.action-btn {
+  padding: 12px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.action-btn:hover {
+  background: #2980b9;
+}
+
+.activities-list {
+  margin-top: 15px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: start;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.activity-icon {
+  margin-right: 15px;
+  color: #3498db;
+}
+
+.activity-details h4 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.activity-details p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.activity-details small {
+  color: #999;
+}
+
+.dashboard-sections {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.customers-table {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.customers-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.customers-table th,
+.customers-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.customer-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 300px;
+}
+
+.btn-view, .btn-verify, .btn-modify {
+  padding: 6px 12px;
+  margin: 0 4px;
+  border-radius: 4px;
+  text-decoration: none;
+  color: white;
+}
+
+.btn-view { background: #3498db; }
+.btn-verify { background: #27ae60; }
+.btn-modify { background: #e67e22; }
+
+.profile-container {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.info-group {
+  margin: 15px 0;
+  display: flex;
+  gap: 20px;
+}
+
+.info-group label {
+  font-weight: bold;
+  min-width: 120px;
+}
+
+.customer-info {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.order-history {
+  margin-top: 30px;
+}

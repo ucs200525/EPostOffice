@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import './Register.css';
-import LocationPicker from '../components/LocationPicker';
+import LocationPicker from '../../components/LocationPicker';
 
 const Register = () => {
   const navigate = useNavigate();

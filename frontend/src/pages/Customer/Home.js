@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import './Home.css';
 import { FaBox, FaTruck, FaMoneyBill, FaUser, FaBell, FaMapMarkerAlt, FaFileAlt, FaStar, FaSearch, FaQuestionCircle, FaArrowRight, FaCalculator, FaClock, FaShieldAlt, FaCheckCircle, FaPlus, FaMinus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { useShipments } from '../context/ShipmentContext';
+import { useShipments } from '../../context/ShipmentContext';
 
 const SendPackageSection = () => {
   const navigate = useNavigate();

@@ -1,23 +1,38 @@
 const mongoose = require('mongoose');
 
 const feedbackSchema = new mongoose.Schema({
-    customer: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', 
-        required: true 
+    customerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Customer',
+        required: true
     },
-    parcel: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Parcel' 
+    customerName: {
+        type: String,
+        required: true
     },
-    rating: { 
-        type: Number, 
-        min: 1, 
-        max: 5, 
-        required: true 
+    customerEmail: {
+        type: String,
+        required: true
     },
-    comment: { type: String },
-    createdAt: { type: Date, default: Date.now }
+    rating: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 5
+    },
+    feedback: {
+        type: String,
+        required: true,
+        minlength: 10,
+        maxlength: 500
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date
+    }
 });
 
 module.exports = mongoose.model('Feedback', feedbackSchema);
