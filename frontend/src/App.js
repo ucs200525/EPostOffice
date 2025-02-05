@@ -29,7 +29,7 @@ import Reports from './pages/Admin/pages/Reports';
 import AdminSettings from './pages/Admin/pages/AdminSettings';
 import Orders from './pages/Staff/pages/Orders';
 import Deliveries from './pages/Staff/pages/Deliveries';
-import Reports from './pages/Staff/pages/Reports';
+import ReportsStaff from './pages/Staff/pages/Reports';
 
 const App = () => {
   return (
@@ -112,7 +112,7 @@ const StaffRoutes = () => {
       <Route path="/modify-customer/:id" element={<CustomerModification />} />
       <Route path="/orders" element={<Orders />} />
       <Route path="/deliveries" element={<Deliveries />} />
-      <Route path="/reports" element={<Reports />} />
+      <Route path="/reports" element={<ReportsStaff />} />
     </Routes>
   );
 };
