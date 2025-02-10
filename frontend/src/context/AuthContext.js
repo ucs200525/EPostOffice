@@ -6,6 +6,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
+    const [role, setRole] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Add verifyToken function
@@ -39,38 +40,43 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    const checkAuth = async () => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const response = await axios.get('http://localhost:4000/api/customer/profile', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                setUser(response.data);
-                setIsAuthenticated(true);
-            } catch (error) {
-                localStorage.removeItem('token');
-                setIsAuthenticated(false);
-                setUser(null);
-            }
-        }
-        setLoading(false);
-    };
-
     const login = async (email, password) => {
         try {
             const response = await axios.post('http://localhost:4000/api/auth/login', {
                 email,
                 password
             });
-            localStorage.setItem('token', response.data.token);
-            setUser(response.data.user);
+
+            const { token, user } = response.data;
+
+            if (!user || !user.role) {
+                throw new Error('Invalid user data received');
+            }
+
+            // Store auth data
+            localStorage.setItem('token', token);
+            localStorage.setItem('userRole', user.role);
+            
+            // Update context state
+            setUser({
+                ...user,
+                _id: user.id // Ensure _id is set from id in response
+            });
+            setRole(user.role);
             setIsAuthenticated(true);
-            return { success: true };
+
+            return {
+                success: true,
+                user: user,
+                role: user.role
+            };
         } catch (error) {
+            console.error('Login error:', error);
             return { 
-                success: false, 
-                error: error.response?.data?.message || 'Login failed' 
+                success: false,
+                error: error.response?.data?.message || 'Login failed',
+                user: null,
+                role: null
             };
         }
     };
@@ -103,6 +109,7 @@ export const AuthProvider = ({ children }) => {
             user,
             loading,
             login,
+            role,
             logout,
             register,
         }}>

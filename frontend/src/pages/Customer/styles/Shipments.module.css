@@ -1,0 +1,241 @@
+.shipmentsContainer {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #ffffff;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header h1 {
+  color: #111827;
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+.newShipmentButton {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.newShipmentButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.ordersList {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.orderCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.orderCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.trackingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trackingInfo span {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.trackingInfo strong {
+  color: #111827;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status.pending { background: #fef3c7; color: #92400e; }
+.status.processing { background: #dbeafe; color: #1e40af; }
+.status.in-transit { background: #e0e7ff; color: #3730a3; }
+.status.delivered { background: #d1fae5; color: #065f46; }
+.status.failed { background: #fee2e2; color: #991b1b; }
+
+.orderDetails {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.addressInfo, .packageInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.from, .to {
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.from span, .to span {
+  color: #6b7280;
+  font-size: 0.875rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.from p, .to p {
+  color: #111827;
+  font-weight: 500;
+}
+
+.packageInfo div {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.packageInfo div:last-child {
+  border-bottom: none;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.trackButton, .detailsButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.trackButton {
+  background: #3b82f6;
+  color: white;
+  border: none;
+}
+
+.trackButton:hover {
+  background: #2563eb;
+}
+
+.detailsButton {
+  background: white;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+}
+
+.detailsButton:hover {
+  background: #eff6ff;
+}
+
+.noOrders {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 2px dashed #e5e7eb;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.noOrders p {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.noOrders button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.noOrders button:hover {
+  background: #2563eb;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .shipmentsContainer {
+    padding: 1rem;
+  }
+
+  .orderDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .trackButton, .detailsButton {
+    width: 100%;
+  }
+}

@@ -1,0 +1,45 @@
+Problem: Router.use() Middleware Error in Express
+
+The error occurs because Express is expecting a middleware function but is receiving an object. This typically happens when:
+
+1. Route files are not properly exporting their routers
+2. Missing module.exports or incorrect export syntax
+3. Routes are not being required correctly in server.js
+
+Common Issues:
+- Using module.exports = {...} instead of module.exports = router
+- Missing express.Router() initialization
+- Circular dependencies in route files
+- Incorrect file paths in require statements
+
+Solution:
+1. Ensure each route file has:
+   ```javascript
+   const express = require('express');
+   const router = express.Router();
+   // ...route definitions...
+   module.exports = router;
+   ```
+
+2. In server.js, require routes correctly:
+   ```javascript
+   app.use('/api/route', require('./routes/routeFile'));
+   ```
+
+3. Check that all route files are properly initialized and exported:
+   - authRoutes.js exports router
+   - customerRoutes.js exports router
+   - feedbackRoutes.js exports router
+   - orderRoutes.js exports router
+   - userSettingsRoutes.js exports router
+   - adminRoutes.js exports router
+   - staffRoutes.js exports router
+
+4. Verify file paths:
+   Make sure all file paths in require statements are correct and the files exist in the specified locations.
+
+Quick Fix:
+1. Remove all middleware temporarily
+2. Test each route file individually
+3. Add middleware back one at a time
+4. Check for proper router exports in each file

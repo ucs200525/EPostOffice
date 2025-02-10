@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
-import './Home.css';
+import styles from './styles/Home.module.css';
 import { FaBox, FaTruck, FaMoneyBill, FaUser, FaBell, FaMapMarkerAlt, FaFileAlt, FaStar, FaSearch, FaQuestionCircle, FaArrowRight, FaCalculator, FaClock, FaShieldAlt, FaCheckCircle, FaPlus, FaMinus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useShipments } from '../../context/ShipmentContext';
@@ -11,19 +11,19 @@ const SendPackageSection = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="service-section">
+    <div className={styles.serviceSection}>
       <h2>Send Package</h2>
-      <div className="service-cards">
-        <div className="service-card">
-          <FaBox className="card-icon" />
+      <div className={styles.serviceCards}>
+        <div className={styles.serviceCard}>
+          <FaBox className={styles.cardIcon} />
           <h3>Domestic Shipping</h3>
           <p>Send packages anywhere within the country</p>
-          <button onClick={() => navigate('/send-package')}>
+          <button onClick={() => navigate('/send-package/domestic')}>
             Send Now
           </button>
         </div>
-        <div className="service-card">
-          <FaTruck className="card-icon" />
+        <div className={styles.serviceCard}>
+          <FaTruck className={styles.cardIcon} />
           <h3>International Shipping</h3>
           <p>Ship worldwide with tracking</p>
           <button onClick={() => navigate('/send-package/international')}>
@@ -47,13 +47,13 @@ const PickupSection = () => {
   };
 
   return (
-    <div className="service-section">
+    <div className={styles.serviceSection}>
       <h2>Schedule a Pickup</h2>
-      <div className="pickup-scheduler">
-        <div className="scheduler-card">
-          <FaClock className="card-icon" />
+      <div className={styles.pickupScheduler}>
+        <div className={styles.schedulerCard}>
+          <FaClock className={styles.cardIcon} />
           <h3>Plan Your Pickup</h3>
-          <div className="scheduler-form">
+          <div className={styles.schedulerForm}>
             <input
               type="date"
               value={pickupDate}
@@ -80,19 +80,19 @@ const PickupSection = () => {
 };
 
 const ShippingCalculator = () => {
-  const navigate = useNavigate();
-  return (
-    <div className="calculator-section">
-      <h2>Shipping Calculator</h2>
-      <div className="calculator-card">
-        <FaCalculator className="card-icon" />
-        <p>Calculate shipping costs instantly</p>
-        <button onClick={() => navigate('/calculator')}>
-          Calculate Now
-        </button>
-      </div>
-    </div>
-  );
+  // const navigate = useNavigate();
+  // return (
+  //   <div className={styles.calculatorSection}>
+  //     <h2>Shipping Calculator</h2>
+  //     <div className={styles.calculatorCard}>
+  //       <FaCalculator className={styles.cardIcon} />
+  //       <p>Calculate shipping costs instantly</p>
+  //       <button onClick={() => navigate('/calculator')}>
+  //         Calculate Now
+  //       </button>
+  //     </div>
+  //   </div>
+  // );
 };
 
 const Home = () => {
@@ -100,6 +100,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false); // Change to false initially
+  const [showToast, setShowToast] = useState({ show: false, message: '', type: '' });
 
   // Add CSS variables
   const cssVariables = {
@@ -134,6 +135,13 @@ const Home = () => {
   });
   const [visibleFaqs, setVisibleFaqs] = useState(5); // Add this state
   const [expandedFaq, setExpandedFaq] = useState(null); // Add this state
+  const [orderStats, setOrderStats] = useState({
+    active: 0,
+    transit: 0,
+    completed: 0,
+    total: 0
+  });
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -199,14 +207,44 @@ const Home = () => {
   
   const fetchOrders = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/customer/orders', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      const token = localStorage.getItem('token');
+      // Use user.id instead of user._id and add null check
+      if (!user || !user.id) {
+        console.log('No user ID available');
+        setOrderStats({ active: 0, transit: 0, completed: 0, total: 0 });
+        setOrders([]);
+        return;
+      }
+
+      const response = await axios.get(
+        `http://localhost:4000/api/orders/my-orders?userId=${user.id}`, // Changed from _id to id
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      if (response.data.success) {
+        const { orders, stats } = response.data;
+        setOrderStats(stats || { active: 0, transit: 0, completed: 0, total: 0 });
+        setOrders(orders || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to fetch orders'
       });
-      setOrders(response.data);
-    } catch (err) {
-      console.error('Orders fetch failed:', err);
+      setOrderStats({ active: 0, transit: 0, completed: 0, total: 0 });
+      setOrders([]);
     }
   };
+
+  useEffect(() => {
+    // Only fetch orders if user exists and has id
+    if (isAuthenticated && user?.id) {
+      fetchOrders();
+    }
+  }, [isAuthenticated, user]);
 
   const fetchNotifications = async () => {
     try {
@@ -221,25 +259,46 @@ const Home = () => {
 
   const fetchWalletBalance = async () => {
     try {
-        const response = await axios.get(
-            `http://localhost:4000/api/customer/${user.id}/wallet`,
-            { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
-        );
-        setWalletBalance(response.data.balance);
+      const token = localStorage.getItem('token');
+      // Check if user and user.id exist
+      if (!user || !user.id) {
+        console.log('No user ID available');
+        setWalletBalance(0);
+        return;
+      }
+
+      const response = await axios.get(
+        `http://localhost:4000/api/customer/${user.id}/wallet`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      if (response.data) {
+        setWalletBalance(response.data.balance || 0);
+      }
     } catch (err) {
-        console.error('Failed to fetch wallet balance', err);
+      console.error('Failed to fetch wallet balance:', err);
+      setWalletBalance(0);
     }
   };
 
+  useEffect(() => {
+    // Only fetch wallet balance if user is authenticated and has an ID
+    if (isAuthenticated && user?.id) {
+      fetchWalletBalance();
+    }
+  }, [isAuthenticated, user]);
+
   const fetchPackageStats = async () => {
     try {
-        if (!user || !user.id) {
+        if (!user || !user._id) {
             console.log('No user ID available');
             return;
         }
 
         const response = await axios.get(
-            `http://localhost:4000/api/packages/${user.id}/stats`,
+            `http://localhost:4000/api/packages/${user._id}/stats`,
             { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
         );
         
@@ -260,7 +319,7 @@ const Home = () => {
 };
 
 useEffect(() => {
-    if (user && user.id) {
+    if (user && user._id) {
         fetchPackageStats();
     }
 }, [user]);
@@ -268,14 +327,35 @@ useEffect(() => {
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:4000/api/customer/feedback', {
+      const token = localStorage.getItem('token');
+      await axios.post('http://localhost:4000/api/feedback/', {
         feedback,
-        rating
+        rating,
+        userId: user._id
+      }, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
+      // Show success message
+      setShowToast({
+        show: true,
+        message: 'Thank you for your feedback!',
+        type: 'success'
+      });
+      
+      // Reset form
       setFeedback('');
       setRating(0);
     } catch (err) {
       console.error('Feedback submission failed:', err);
+      setShowToast({
+        show: true,
+        message: 'Failed to submit feedback. Please try again.',
+        type: 'error'
+      });
     }
   };
 
@@ -356,37 +436,7 @@ useEffect(() => {
       answer: "Apply through our Careers page. We require valid ID, vehicle documentation, and clean driving record." },
     
     { question: "What's your holiday delivery schedule?", 
-      answer: "Holiday schedules are posted a month in advance. Express services remain available on selected holidays." },
-    
-    { question: "How do I handle return shipments?", 
-      answer: "Generate a return label through your account or contact customer support. Return shipping rates may vary." },
-    
-    { question: "What's the process for filing a complaint?", 
-      answer: "Submit complaints through your account or contact customer support with relevant details and tracking numbers." },
-    
-    { question: "Do you offer mail forwarding services?", 
-      answer: "Yes, set up mail forwarding through your account or at any post office. Service available for 3, 6, or 12 months." },
-    
-    { question: "How do I update my account information?", 
-      answer: "Log into your account and visit Profile Settings to update personal information, addresses, and preferences." },
-    
-    { question: "What are your green shipping options?", 
-      answer: "We offer eco-friendly packaging and carbon-neutral delivery options at a small additional cost." },
-    
-    { question: "How can I track multiple packages?", 
-      answer: "Business accounts can use bulk tracking. Regular users can track up to 10 packages simultaneously." },
-    
-    { question: "What's your signature requirement policy?", 
-      answer: "High-value packages and express deliveries require signatures. You can request signature service for any package." },
-    
-    { question: "Do you offer same-day delivery?", 
-      answer: "Same-day delivery is available in select cities for packages booked before 10 AM." },
-    
-    { question: "How do I get delivery notifications?", 
-      answer: "Enable SMS and email notifications in your account settings for real-time delivery updates." },
-    
-    { question: "What's your inclement weather policy?", 
-      answer: "Deliveries may be delayed during severe weather. Check our service alerts page for updates." }
+      answer: "Holiday schedules are posted a month in advance. Express services remain available on selected holidays." }
   ];
 
   const toggleFaq = (index) => {
@@ -398,159 +448,162 @@ useEffect(() => {
   };
 
   const BeforeLoginView = () => (
-    <div className="home-guest-container" style={cssVariables}>
-      <section className="hero-section">
-        <div className="hero-content">
-          <div className="hero-text">
-            <h1>Welcome to E-Post Office</h1>
-            <p>Experience seamless postal services with modern technology. Track packages, pay bills, and manage all your postal needs in one place.</p>
-            <div className="cta-buttons">
-              <Link to="/register" className="cta-btn primary">Get Started</Link>
-              <Link to="/services" className="cta-btn secondary">Explore Services</Link>
-            </div>
-          </div>
-          <div className="hero-image">
+    <div className={styles.homeGuestContainer} style={cssVariables}>
+      <section className={styles.heroSection}>
+        <div className={styles.heroContent}>
+          {/* Swap: Place image above text */}
+          <div className={styles.heroImage}>
             <img src="./assets/hero-illustration.png" alt="E-Post Office Services" />
+          </div>
+          <div className={styles.heroText}>
+            <h1>Welcome to E-Post Office</h1>
+            <p>
+              Experience seamless postal services with modern technology. Track packages, pay bills, and manage all your postal needs in one place.
+            </p>
+            <div className={styles.ctaButtons}>
+              <Link to="/register" className={styles.ctaBtnPrimary}>Get Started</Link>
+              <Link to="/services" className={styles.ctaBtnSecondary}>Explore Services</Link>
+            </div>
           </div>
         </div>
       </section>
   
-      <section className="features-section">
-        <div className="section-title">
+      <section className={styles.featuresSection}>
+        <div className={styles.sectionTitle}>
           <h2>Why Choose E-Post Office?</h2>
           <p>Discover the advantages of our digital postal services</p>
         </div>
-        <div className="features-grid">
-          <div className="feature-card">
-            <FaTruck className="feature-icon" />
+        <div className={styles.featuresGrid}>
+          <div className={styles.featureCard}>
+            <FaTruck className={styles.featureIcon} />
             <h3>Real-Time Tracking</h3>
             <p>Track your packages instantly with our advanced tracking system</p>
           </div>
-          <div className="feature-card">
-            <FaShieldAlt className="feature-icon" />
+          <div className={styles.featureCard}>
+            <FaShieldAlt className={styles.featureIcon} />
             <h3>Secure Services</h3>
             <p>Your parcels and documents are protected with utmost security</p>
           </div>
-          <div className="feature-card">
-            <FaClock className="feature-icon" />
+          <div className={styles.featureCard}>
+            <FaClock className={styles.featureIcon} />
             <h3>24/7 Access</h3>
             <p>Manage your postal needs anytime, anywhere</p>
           </div>
         </div>
       </section>
   
-      <section className="stats-section">
-        <div className="stats-grid">
-          <div className="stat-item">
-            <div className="stat-number">5M+</div>
-            <div className="stat-label">Active Users</div>
+      <section className={styles.statsSection}>
+        <div className={styles.statsGrid}>
+          <div className={styles.statItem}>
+            <div className={styles.statNumber}>5M+</div>
+            <div className={styles.statLabel}>Active Users</div>
           </div>
-          <div className="stat-item">
-            <div className="stat-number">10K+</div>
-            <div className="stat-label">Daily Deliveries</div>
+          <div className={styles.statItem}>
+            <div className={styles.statNumber}>10K+</div>
+            <div className={styles.statLabel}>Daily Deliveries</div>
           </div>
-          <div className="stat-item">
-            <div className="stat-number">98%</div>
-            <div className="stat-label">Satisfaction Rate</div>
+          <div className={styles.statItem}>
+            <div className={styles.statNumber}>98%</div>
+            <div className={styles.statLabel}>Satisfaction Rate</div>
           </div>
-          <div className="stat-item">
-            <div className="stat-number">500+</div>
-            <div className="stat-label">Post Offices</div>
+          <div className={styles.statItem}>
+            <div className={styles.statNumber}>500+</div>
+            <div className={styles.statLabel}>Post Offices</div>
           </div>
         </div>
       </section>
     </div>
   );
 
-  if (authLoading) return <div className="loader">Loading...</div>;
-  if (error) return <div className="error-message">{error}</div>;
+  if (authLoading) return <div className={styles.loader}>Loading...</div>;
+  if (error) return <div className={styles.errorMessage}>{error}</div>;
 
   return isAuthenticated ? (
-    <div className="dashboard-container">
+    <div className={styles.dashboardContainer}>
       {loading ? (
-        <div className="loader">Loading dashboard...</div>
+        <div className={styles.loader}>Loading dashboard...</div>
       ) : (
         <>
-          <header className="dashboard-header">
-            <div className="profile-section">
-              <FaUser className="profile-icon" />
-              <div className="profile-info">
+          <header className={styles.dashboardHeader}>
+            <div className={styles.profileSection}>
+              <FaUser className={styles.profileIcon} />
+              <div className={styles.profileInfo}>
                 <h1>Welcome back, {customerData?.name}</h1>
                 <p>{customerData?.email}</p>
                 <p><FaMapMarkerAlt /> {customerData?.address}</p>
               </div>
             </div>
-            <div className="balance-section">
+            <div className={styles.balanceSection}>
               <h3>Wallet Balance</h3>
-              <p className="balance-amount">${walletBalance?.toFixed(2)}</p>
+              <p className={styles.balanceAmount}>${walletBalance?.toFixed(2)}</p>
             </div>
           </header>
 
-          <section className="stats-overview">
-            <div className="stat-card">
-              <FaBox className="stat-icon" />
-              <div className="stat-info">
+          <section className={styles.statsOverview}>
+            <div className={styles.statCard}>
+              <FaBox className={styles.statIcon} />
+              <div className={styles.statInfo}>
                 <h3>Active Orders</h3>
-                <p>{packageStats.active}</p>
+                <p>{orderStats.active}</p>
               </div>
             </div>
-            <div className="stat-card">
-              <FaTruck className="stat-icon" />
-              <div className="stat-info">
+            <div className={styles.statCard}>
+              <FaTruck className={styles.statIcon} />
+              <div className={styles.statInfo}>
                 <h3>In Transit</h3>
-                <p>{packageStats.transit}</p>
+                <p>{orderStats.transit}</p>
               </div>
             </div>
-            <div className="stat-card">
-              <FaCheckCircle className="stat-icon" />
-              <div className="stat-info">
+            <div className={styles.statCard}>
+              <FaCheckCircle className={styles.statIcon} />
+              <div className={styles.statInfo}>
                 <h3>Completed</h3>
-                <p>{packageStats.delivered}</p>
+                <p>{orderStats.completed}</p>
               </div>
             </div>
-            <div className="stat-card">
-              <FaBox className="stat-icon" />
-              <div className="stat-info">
+            <div className={styles.statCard}>
+              <FaBox className={styles.statIcon} />
+              <div className={styles.statInfo}>
                 <h3>Total Shipments</h3>
-                <p>{packageStats.total}</p>
+                <p>{orderStats.total}</p>
               </div>
             </div>
           </section>
 
-          <div className="services-container">
+          <div className={styles.servicesContainer}>
             <SendPackageSection />
             <PickupSection />
             <ShippingCalculator />
           </div>
 
-          <section className="services-highlights">
+          <section className={styles.servicesHighlights}>
             <h2>Our Services</h2>
-            <div className="services-grid">
-              <div className="service-card">
-                <FaTruck className="service-icon" />
+            <div className={styles.servicesGrid}>
+              <div className={styles.serviceCard}>
+                <FaTruck className={styles.serviceIcon} />
                 <h3>Express Delivery</h3>
                 <p>Next-day delivery guaranteed</p>
               </div>
-              <div className="service-card">
-                <FaBox className="service-icon" />
+              <div className={styles.serviceCard}>
+                <FaBox className={styles.serviceIcon} />
                 <h3>Secure Packaging</h3>
                 <p>Professional packaging service</p>
               </div>
-              <div className="service-card">
-                <FaMoneyBill className="service-icon" />
+              <div className={styles.serviceCard}>
+                <FaMoneyBill className={styles.serviceIcon} />
                 <h3>Bill Payments</h3>
                 <p>Pay utilities & more</p>
               </div>
             </div>
           </section>
 
-          <section className="recent-activities">
+          <section className={styles.recentActivities}>
             <h2>Recent Activities</h2>
-            <div className="activities-grid">
+            <div className={styles.activitiesGrid}>
               {notifications.map(notif => (
-                <div key={notif.id} className="activity-card">
-                  <FaBell className="notif-icon" />
-                  <div className="notif-content">
+                <div key={notif.id} className={styles.activityCard}>
+                  <FaBell className={styles.notifIcon} />
+                  <div className={styles.notifContent}>
                     <h4>{notif.title}</h4>
                     <p>{notif.message}</p>
                     <small>{new Date(notif.createdAt).toLocaleDateString()}</small>
@@ -560,10 +613,10 @@ useEffect(() => {
             </div>
           </section>
 
-          <section className="faq-section">
+          <section className={styles.faqSection}>
             <h2>Frequently Asked Questions</h2>
-            <div className="faq-search">
-              <FaSearch className="search-icon" />
+            <div className={styles.faqSearch}>
+              <FaSearch className={styles.searchIcon} />
               <input
                 type="text"
                 value={faqSearch}
@@ -571,7 +624,7 @@ useEffect(() => {
                 placeholder="Search FAQs..."
               />
             </div>
-            <div className="faq-list">
+            <div className={styles.faqList}>
               {faqs
                 .filter(faq => 
                   faq.question.toLowerCase().includes(faqSearch.toLowerCase()) ||
@@ -579,9 +632,9 @@ useEffect(() => {
                 )
                 .slice(0, visibleFaqs)
                 .map((faq, index) => (
-                  <div key={index} className="faq-item">
+                  <div key={index} className={styles.faqItem}>
                     <div 
-                      className="faq-question"
+                      className={styles.faqQuestion}
                       onClick={() => toggleFaq(index)}
                     >
                       <h4>
@@ -590,29 +643,29 @@ useEffect(() => {
                       </h4>
                       {expandedFaq === index ? <FaMinus /> : <FaPlus />}
                     </div>
-                    <div className={`faq-answer ${expandedFaq === index ? 'expanded' : ''}`}>
+                    <div className={`${styles.faqAnswer} ${expandedFaq === index ? styles.expanded : ''}`}>
                       <p>{faq.answer}</p>
                     </div>
                   </div>
                 ))}
             </div>
             {visibleFaqs < faqs.length && !faqSearch && (
-              <div className="show-more-container">
-                <button onClick={handleShowMore} className="show-more-btn">
+              <div className={styles.showMoreContainer}>
+                <button onClick={handleShowMore} className={styles.showMoreBtn}>
                   Show More FAQs
                 </button>
               </div>
             )}
           </section>
 
-          <section className="feedback-section">
+          <section className={styles.feedbackSection}>
             <h2>Your Feedback Matters</h2>
-            <form onSubmit={handleFeedbackSubmit} className="feedback-form">
-              <div className="rating-stars">
+            <form onSubmit={handleFeedbackSubmit} className={styles.feedbackForm}>
+              <div className={styles.ratingStars}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <FaStar
                     key={`star-${star}`}
-                    className={star <= rating ? 'star active' : 'star'}
+                    className={`${styles.star} ${star <= rating ? styles.active : ''}`}
                     onClick={() => setRating(star)}
                   />
                 ))}
@@ -621,18 +674,34 @@ useEffect(() => {
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 placeholder="Share your experience with us..."
+                required
+                minLength={10}
+                maxLength={500}
               />
-              <button type="submit" className="submit-btn">Submit Feedback</button>
+              <button 
+                type="submit" 
+                className={styles.submitBtn}
+                disabled={!feedback.trim() || rating === 0}
+              >
+                Submit Feedback
+              </button>
             </form>
           </section>
 
-          <footer className="dashboard-footer">
-            <div className="footer-links">
-              <a onClick={handleNavigation('/help')} href="/help">Help Center</a>
-              <a onClick={handleNavigation('/contact')} href="/contact">Contact Support</a>
-              <a onClick={handleNavigation('/terms')} href="/terms">Terms of Service</a>
+          <footer className={styles.dashboardFooter}>
+            <div className={styles.footerLinks}>
+              <a onClick={handleNavigation('/help')}>Help Center</a>
+              <a onClick={handleNavigation('/contact')}>Contact Support</a>
+              <a onClick={handleNavigation('/terms')}>Terms of Service</a>
             </div>
           </footer>
+
+          {showToast.show && (
+            <div className={`${styles.toast} ${styles[showToast.type]}`}>
+              {showToast.message}
+              <button onClick={() => setShowToast({ show: false })}>×</button>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -6,7 +6,7 @@ import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login ,role} = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -32,12 +32,33 @@ const Login = () => {
 
     try {
       const result = await login(formData.email, formData.password);
-      if (result.success) {
-        navigate('/');
+      console.log('Login result:', result);
+      
+      if (result.success && result.user && result.user.role) {
+        // Handle navigation based on user role
+        const userRole = result.user.role.toLowerCase();
+        switch(userRole) {
+          case 'admin':
+            console.log('Redirecting to admin dashboard');
+            navigate('/admin');
+            break;
+          case 'staff':
+            console.log('Redirecting to staff dashboard');
+            navigate('/staff');
+            break;
+          case 'customer':
+            console.log('Redirecting to customer dashboard');
+            navigate('/');
+            break;
+          default:
+            console.log('Unknown role, redirecting to home');
+            navigate('/');
+        }
       } else {
-        setError(result.error);
+        setError(result.error || 'Invalid credentials');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Login failed. Please try again.');
     } finally {
       setLoading(false);

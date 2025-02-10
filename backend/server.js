@@ -1,8 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const helmet = require('helmet');
 const cors = require('cors');
+const dotenv = require('dotenv');
 const logger = require('./utils/logger');
 
 // Load environment variables
@@ -19,23 +18,25 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
     });
 
 // Middleware
-app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/customer', require('./routes/customerRoutes'));
-app.use('/api/packages', require('./routes/packageRoutes'));
-app.use('/api/user/settings', require('./routes/userSettings'));
-// app.use('/api/admin', require('./routes/adminRoutes'));
-// app.use('/api/staff', require('./routes/staffRoutes'));
+app.use('/api/auth', require('./routes/customer/authRoutes'));
+app.use('/api/customer', require('./routes/customer/customerRoutes'));
+app.use('/api/feedback', require('./routes/customer/feedbackRoutes'));
+
+app.use('/api/orders', require('./routes/orders/orderRoutes'));
+app.use('/api/user/settings', require('./routes/customer/userSettingsRoutes'));
+app.use('/api/admin', require('./routes/admin/adminRoutes'));
+app.use('/api/staff', require('./routes/staff/staffRoutes'));
 
 // Error Handling
 app.use((err, req, res, next) => {
     logger.error(`❌ Error: ${err.message}`);
     res.status(500).json({ success: false, error: err.message || 'Server Error' });
 });
+
 
 // Start Server
 const PORT = process.env.PORT || 4000;

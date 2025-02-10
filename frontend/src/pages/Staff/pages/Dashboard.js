@@ -1,102 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { FaUserCircle, FaMapMarkerAlt, FaPhone, FaClock, FaCalendarAlt } from 'react-icons/fa';
 import StaffNavbar from '../components/StaffNavbar';
-import { Link } from 'react-router-dom';
 import '../styles/StaffDashboard.css';
 
-const Dashboard = () => {
-  const [stats] = useState({
-    pendingOrders: 15,
-    deliveredToday: 28,
-    activeCustomers: 156,
-    totalRevenue: 25000,
-    tasksCompleted: 45,
-    efficiency: 92
+const StaffDashboard = () => {
+  const { user } = useAuth();
+  const [staffStats, setStaffStats] = useState({
+    deliveriesCompleted: 0,
+    pendingDeliveries: 0,
+    customerRating: 0,
+    todaysTasks: []
   });
 
-  const [tasks] = useState([
-    { id: 1, title: 'Process Order #123', status: 'pending', priority: 'high', deadline: '2024-02-06' },
-    { id: 2, title: 'Verify Customer Documents', status: 'completed', priority: 'medium', deadline: '2024-02-05' },
-    { id: 3, title: 'Update Delivery Status', status: 'processing', priority: 'normal', deadline: '2024-02-07' }
-  ]);
+  useEffect(() => {
+    fetchStaffStats();
+  }, []);
+
+  const fetchStaffStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:4000/api/staff/stats/${user._id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        setStaffStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching staff stats:', error);
+    }
+  };
 
   return (
     <div className="staff-dashboard">
       <StaffNavbar />
-      <div className="staff-content">
-        <div className="staff-header">
-          <div className="header-left">
-            <h1>Staff Dashboard</h1>
-            <p>Welcome back, {localStorage.getItem('staffName') || 'Staff Member'}</p>
-          </div>
-          <div className="current-time">
-            {new Date().toLocaleString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
-        </div>
-
-        <div className="staff-stats">
-          <div className="stat-card">
-            <h3>Pending Orders</h3>
-            <div className="stat-value">{stats.pendingOrders}</div>
-            <div className="stat-label">Needs attention</div>
-          </div>
-          <div className="stat-card">
-            <h3>Delivered Today</h3>
-            <div className="stat-value">{stats.deliveredToday}</div>
-            <div className="stat-label">Successfully completed</div>
-          </div>
-          <div className="stat-card">
-            <h3>Active Customers</h3>
-            <div className="stat-value">{stats.activeCustomers}</div>
-            <div className="stat-label">Current customers</div>
-          </div>
-          <div className="stat-card">
-            <h3>Efficiency Rate</h3>
-            <div className="stat-value">{stats.efficiency}%</div>
-            <div className="stat-label">Task completion rate</div>
+      <div className="dashboard-content">
+        <div className="staff-profile-section">
+          <div className="staff-details">
+            <div className="staff-avatar">
+              <FaUserCircle size={80} />
+            </div>
+            <div className="staff-info">
+              <h2>{user?.name}</h2>
+              <p className="staff-id">ID: {user?.staffId}</p>
+              <div className="info-row">
+                <FaMapMarkerAlt />
+                <span>{user?.address}</span>
+              </div>
+              <div className="info-row">
+                <FaPhone />
+                <span>{user?.phone}</span>
+              </div>
+              <div className="info-row">
+                <FaClock />
+                <span>Shift: {user?.shift || 'Regular'}</span>
+              </div>
+              <div className="info-row">
+                <FaCalendarAlt />
+                <span>Joined: {new Date(user?.joinedDate).toLocaleDateString()}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="staff-tasks">
-          <div className="task-list">
-            <h2>Today's Tasks</h2>
-            {tasks.map(task => (
-              <div key={task.id} className="task-item">
-                <div className="task-info">
-                  <h4>{task.title}</h4>
-                  <p>Due: {task.deadline}</p>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <h3>Deliveries Completed</h3>
+            <p className="stat-number">{staffStats.deliveriesCompleted}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Pending Deliveries</h3>
+            <p className="stat-number">{staffStats.pendingDeliveries}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Customer Rating</h3>
+            <p className="stat-number">{staffStats.customerRating.toFixed(1)}/5.0</p>
+          </div>
+        </div>
+
+        <div className="tasks-section">
+          <h3>Today's Tasks</h3>
+          <div className="tasks-list">
+            {staffStats.todaysTasks.map((task, index) => (
+              <div key={index} className="task-card">
+                <div className="task-header">
+                  <h4>{task.type}</h4>
+                  <span className={`status ${task.status.toLowerCase()}`}>
+                    {task.status}
+                  </span>
                 </div>
-                <span className={`task-status status-${task.status}`}>
-                  {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-                </span>
+                <div className="task-details">
+                  <p><strong>Time:</strong> {task.scheduledTime}</p>
+                  <p><strong>Location:</strong> {task.location}</p>
+                  <p><strong>Details:</strong> {task.description}</p>
+                </div>
               </div>
             ))}
-          </div>
-
-          <div className="quick-actions">
-            <h2>Quick Actions</h2>
-            <Link to="/staff/orders/new" className="action-btn">
-              <i className="fas fa-plus"></i>
-              New Order
-            </Link>
-            <Link to="/staff/customers" className="action-btn">
-              <i className="fas fa-users"></i>
-              Manage Customers
-            </Link>
-            <Link to="/staff/deliveries" className="action-btn">
-              <i className="fas fa-truck"></i>
-              Track Deliveries
-            </Link>
-            <Link to="/staff/reports" className="action-btn">
-              <i className="fas fa-chart-bar"></i>
-              View Reports
-            </Link>
           </div>
         </div>
       </div>
@@ -104,4 +106,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default StaffDashboard;

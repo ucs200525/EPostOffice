@@ -1,0 +1,85 @@
+E-Post Office Data Organization
+==============================
+
+Current Structure Issues:
+------------------------
+1. Redundant concepts: Orders, Shipments, and Packages are overlapping
+2. Multiple routes handling similar functionality
+3. Confusing data flow
+
+Recommended Structure:
+--------------------
+Everything should be consolidated under "Orders" because:
+
+1. Orders (Primary Concept)
+   - Represents the complete shipping transaction
+   - Contains:
+     * Tracking number
+     * Shipping details (addresses, package info)
+     * Cost information
+     * Payment status
+     * Timeline/tracking history
+     * Customer information
+
+2. Remove /shipments because:
+   - It's redundant with orders
+   - Creates confusion in tracking
+   - Same data being stored in multiple places
+   - Harder to maintain consistency
+
+3. Remove /packages because:
+   - Package details should be part of the order
+   - No need for separate tracking
+   - Simplifies the data model
+
+Correct Data Flow:
+----------------
+1. Customer creates order
+   /api/orders/create
+   → Creates single order record with all necessary info
+
+2. Track shipment
+   /api/orders/track/:trackingNumber
+   → Uses the order record for tracking
+
+3. View order history
+   /api/orders/my-orders
+   → Lists all orders for a customer
+
+Database Structure:
+-----------------
+Single Order Model containing:
+{
+  trackingNumber: String,
+  userId: ObjectId,
+  type: 'domestic' | 'international',
+  status: String,
+  shippingDetails: {
+    senderAddress: String,
+    receiverAddress: String,
+    packageInfo: {
+      weight: Number,
+      dimensions: Object,
+      type: String
+    }
+  },
+  timeline: [{
+    status: String,
+    location: String,
+    timestamp: Date
+  }],
+  cost: {
+    baseRate: Number,
+    serviceFee: Number,
+    total: Number
+  },
+  transactionId: ObjectId
+}
+
+Action Items:
+-----------
+1. Remove /shipments routes
+2. Remove /packages routes
+3. Consolidate all shipping functionality under /orders
+4. Update frontend to use only /orders endpoints
+5. Migrate existing data to unified structure

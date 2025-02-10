@@ -1,12 +1,15 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+
 import EPostOfficeNavbar from './components/Navbar';
 import SideBar from './components/sideBar';
 import Home from './pages/Customer/Home';
 import { AuthProvider } from './context/AuthContext';
 import { ShipmentProvider } from './context/ShipmentContext';
 import { DarkModeProvider } from './context/DarkModeContext';
+
 import './pages/Customer/styles/DarkMode.css';
+
 import Login from './pages/Customer/Login';
 import Register from './pages/Customer/Register';
 import PostalCalculator from './pages/Customer/PostalCalculator';
@@ -16,6 +19,7 @@ import Shipments from './pages/Customer/Shipments';
 import TrackTrace from './pages/Customer/TrackTrace';
 import Settings from './pages/Customer/Settings';
 import Dashboard from './pages/Customer/Dashboard';
+
 import StaffDashboard from './pages/Staff/pages/Dashboard';
 import CustomerManagement from './pages/Staff/pages/CustomerManagement';
 import StaffProfile from './pages/Staff/pages/Profile';
@@ -30,6 +34,15 @@ import AdminSettings from './pages/Admin/pages/AdminSettings';
 import Orders from './pages/Staff/pages/Orders';
 import Deliveries from './pages/Staff/pages/Deliveries';
 import ReportsStaff from './pages/Staff/pages/Reports';
+
+import DomesticShipping from './pages/Customer/DomesticShipping';
+import InternationalShipping from './pages/Customer/InternationalShipping';
+import ShippingConfirmation from './pages/Customer/ShippingConfirmation';
+import ShippingSuccess from './pages/Customer/ShippingSuccess';
+import OrderDetails from './pages/Customer/OrderDetails';
+
+// Add this import
+import ManageAddresses from './pages/Customer/Settings/ManageAddresses';
 
 const App = () => {
   return (
@@ -67,8 +80,10 @@ const CustomerLayout = () => {
         <div className="main-content">
           <Routes>
             <Route path="/" element={<Home />} />
+            
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+
             <Route path="/calculator" element={<PostalCalculator />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/send-package" element={<SendPackage />} />
@@ -76,6 +91,12 @@ const CustomerLayout = () => {
             <Route path="/track" element={<TrackTrace />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/send-package/domestic" element={<DomesticShipping />} />
+            <Route path="/send-package/international" element={<InternationalShipping />} />
+            <Route path="/shipping/confirmation" element={<ShippingConfirmation />} />
+            <Route path="/shipping-success" element={<ShippingSuccess />} />
+            <Route path="/orders/:orderId" element={<OrderDetails />} />
+            <Route path="/settings/addresses" element={<ManageAddresses />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

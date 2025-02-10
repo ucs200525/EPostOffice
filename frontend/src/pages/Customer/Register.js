@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
-import './Register.css';
+import styles from './styles/Register.module.css';
 import LocationPicker from '../../components/LocationPicker';
+import Toast from '../../components/Toast';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -21,6 +22,9 @@ const Register = () => {
   });
   const [errors, setErrors] = useState({});
   const [manualAddress, setManualAddress] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showToast, setShowToast] = useState({ show: false, message: '', type: '' });
+  const [showMap, setShowMap] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -38,18 +42,23 @@ const Register = () => {
       newErrors.phone = 'Invalid phone number format';
     }
     if (!formData.address.trim()) newErrors.address = 'Address is required';
-    // if (manualAddress && !isValidAddress(formData.address)) {
-    //   newErrors.address = 'Address must include pincode, city, state, and area';
-    // }
     return newErrors;
   };
 
-  // const isValidAddress = (address) => {
-  //   // const hasPincode = /\b\d{5,6}\b/.test(address);
-  //   // const hasCity = /[a-zA-Z]+/.test(address); // Add more validation if needed
-  //   // const hasState = /[a-zA-Z]+/.test(address);
-  //   // return hasPincode && hasCity && hasState;
-  // };
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'password':
+        return value.length < 8 ? 'Password must be at least 8 characters' : '';
+      default:
+        return '';
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+  };
 
   const fetchCoordinates = async (address) => {
     try {
@@ -69,22 +78,37 @@ const Register = () => {
     return null;
   };
 
+  const handleLocationClick = () => {
+    setShowMap(!showMap);
+    if (!showMap) {
+      setManualAddress(false);
+    }
+  };
+
   const handleLocationSelect = ({ address, coordinates }) => {
     setFormData((prev) => ({
       ...prev,
       address: address,
       coordinates: coordinates,
     }));
+    setShowMap(false);
     setManualAddress(false);
   };
 
   const handleAddressChange = async (e) => {
     const address = e.target.value;
     setFormData((prev) => ({ ...prev, address }));
-    // if (isValidAddress(address)) {
-    //   const coordinates = await fetchCoordinates(address);
-    //   setFormData((prev) => ({ ...prev, coordinates }));
-    // }
+  };
+
+  const getPasswordStrength = (password) => {
+    const checks = {
+      length: password.length >= 8,
+      hasUpper: /[A-Z]/.test(password),
+      hasLower: /[a-z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecial: /[!@#$%^&*]/.test(password)
+    };
+    return Object.values(checks).filter(Boolean).length;
   };
 
   const handleSubmit = async (e) => {
@@ -103,151 +127,183 @@ const Register = () => {
         role: 'customer',
       });
       if (result.success) {
+        setShowToast({
+          show: true,
+          message: 'Registration successful!',
+          type: 'success'
+        });
         navigate('/login', {
           state: { message: 'Registration successful! Please login.' },
         });
       }
     } catch (err) {
+      setShowToast({
+        show: true,
+        message: 'Registration failed',
+        type: 'error'
+      });
       setErrors({ submit: 'Registration failed. Please try again.' });
     }
     setLoading(false);
   };
 
   return (
-    <div className="register-container">
-      <div className="register-card">
-        <div className="register-header">
-          <h2>Create Account</h2>
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>Create Account</h2>
           <p>Join EPostOffice to access all services</p>
         </div>
 
-        {errors.submit && <div className="error-message">{errors.submit}</div>}
+        {errors.submit && <div className={styles.errorMessage}>{errors.submit}</div>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <div className="input-group">
-              <FaUser className="input-icon" />
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
+              <FaUser className={styles.icon} />
               <input
                 type="text"
                 name="name"
+                className={styles.input}
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={handleInputChange}
                 placeholder="Full Name"
               />
             </div>
-            {errors.name && <span className="error-text">{errors.name}</span>}
+            {errors.name && <span className={styles.errorText}>{errors.name}</span>}
           </div>
 
-          <div className="form-group">
-            <div className="input-group">
-              <FaEnvelope className="input-icon" />
+          <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
+              <FaEnvelope className={styles.icon} />
               <input
                 type="email"
                 name="email"
+                className={styles.input}
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={handleInputChange}
                 placeholder="Email Address"
               />
             </div>
-            {errors.email && <span className="error-text">{errors.email}</span>}
+            {errors.email && <span className={styles.errorText}>{errors.email}</span>}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <div className="input-group">
-                <FaLock className="input-icon" />
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <div className={styles.inputGroup}>
+                <FaLock className={styles.icon} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
+                  className={styles.input}
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={handleInputChange}
                   placeholder="Password"
                 />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
               </div>
+              {formData.password && (
+                <div className={styles.passwordStrength}>
+                  <div className={`strength-bar strength-${getPasswordStrength(formData.password)}`} />
+                </div>
+              )}
               {errors.password && (
-                <span className="error-text">{errors.password}</span>
+                <span className={styles.errorText}>{errors.password}</span>
               )}
             </div>
 
-            <div className="form-group">
-              <div className="input-group">
-                <FaLock className="input-icon" />
+            <div className={styles.formGroup}>
+              <div className={styles.inputGroup}>
+                <FaLock className={styles.icon} />
                 <input
                   type="password"
                   name="confirmPassword"
+                  className={styles.input}
                   value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({ ...formData, confirmPassword: e.target.value })
-                  }
+                  onChange={handleInputChange}
                   placeholder="Confirm Password"
                 />
               </div>
               {errors.confirmPassword && (
-                <span className="error-text">{errors.confirmPassword}</span>
+                <span className={styles.errorText}>{errors.confirmPassword}</span>
               )}
             </div>
           </div>
 
-          <div className="form-group">
-            <div className="input-group">
-              <FaMapMarkerAlt className="input-icon" />
+          <div className={`${styles.formGroup} ${styles.locationGroup}`}>
+            <div className={styles.inputGroup}>
+              <FaMapMarkerAlt className={styles.icon} />
               <textarea
                 name="address"
                 value={formData.address}
                 onChange={manualAddress ? handleAddressChange : undefined}
                 placeholder="Address"
                 readOnly={!manualAddress}
+                className={`${styles.input} ${formData.address ? 'has-value' : ''}`}
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setManualAddress(!manualAddress)}
-            >
-              {manualAddress
-                ? 'Use Map to Add Address'
-                : 'Type Address Manually'}
-            </button>
-            {!manualAddress && (
-              <LocationPicker onLocationSelect={handleLocationSelect} />
+            
+            <div className={styles.locationActions}>
+              <button
+                type="button"
+                className={styles.locationToggle}
+                onClick={handleLocationClick}
+              >
+                {showMap ? 'Hide Map' : 'Pick Location on Map'}
+              </button>
+            </div>
+
+            {showMap && (
+              <div className={`${styles.mapContainer} fade-in`}>
+                <LocationPicker onLocationSelect={handleLocationSelect} />
+                <button 
+                  type="button" 
+                  className={styles.closeMap}
+                  onClick={() => setShowMap(false)}
+                >
+                  &times;
+                </button>
+              </div>
             )}
+            
             {errors.address && (
-              <span className="error-text">{errors.address}</span>
+              <span className={styles.errorText}>{errors.address}</span>
             )}
           </div>
 
-          <div className="form-group">
-            <div className="input-group">
-              <FaPhone className="input-icon" />
+          <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
+              <FaPhone className={styles.icon} />
               <input
                 type="tel"
                 name="phone"
+                className={styles.input}
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                onChange={handleInputChange}
                 placeholder="Phone Number"
               />
             </div>
-            {errors.phone && <span className="error-text">{errors.phone}</span>}
+            {errors.phone && <span className={styles.errorText}>{errors.phone}</span>}
           </div>
 
-          <button type="submit" className="register-button" disabled={loading}>
+          <button type="submit" className={styles.button} disabled={loading}>
             {loading ? 'Creating Account...' : 'Register'}
           </button>
         </form>
 
-        <div className="login-prompt">
+        <div className={styles.loginPrompt}>
           <p>
             Already have an account? <a href="/login">Sign in</a>
           </p>
         </div>
       </div>
+      <Toast {...showToast} onClose={() => setShowToast({ show: false })} />
     </div>
   );
 };

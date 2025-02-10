@@ -7,7 +7,7 @@ const StaffDashboard = () => {
     activeCustomers: 150,
     totalOrders: 45
   };
-
+  
   return (
     <div className="dashboard-container">
       <h2>Welcome, Staff Member</h2>

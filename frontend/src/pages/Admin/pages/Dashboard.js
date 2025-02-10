@@ -1,20 +1,43 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../../../context/AuthContext'; // Fix import path
 import AdminNavbar from '../components/AdminNavbar';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS } from 'chart.js/auto';
 import '../styles/AdminDashboard.css';
+import { FaUserCircle, FaEdit, FaCog } from 'react-icons/fa';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate(); // Add this
+  const { user } = useAuth(); // Add this line to get admin details
+  
   const [stats, setStats] = useState({
-    totalStaff: 25,
-    activeCustomers: 1250,
-    totalRevenue: 150000,
-    pendingApprovals: 8,
-    totalOrders: 450,
-    completedOrders: 380,
-    pendingOrders: 70,
-    monthlyGrowth: 15
+    totalStaff: 0,
+    activeCustomers: 0,
+    totalRevenue: 0,
+    pendingApprovals: 0,
+    totalOrders: 0,
+    completedOrders: 0,
+    pendingOrders: 0,
+    monthlyGrowth: 0
   });
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:4000/api/admin/dashboard-stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setStats(response.data.stats);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    }
+  };
 
   const [notifications, setNotifications] = useState([]);
   const [selectedTimeRange, setSelectedTimeRange] = useState('week');
@@ -114,6 +137,28 @@ const AdminDashboard = () => {
     <div className="admin-dashboard">
       <AdminNavbar />
       <div className="dashboard-content">
+        <div className="admin-profile-section">
+          <div className="admin-details">
+            <div className="admin-avatar">
+              <FaUserCircle size={60} />
+            </div>
+            <div className="admin-info">
+              <h2>{user?.name || 'Administrator'}</h2>
+              <p>{user?.email}</p>
+              <span className="admin-role">Administrator</span>
+              <p>Last Login: {new Date(user?.lastLogin).toLocaleString()}</p>
+            </div>
+            <div className="admin-actions">
+              <button className="edit-profile-btn">
+                <FaEdit /> Edit Profile
+              </button>
+              <button className="settings-btn">
+                <FaCog /> Settings
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="dashboard-header">
           <div className="header-left">
             <div className="welcome-section">
