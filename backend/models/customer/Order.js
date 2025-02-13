@@ -17,8 +17,28 @@ const orderSchema = new mongoose.Schema({
     required: true
   },
   shippingDetails: {
-    senderAddress: String,
-    receiverAddress: String,
+    pickupAddress: {
+      streetAddress: String,
+      city: String,
+      state: String,
+      postalCode: String,
+      country: String,
+      coordinates: {
+        latitude: Number,
+        longitude: Number
+      }
+    },
+    deliveryAddress: {
+      streetAddress: String,
+      city: String,
+      state: String,
+      postalCode: String,
+      country: String,
+      coordinates: {
+        latitude: Number,
+        longitude: Number
+      }
+    },
     destinationCountry: String,
     weight: Number,
     dimensions: {
@@ -26,7 +46,12 @@ const orderSchema = new mongoose.Schema({
       width: Number,
       height: Number
     },
-    packageType: String
+    packageType: {
+      type: String,
+      enum: ['standard', 'fragile', 'document'],
+      default: 'standard'
+    },
+    specialInstructions: String
   },
   cost: {
     baseRate: Number,

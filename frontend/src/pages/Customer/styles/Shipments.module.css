@@ -239,3 +239,89 @@
     width: 100%;
   }
 }
+
+.container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statItem {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.statItem span {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.statItem strong {
+  display: block;
+  font-size: 1.5rem;
+  color: #2563eb;
+  margin-top: 0.5rem;
+}
+
+.orderList {
+  display: grid;
+  gap: 1rem;
+}
+
+.orderCard {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.orderDetails {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error {
+  color: #ef4444;
+  text-align: center;
+  padding: 2rem;
+}
+
+.noOrders {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+/* Status colors */
+.pending { color: #f59e0b; }
+.processing { color: #3b82f6; }
+.in-transit { color: #10b981; }
+.out-for-delivery { color: #8b5cf6; }
+.delivered { color: #059669; }
+.failed { color: #ef4444; }

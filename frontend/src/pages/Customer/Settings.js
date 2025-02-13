@@ -3,8 +3,12 @@ import { Container, Card, Form, Button, Row, Col, Alert, Spinner } from 'react-b
 import axios from 'axios';
 import './styles/Settings.css';
 import { useDarkMode } from '../../context/DarkModeContext';
+import { Tabs } from 'antd';
+import ManageAddresses from './Settings/ManageAddresses';
+import ManagePickupLocation from './Settings/ManagePickupLocation';
+// import 'antd/dist/antd.css'; // Add this line for antd styles
 
-
+const { TabPane } = Tabs;
 
 const Settings = () => {
     const { isDarkMode, toggleDarkMode } = useDarkMode();
@@ -187,184 +191,14 @@ const Settings = () => {
             
             <h2 className="mb-4">Settings</h2>
             
-            <Form onSubmit={handleSubmit}>
-                <Card className="mb-4">
-                    <Card.Header>
-                        <h4>Profile Settings</h4>
-                    </Card.Header>
-                    <Card.Body>
-                        <Row>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>First Name</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleInputChange}
-                                        isInvalid={!!errors.firstName}
-                                    />
-                                    <Form.Control.Feedback type="invalid">
-                                        {errors.firstName}
-                                    </Form.Control.Feedback>
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Last Name</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        name="lastName"
-                                        value={formData.lastName}
-                                        onChange={handleInputChange}
-                                        isInvalid={!!errors.lastName}
-                                    />
-                                    <Form.Control.Feedback type="invalid">
-                                        {errors.lastName}
-                                    </Form.Control.Feedback>
-                                </Form.Group>
-                            </Col>
-                        </Row>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Email</Form.Label>
-                            <Form.Control
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                isInvalid={!!errors.email}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {errors.email}
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Phone Number</Form.Label>
-                            <Form.Control
-                                type="tel"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                isInvalid={!!errors.phone}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {errors.phone}
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                    </Card.Body>
-                </Card>
-
-                <Card className="mb-4">
-                    <Card.Header>
-                        <h4>Change Password</h4>
-                    </Card.Header>
-                    <Card.Body>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Current Password</Form.Label>
-                            <Form.Control
-                                type="password"
-                                name="currentPassword"
-                                value={formData.currentPassword}
-                                onChange={handleInputChange}
-                                isInvalid={!!errors.currentPassword}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {errors.currentPassword}
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>New Password</Form.Label>
-                            <Form.Control
-                                type="password"
-                                name="newPassword"
-                                value={formData.newPassword}
-                                onChange={handleInputChange}
-                                isInvalid={!!errors.newPassword}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {errors.newPassword}
-                            </Form.Control.Feedback>
-                            <div className="password-requirements">
-                                Password must be at least 8 characters long
-                            </div>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Confirm New Password</Form.Label>
-                            <Form.Control
-                                type="password"
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleInputChange}
-                                isInvalid={!!errors.confirmPassword}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {errors.confirmPassword}
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                    </Card.Body>
-                </Card>
-
-                <Card className="mb-4">
-                    <Card.Header>
-                        <h4>Preferences</h4>
-                    </Card.Header>
-                    <Card.Body>
-                        <Form.Group className="mb-3">
-                            <Form.Check
-                                type="checkbox"
-                                name="notifications"
-                                label="Enable Email Notifications"
-                                checked={formData.notifications}
-                                onChange={handleInputChange}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Language</Form.Label>
-                            <Form.Select
-                                name="language"
-                                value={formData.language}
-                                onChange={handleInputChange}
-                            >
-                                <option value="en">English</option>
-                                <option value="fr">French</option>
-                                <option value="es">Spanish</option>
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Check
-                                type="switch"
-                                name="darkMode"
-                                label="Dark Mode"
-                                checked={formData.darkMode}
-                                onChange={handleInputChange}
-                            />
-                        </Form.Group>
-                    </Card.Body>
-                </Card>
-
-                <div className="d-grid gap-2">
-                    <Button 
-                        variant="primary" 
-                        type="submit" 
-                        size="lg"
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <>
-                                <Spinner
-                                    as="span"
-                                    animation="border"
-                                    size="sm"
-                                    role="status"
-                                    aria-hidden="true"
-                                    className="me-2"
-                                />
-                                Saving...
-                            </>
-                        ) : 'Save Settings'}
-                    </Button>
-                </div>
-            </Form>
+            <Tabs defaultActiveKey="1">
+                <TabPane tab="Delivery Addresses" key="1">
+                    <ManageAddresses />
+                </TabPane>
+                <TabPane tab="Pickup Location" key="2">
+                    <ManagePickupLocation />
+                </TabPane>
+            </Tabs>
         </Container>
     );
 };

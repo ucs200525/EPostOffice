@@ -57,6 +57,10 @@ const customerSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         }
+    }],
+    orders: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order'
     }]
 }, { 
     timestamps: true,

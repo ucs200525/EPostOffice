@@ -1,57 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FaBox, FaWeightHanging, FaRuler, FaMapMarkerAlt } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import styles from './styles/Shipping.module.css';
 
 const DomesticShipping = () => {
   const navigate = useNavigate();
-  const [savedAddresses, setSavedAddresses] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState('');
+  const { user } = useAuth();
+  const [addresses, setAddresses] = useState([]);
+  const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState('');
   const [formData, setFormData] = useState({
-    senderAddress: '',
-    receiverAddress: '',
     weight: '',
     dimensions: { length: '', width: '', height: '' },
     packageType: 'standard',
     specialInstructions: ''
   });
 
+  // Fetch saved delivery addresses
   useEffect(() => {
-    fetchSavedAddresses();
-  }, []);
-
-  const fetchSavedAddresses = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        'http://localhost:4000/api/customer/addresses',
-        {
-          headers: { 'Authorization': `Bearer ${token}` }
+    const fetchAddresses = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:4000/api/customer/addresses?userId=${user._id}`,
+          {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          }
+        );
+        setAddresses(response.data.addresses || []);
+        
+        // Set default delivery address if exists
+        const defaultAddress = response.data.addresses.find(addr => addr.isDefault);
+        if (defaultAddress) {
+          setSelectedDeliveryAddress(defaultAddress._id);
         }
-      );
-      setSavedAddresses(response.data.addresses);
-    } catch (error) {
-      console.error('Failed to fetch addresses:', error);
-    }
-  };
+      } catch (error) {
+        console.error('Failed to fetch addresses:', error);
+      }
+    };
 
-  const handleAddressSelect = (addressId) => {
-    const selected = savedAddresses.find(addr => addr._id === addressId);
-    if (selected) {
-      setSelectedAddress(addressId);
-      setFormData(prev => ({
-        ...prev,
-        receiverAddress: `${selected.streetAddress}, ${selected.city}, ${selected.state} ${selected.postalCode}, ${selected.country}`
-      }));
+    if (user?._id) {
+      fetchAddresses();
     }
-  };
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!selectedDeliveryAddress) {
+      alert('Please select a delivery address');
+      return;
+    }
+
     try {
-      // API call to submit domestic shipping request
-      navigate('/shipping/confirmation', { state: { shippingDetails: formData } });
+      const selectedAddress = addresses.find(addr => addr._id === selectedDeliveryAddress);
+      
+      const shippingDetails = {
+        ...formData,
+        pickupAddress: {
+          streetAddress: user.address, // Use user's default address as pickup
+          city: user.city,
+          state: user.state,
+          postalCode: user.postalCode,
+          country: 'India'
+        },
+        deliveryAddress: selectedAddress
+      };
+
+      navigate('/shipping/confirmation', { state: { shippingDetails } });
     } catch (error) {
       console.error('Shipping submission failed:', error);
     }
@@ -65,42 +81,33 @@ const DomesticShipping = () => {
       <form onSubmit={handleSubmit} className={styles.shippingForm}>
         <div className={styles.formSection}>
           <h3><FaMapMarkerAlt /> Delivery Details</h3>
-          <div className={styles.formGroup}>
-            <label>Pickup Address</label>
-            <input
-              type="text"
-              value={formData.senderAddress}
-              onChange={(e) => setFormData({...formData, senderAddress: e.target.value})}
-              placeholder="Enter pickup address"
-            />
+          
+          {/* Display user's default address as pickup location */}
+          <div className={styles.pickupAddress}>
+            <h4>Pickup Address</h4>
+            <div className={styles.addressDisplay}>
+              <p>{user.address}</p>
+              <p>{user.city}, {user.state}</p>
+              <p>{user.postalCode}</p>
+            </div>
           </div>
-          <div className={styles.formGroup}>
-            <label>Delivery Address</label>
-            <input
-              type="text"
-              value={formData.receiverAddress}
-              onChange={(e) => setFormData({...formData, receiverAddress: e.target.value})}
-              placeholder="Enter delivery address"
-            />
-          </div>
-        </div>
 
-        <div className={styles.addressSection}>
-          <h3>Select Delivery Address</h3>
-          <select
-            value={selectedAddress}
-            onChange={(e) => handleAddressSelect(e.target.value)}
-          >
-            <option value="">Choose an address</option>
-            {savedAddresses.map(addr => (
-              <option key={addr._id} value={addr._id}>
-                {addr.label} - {addr.streetAddress}
-              </option>
-            ))}
-          </select>
-          <Link to="/settings/addresses" className={styles.manageAddressLink}>
-            Manage Addresses
-          </Link>
+          {/* Delivery address selector */}
+          <div className={styles.deliveryAddress}>
+            <h4>Select Delivery Address</h4>
+            <select
+              value={selectedDeliveryAddress}
+              onChange={(e) => setSelectedDeliveryAddress(e.target.value)}
+              required
+            >
+              <option value="">Choose delivery address</option>
+              {addresses.map(addr => (
+                <option key={addr._id} value={addr._id}>
+                  {addr.label} - {addr.streetAddress}, {addr.city}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className={styles.formSection}>

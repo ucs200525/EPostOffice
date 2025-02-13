@@ -1,0 +1,57 @@
+.pageHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 2rem 0;
+  background: linear-gradient(to right, #3b82f6, #2563eb);
+  color: white;
+  border-radius: 8px;
+}
+
+.pageHeader h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.pageHeader p {
+  color: #e5e7eb;
+  font-size: 1.1rem;
+}
+
+.progressIndicator {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #e5e7eb;
+}
+
+.step.active {
+  color: white;
+  font-weight: 500;
+}
+
+.step svg {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .pageHeader {
+    padding: 1.5rem 0;
+  }
+
+  .pageHeader h1 {
+    font-size: 1.5rem;
+  }
+
+  .progressIndicator {
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+}

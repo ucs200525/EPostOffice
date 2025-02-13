@@ -1,141 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaBox, FaTruck, FaCheckCircle, FaClock } from 'react-icons/fa';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 import styles from './styles/Shipments.module.css';
-import Notification from '../../components/Notification';
 
 const Shipments = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState(null);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({
+    active: 0,
+    transit: 0,
+    completed: 0,
+    total: 0
+  });
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        'http://localhost:4000/api/orders/my-orders',
-        {
-          headers: { 'Authorization': `Bearer ${token}` }
+    const fetchOrders = async () => {
+      try {
+        if (!user?._id) {
+          console.log('No user ID available');
+          return;
         }
-      );
 
-      if (response.data.success) {
-        setOrders(response.data.orders);
+        const token = localStorage.getItem('token');
+        console.log('Fetching orders...'); // Debug log
+
+        const response = await axios.get(
+          'http://localhost:4000/api/orders/my-orders',
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        console.log('Orders response:', response.data); // Debug log
+
+        if (response.data.success) {
+          setOrders(response.data.data.orders || []);
+          setStats(response.data.data.stats || {
+            active: 0,
+            transit: 0,
+            completed: 0,
+            total: 0
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setError('Failed to fetch orders');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      setNotification({
-        type: 'error',
-        message: 'Failed to fetch orders'
-      });
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchOrders();
+  }, [user]);
+
+  const formatAddress = (addressDetails) => {
+    if (!addressDetails) return 'N/A';
+    return [addressDetails.city, addressDetails.state].filter(Boolean).join(', ');
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'delivered': return <FaCheckCircle className={styles.iconSuccess} />;
-      case 'in-transit': return <FaTruck className={styles.iconPrimary} />;
-      case 'pending': return <FaClock className={styles.iconWarning} />;
-      default: return <FaBox className={styles.iconDefault} />;
-    }
-  };
-
-  if (loading) {
-    return <div className={styles.loading}>Loading orders...</div>;
-  }
+  if (loading) return <div className={styles.loading}>Loading shipments...</div>;
+  if (error) return <div className={styles.error}>{error}</div>;
 
   return (
-    <div className={styles.shipmentsContainer}>
-      {notification && (
-        <Notification
-          {...notification}
-          onClose={() => setNotification(null)}
-        />
-      )}
-
-      <div className={styles.header}>
-        <h1>My Shipments</h1>
-        <button
-          onClick={() => navigate('/send-package')}
-          className={styles.newShipmentButton}
-        >
-          New Shipment
-        </button>
+    <div className={styles.container}>
+      <h1>My Shipments</h1>
+      
+      <div className={styles.stats}>
+        <div className={styles.statItem}>
+          <span>Active</span>
+          <strong>{stats.active}</strong>
+        </div>
+        <div className={styles.statItem}>
+          <span>In Transit</span>
+          <strong>{stats.transit}</strong>
+        </div>
+        <div className={styles.statItem}>
+          <span>Completed</span>
+          <strong>{stats.completed}</strong>
+        </div>
+        <div className={styles.statItem}>
+          <span>Total</span>
+          <strong>{stats.total}</strong>
+        </div>
       </div>
 
-      <div className={styles.ordersList}>
+      <div className={styles.orderList}>
         {orders.length === 0 ? (
           <div className={styles.noOrders}>
-            <FaBox className={styles.emptyIcon} />
-            <p>No shipments found</p>
-            <button onClick={() => navigate('/send-package')}>
-              Send Your First Package
-            </button>
+            No shipments found
           </div>
         ) : (
-          orders.map(order => (
-            <div key={order._id} className={styles.orderCard}>
+          orders.map((order) => (
+            <div key={order._id || order.trackingNumber} className={styles.orderCard}>
               <div className={styles.orderHeader}>
-                <div className={styles.trackingInfo}>
-                  <span>Tracking Number:</span>
-                  <strong>{order.trackingNumber}</strong>
-                </div>
-                <div className={`${styles.status} ${styles[order.status]}`}>
-                  {getStatusIcon(order.status)}
-                  <span>{order.status}</span>
-                </div>
+                <h3>Tracking #: {order.trackingNumber}</h3>
+                <span className={styles[order.status || 'pending']}>{order.status || 'pending'}</span>
               </div>
-
               <div className={styles.orderDetails}>
                 <div className={styles.addressInfo}>
-                  <div className={styles.from}>
-                    <span>From:</span>
-                    <p>{order.shippingDetails?.senderAddress || 'Not specified'}</p>
-                  </div>
-                  <div className={styles.to}>
-                    <span>To:</span>
-                    <p>{order.shippingDetails?.receiverAddress || 'Not specified'}</p>
-                  </div>
+                  <p>From: {formatAddress(order?.shippingDetails?.pickupAddress)}</p>
+                  <p>To: {formatAddress(order?.shippingDetails?.deliveryAddress)}</p>
                 </div>
-
-                <div className={styles.packageInfo}>
-                  <div>
-                    <span>Type:</span>
-                    <p>{order.type || 'Standard'}</p>
-                  </div>
-                  <div>
-                    <span>Created:</span>
-                    <p>{new Date(order.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  {order.shippingDetails?.packageInfo && (
-                    <div>
-                      <span>Weight:</span>
-                      <p>{order.shippingDetails.packageInfo.weight} kg</p>
-                    </div>
-                  )}
+                <div className={styles.shipmentInfo}>
+                  <p>Type: {order.type || 'N/A'}</p>
+                  <p>Weight: {order?.shippingDetails?.weight || 'N/A'} kg</p>
+                  <p>Created: {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</p>
                 </div>
-              </div>
-
-              <div className={styles.actions}>
-                <button
-                  onClick={() => navigate(`/track?number=${order.trackingNumber}`)}
-                  className={styles.trackButton}
-                >
-                  Track Package
-                </button>
-                <button
-                  onClick={() => navigate(`/orders/${order._id}`)}
-                  className={styles.detailsButton}
-                >
-                  View Details
-                </button>
               </div>
             </div>
           ))

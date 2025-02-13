@@ -209,7 +209,7 @@ const Home = () => {
     try {
       const token = localStorage.getItem('token');
       // Use user.id instead of user._id and add null check
-      if (!user || !user.id) {
+      if (!user || !user._id) {
         console.log('No user ID available');
         setOrderStats({ active: 0, transit: 0, completed: 0, total: 0 });
         setOrders([]);
@@ -261,7 +261,7 @@ const Home = () => {
     try {
       const token = localStorage.getItem('token');
       // Check if user and user.id exist
-      if (!user || !user.id) {
+      if (!user || !user._id) {
         console.log('No user ID available');
         setWalletBalance(0);
         return;
@@ -453,7 +453,7 @@ useEffect(() => {
         <div className={styles.heroContent}>
           {/* Swap: Place image above text */}
           <div className={styles.heroImage}>
-            <img src="./assets/hero-illustration.png" alt="E-Post Office Services" />
+            <img src="hero-illustration.png" alt="E-Post Office Services" />
           </div>
           <div className={styles.heroText}>
             <h1>Welcome to E-Post Office</h1>

@@ -1,26 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBox, FaWeightHanging, FaRuler, FaGlobe, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaBox, FaWeightHanging, FaRuler, FaMapMarkerAlt, FaGlobe } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 import styles from './styles/Shipping.module.css';
 
 const InternationalShipping = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [addresses, setAddresses] = useState([]);
+  const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState('');
+  const [countries, setCountries] = useState([]);
   const [formData, setFormData] = useState({
-    senderAddress: '',
-    receiverAddress: '',
-    destinationCountry: '',
     weight: '',
     dimensions: { length: '', width: '', height: '' },
     packageType: 'standard',
-    declaredValue: '',
-    specialInstructions: ''
+    specialInstructions: '',
+    destinationCountry: '',
+    customsDeclaration: {
+      itemDescription: '',
+      value: '',
+      category: ''
+    }
   });
+
+  useEffect(() => {
+    fetchAddresses();
+    fetchCountries();
+  }, [user]);
+
+  const fetchAddresses = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:4000/api/customer/addresses?userId=${user._id}`,
+        {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }
+      );
+      setAddresses(response.data.addresses || []);
+      
+      const defaultAddress = response.data.addresses.find(addr => addr.isDefault);
+      if (defaultAddress) {
+        setSelectedDeliveryAddress(defaultAddress._id);
+      }
+    } catch (error) {
+      console.error('Failed to fetch addresses:', error);
+    }
+  };
+
+  const fetchCountries = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/api/shipping/countries');
+      setCountries(response.data.countries);
+    } catch (error) {
+      console.error('Failed to fetch countries:', error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedDeliveryAddress || !formData.destinationCountry) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
     try {
-      // API call to submit international shipping request
-      navigate('/shipping/confirmation', { state: { shippingDetails: formData } });
+      const selectedAddress = addresses.find(addr => addr._id === selectedDeliveryAddress);
+      
+      const shippingDetails = {
+        ...formData,
+        pickupAddress: {
+          streetAddress: user.address,
+          city: user.city,
+          state: user.state,
+          postalCode: user.postalCode,
+          country: 'India'
+        },
+        deliveryAddress: selectedAddress,
+        type: 'international'
+      };
+
+      navigate('/shipping/confirmation', { state: { shippingDetails } });
     } catch (error) {
       console.error('Shipping submission failed:', error);
     }
@@ -29,46 +89,59 @@ const InternationalShipping = () => {
   return (
     <div className={styles.shippingContainer}>
       <h1>International Shipping</h1>
-      <p>Ship your packages worldwide with reliable tracking</p>
+      <p>Send packages worldwide</p>
 
       <form onSubmit={handleSubmit} className={styles.shippingForm}>
         <div className={styles.formSection}>
           <h3><FaMapMarkerAlt /> Delivery Details</h3>
-          <div className={styles.formGroup}>
-            <label>Pickup Address</label>
-            <input
-              type="text"
-              value={formData.senderAddress}
-              onChange={(e) => setFormData({...formData, senderAddress: e.target.value})}
-              placeholder="Enter pickup address"
-            />
-          </div>
           
-          <div className={styles.formGroup}>
-            <label><FaGlobe /> Destination Country</label>
-            <select
-              value={formData.destinationCountry}
-              onChange={(e) => setFormData({...formData, destinationCountry: e.target.value})}
-            >
-              <option value="">Select Country</option>
-              <option value="USA">United States</option>
-              <option value="UK">United Kingdom</option>
-              <option value="CA">Canada</option>
-              {/* Add more countries */}
-            </select>
+          {/* Pickup Address Display */}
+          <div className={styles.pickupAddress}>
+            <h4>Pickup Address</h4>
+            <div className={styles.addressDisplay}>
+              <p>{user.address}</p>
+              <p>{user.city}, {user.state}</p>
+              <p>{user.postalCode}</p>
+              <p>India</p>
+            </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label>Delivery Address</label>
-            <input
-              type="text"
-              value={formData.receiverAddress}
-              onChange={(e) => setFormData({...formData, receiverAddress: e.target.value})}
-              placeholder="Enter international delivery address"
-            />
+          {/* Delivery Address Section */}
+          <div className={styles.deliveryAddress}>
+            <h4>Select Delivery Address</h4>
+            <select
+              value={selectedDeliveryAddress}
+              onChange={(e) => setSelectedDeliveryAddress(e.target.value)}
+              required
+            >
+              <option value="">Choose delivery address</option>
+              {addresses.map(addr => (
+                <option key={addr._id} value={addr._id}>
+                  {addr.label} - {addr.streetAddress}, {addr.city}
+                </option>
+              ))}
+            </select>
+
+            {/* Destination Country Selection */}
+            <div className={styles.formGroup}>
+              <label><FaGlobe /> Destination Country</label>
+              <select
+                value={formData.destinationCountry}
+                onChange={(e) => setFormData({...formData, destinationCountry: e.target.value})}
+                required
+              >
+                <option value="">Select country</option>
+                {countries.map(country => (
+                  <option key={country.code} value={country.code}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
+        {/* Package Details */}
         <div className={styles.formSection}>
           <h3><FaBox /> Package Details</h3>
           <div className={styles.formGroup}>
@@ -137,14 +210,60 @@ const InternationalShipping = () => {
           </div>
         </div>
 
+        {/* Customs Declaration */}
         <div className={styles.formSection}>
+          <h3>Customs Declaration</h3>
           <div className={styles.formGroup}>
-            <label>Special Instructions</label>
+            <label>Item Description</label>
             <textarea
-              value={formData.specialInstructions}
-              onChange={(e) => setFormData({...formData, specialInstructions: e.target.value})}
-              placeholder="Any special handling instructions?"
+              value={formData.customsDeclaration.itemDescription}
+              onChange={(e) => setFormData({
+                ...formData,
+                customsDeclaration: {
+                  ...formData.customsDeclaration,
+                  itemDescription: e.target.value
+                }
+              })}
+              required
+              placeholder="Detailed description of items"
             />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label>Declared Value (USD)</label>
+            <input
+              type="number"
+              value={formData.customsDeclaration.value}
+              onChange={(e) => setFormData({
+                ...formData,
+                customsDeclaration: {
+                  ...formData.customsDeclaration,
+                  value: e.target.value
+                }
+              })}
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label>Category</label>
+            <select
+              value={formData.customsDeclaration.category}
+              onChange={(e) => setFormData({
+                ...formData,
+                customsDeclaration: {
+                  ...formData.customsDeclaration,
+                  category: e.target.value
+                }
+              })}
+              required
+            >
+              <option value="">Select category</option>
+              <option value="gift">Gift</option>
+              <option value="documents">Documents</option>
+              <option value="commercial">Commercial Goods</option>
+              <option value="sample">Sample</option>
+            </select>
           </div>
         </div>
 
