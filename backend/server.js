@@ -7,6 +7,9 @@ const logger = require('./utils/logger');
 // Load environment variables
 dotenv.config();
 
+// Make JWT_SECRET available globally
+global.JWT_SECRET = process.env.JWT_SECRET;
+
 const app = express();
 const port = process.env.PORT || 4000;
 

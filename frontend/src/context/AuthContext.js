@@ -49,11 +49,11 @@ export const AuthProvider = ({ children }) => {
                 password
             });
 
-            const { token, user } = response.data;
-           
-            if (!token || !user) {
-                throw new Error('Invalid response from server');
+            if (!response.data.success) {
+                throw new Error(response.data.message || 'Login failed');
             }
+
+            const { token, user } = response.data;
 
             localStorage.setItem('token', token);
             localStorage.setItem('userId', user.id);
@@ -71,6 +71,7 @@ export const AuthProvider = ({ children }) => {
                 role: user.role 
             };
         } catch (error) {
+            console.error('Login error:', error);
             const errorMessage = error.response?.data?.message || 'Login failed';
             setError(errorMessage);
             return { 

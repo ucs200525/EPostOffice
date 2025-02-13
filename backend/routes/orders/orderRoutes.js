@@ -151,15 +151,21 @@ router.get('/track/:trackingNumber', async (req, res) => {
 // Get user's orders
 router.get('/my-orders', async (req, res) => {
   try {
-    // First try to get userId from query params
     let userId = req.query.userId;
     
-    // If no userId in query, extract from JWT token
     if (!userId && req.headers.authorization) {
       const token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      userId = decoded.id;
-      console.log('Extracted userId from token:', userId);
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.id;
+        console.log('Extracted userId from token:', userId);
+      } catch (tokenError) {
+        console.error('Token verification failed:', tokenError);
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid token'
+        });
+      }
     }
 
     if (!userId) {
