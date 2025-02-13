@@ -22,9 +22,6 @@ const Navbar = () => {
     setIsOpen(!isOpen);
   };
   
-  const handleLogout = () => {
-    logout(navigate); // Pass navigate function to logout
-  };
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -163,7 +160,7 @@ const Navbar = () => {
                     <Link to="/payment">Payments</Link>
                     <Link to="/settings">Settings</Link>
                     <div className="divider"></div>
-                    <button onClick={handleLogout} className="logout">
+                    <button onClick={logout} className="logout">
                       <FaSignOutAlt /> Sign Out
                     </button>
                   </div>

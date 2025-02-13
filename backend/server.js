@@ -1,17 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
 const dotenv = require('dotenv');
+const helmet = require('helmet');
+const cors = require('cors');
 const logger = require('./utils/logger');
 
 // Load environment variables
 dotenv.config();
 
-// Make JWT_SECRET available globally
-global.JWT_SECRET = process.env.JWT_SECRET;
-
 const app = express();
-const port = process.env.PORT || 4000;
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -22,6 +19,7 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
     });
 
 // Middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
@@ -29,15 +27,11 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/customer/authRoutes'));
 app.use('/api/customer', require('./routes/customer/customerRoutes'));
 app.use('/api/feedback', require('./routes/customer/feedbackRoutes'));
-
 app.use('/api/orders', require('./routes/orders/orderRoutes'));
 app.use('/api/user/settings', require('./routes/customer/userSettingsRoutes'));
+
 app.use('/api/admin', require('./routes/admin/adminRoutes'));
 app.use('/api/staff', require('./routes/staff/staffRoutes'));
-
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
 
 // Error Handling
 app.use((err, req, res, next) => {
@@ -46,7 +40,5 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-  logger.info(`🚀 Server running on http://localhost:${port}`);
-});
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => logger.info(`🚀 Server running on http://localhost:${PORT}`));

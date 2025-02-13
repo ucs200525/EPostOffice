@@ -22,6 +22,8 @@ import Shipments from './pages/Customer/Shipments';
 import TrackTrace from './pages/Customer/TrackTrace';
 import Settings from './pages/Customer/Settings';
 import Dashboard from './pages/Customer/Dashboard';
+import DomesticShipping from './pages/Customer/DomesticShipping';
+import InternationalShipping from './pages/Customer/InternationalShipping';
 
 
 import StaffDashboard from './pages/Staff/pages/Dashboard';
@@ -82,6 +84,8 @@ const CustomerLayout = () => {
             <Route path="/calculator" element={<PostalCalculator />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/send-package" element={<SendPackage />} />
+            <Route path="/send-package/domestic" element={<DomesticShipping />} />
+            <Route path="/send-package/international" element={<InternationalShipping />} />
             <Route path="/Shipments" element={<Shipments />} />
             <Route path="/track" element={<TrackTrace />} />
             <Route path="/settings" element={<Settings />} />
