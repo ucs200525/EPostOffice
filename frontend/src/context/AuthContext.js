@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null); // Add error state
 
     // Add verifyToken function
     const verifyToken = async (token) => {
@@ -42,50 +43,63 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
+            setError(null); // Clear any previous errors
             const response = await axios.post('http://localhost:4000/api/auth/login', {
                 email,
                 password
             });
 
             const { token, user } = response.data;
-
-            if (!user || !user.role) {
-                throw new Error('Invalid user data received');
+           
+            if (!token || !user) {
+                throw new Error('Invalid response from server');
             }
 
-            // Store auth data
             localStorage.setItem('token', token);
+            localStorage.setItem('userId', user.id);
+            localStorage.setItem('userEmail', user.email);
             localStorage.setItem('userRole', user.role);
-            
-            // Update context state
-            setUser({
-                ...user,
-                _id: user.id // Ensure _id is set from id in response
-            });
-            setRole(user.role);
-            setIsAuthenticated(true);
 
-            return {
-                success: true,
-                user: user,
-                role: user.role
+            setUser(user);
+            setIsAuthenticated(true);
+            setError(null);
+
+            // Return role information for redirect handling
+            return { 
+                success: true, 
+                user,
+                role: user.role 
             };
         } catch (error) {
-            console.error('Login error:', error);
+            const errorMessage = error.response?.data?.message || 'Login failed';
+            setError(errorMessage);
             return { 
-                success: false,
-                error: error.response?.data?.message || 'Login failed',
-                user: null,
-                role: null
+                success: false, 
+                error: errorMessage
             };
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        setIsAuthenticated(false);
-        setUser(null);
-        // Add any other cleanup needed
+    const logout = async (navigate) => {
+        try {
+            setError(null);
+            
+            // Clear all auth-related data from localStorage
+            localStorage.clear(); // This will clear all localStorage items
+            
+            // Reset all state
+            setIsAuthenticated(false);
+            setUser(null);
+            setRole(null);
+
+            // Navigate to login page if navigate function is provided
+            if (navigate) {
+                navigate('/login');
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            setError('Logout failed');
+        }
     };
 
     const register = async (userData) => {
@@ -108,6 +122,8 @@ export const AuthProvider = ({ children }) => {
             isAuthenticated,
             user,
             loading,
+            error, // Add error to the context
+            setError, // Optionally expose setError
             login,
             role,
             logout,
@@ -118,4 +134,10 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};

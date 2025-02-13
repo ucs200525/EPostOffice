@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -6,7 +6,7 @@ import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login ,role} = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -16,6 +16,39 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const role = user.role || localStorage.getItem('userRole');
+      switch (role) {
+        case 'admin':
+          navigate('/admin');
+          break;
+        case 'staff':
+          navigate('/staff');
+          break;
+        default:
+          navigate('/dashboard');
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  const redirectBasedOnRole = (role) => {
+    switch (role) {
+      case 'admin':
+        navigate('/admin');
+        break;
+      case 'staff':
+        navigate('/staff');
+        break;
+      case 'customer':
+        navigate('/dashboard');
+        break;
+      default:
+        navigate('/dashboard');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
@@ -32,28 +65,9 @@ const Login = () => {
 
     try {
       const result = await login(formData.email, formData.password);
-      console.log('Login result:', result);
       
-      if (result.success && result.user && result.user.role) {
-        // Handle navigation based on user role
-        const userRole = result.user.role.toLowerCase();
-        switch(userRole) {
-          case 'admin':
-            console.log('Redirecting to admin dashboard');
-            navigate('/admin');
-            break;
-          case 'staff':
-            console.log('Redirecting to staff dashboard');
-            navigate('/staff');
-            break;
-          case 'customer':
-            console.log('Redirecting to customer dashboard');
-            navigate('/');
-            break;
-          default:
-            console.log('Unknown role, redirecting to home');
-            navigate('/');
-        }
+      if (result.success) {
+        redirectBasedOnRole(result.role);
       } else {
         setError(result.error || 'Invalid credentials');
       }
