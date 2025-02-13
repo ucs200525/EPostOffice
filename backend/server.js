@@ -8,6 +8,7 @@ const logger = require('./utils/logger');
 dotenv.config();
 
 const app = express();
+const port = process.env.PORT || 4000;
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -31,13 +32,18 @@ app.use('/api/user/settings', require('./routes/customer/userSettingsRoutes'));
 app.use('/api/admin', require('./routes/admin/adminRoutes'));
 app.use('/api/staff', require('./routes/staff/staffRoutes'));
 
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
 // Error Handling
 app.use((err, req, res, next) => {
     logger.error(`❌ Error: ${err.message}`);
     res.status(500).json({ success: false, error: err.message || 'Server Error' });
 });
 
-
 // Start Server
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => logger.info(`🚀 Server running on http://localhost:${PORT}`));
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+  logger.info(`🚀 Server running on http://localhost:${port}`);
+});
