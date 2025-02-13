@@ -30,7 +30,7 @@ const AdminDashboard = () => {
   const fetchDashboardStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:4000/api/admin/dashboard-stats', {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/admin/dashboard-stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setStats(response.data.stats);
@@ -137,10 +137,10 @@ const AdminDashboard = () => {
     <div className="admin-dashboard">
       <AdminNavbar />
       <div className="dashboard-content">
-        <div className="admin-profile-section">
+        {/* <div className="admin-profile-section">
           <div className="admin-details">
             <div className="admin-avatar">
-              <FaUserCircle size={60} />
+              <FaUserCircle size={70} />
             </div>
             <div className="admin-info">
               <h2>{user?.name || 'Administrator'}</h2>
@@ -157,7 +157,7 @@ const AdminDashboard = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="dashboard-header">
           <div className="header-left">

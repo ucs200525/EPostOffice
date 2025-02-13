@@ -79,7 +79,7 @@ const Dashboard = () => {
             }
 
             const response = await axios.post(
-                'http://localhost:4000/api/feedback',
+                `${process.env.REACT_APP_BACKEND_URL}/api/feedback`,
                 { rating, feedback },
                 {
                     headers: { 

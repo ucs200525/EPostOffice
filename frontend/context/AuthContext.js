@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
                 throw new Error('Token expired');
             }
 
-            const response = await axios.get('http://localhost:4000/api/customer/profile', {
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customer/profile`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const response = await axios.post('http://localhost:4000/api/auth/login', {
+            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
                 email,
                 password
             });
@@ -92,8 +92,8 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            // Optional: Call logout endpoint if you have one
-            // await axios.post('http://localhost:4000/api/auth/logout');
+// Optional: Call logout endpoint if you have one
+// await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/logout`);
             
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (userData) => {
         try {
-            const response = await axios.post('http://localhost:4000/api/auth/register', userData);
+            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, userData);
             
             const { token, user } = response.data;
             
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }) => {
     const updateProfile = async (userData) => {
         try {
             const response = await axios.put(
-                'http://localhost:4000/api/customer/profile',
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/profile`,
                 userData,
                 {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }

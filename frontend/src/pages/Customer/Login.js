@@ -25,6 +25,20 @@ const Login = () => {
     }));
   };
 
+  const handleRoleButtonClick = (role) => {
+    switch(role) {
+      case 'admin':
+        navigate('/admin/login');
+        break;
+      case 'staff':
+        navigate('/staff/login');
+        break;
+      default:
+        // Stay on current page for customer login
+        break;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -71,6 +85,22 @@ const Login = () => {
         <div className="login-header">
           <h2>Welcome Back</h2>
           <p>Sign in to access your account</p>
+        </div>
+
+        <div className="role-buttons">
+         
+          {/* <button 
+            className="role-button staff"
+            onClick={() => handleRoleButtonClick('staff')}
+          >
+            Staff Login
+          </button>
+          <button 
+            className="role-button admin"
+            onClick={() => handleRoleButtonClick('admin')}
+          >
+            Admin Login
+          </button> */}
         </div>
 
         {error && <div className="error-message">{error}</div>}

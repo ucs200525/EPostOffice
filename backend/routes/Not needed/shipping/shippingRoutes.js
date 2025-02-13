@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const authenticateToken = require('../../../middleware/auth');
 const Order = require('../../models/Order');
-const User = require('../../../models/customer/Customer');
+const User = require('..../../models/customer/Customer');
 const logger = require('../../../utils/logger');
 const Transaction = require('../../models/Transaction');
 

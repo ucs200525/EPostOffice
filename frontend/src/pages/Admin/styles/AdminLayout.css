@@ -1,0 +1,52 @@
+.admin-layout {
+  display: block; /* Change from flex to block */
+  width: 100%;
+  min-height: 100vh;
+  background: #f1f5f9;
+}
+
+.admin-content {
+  width: 100%;
+  margin: 64px 0 0 0; /* Only top margin for navbar */
+  padding: 0;
+}
+
+/* Common styles for all admin pages */
+.dashboard-container,
+.staff-management,
+.staff-registration,
+.services-container,
+.reports-container,
+.settings-container {
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  margin: 0;
+  padding: 1rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* Keep form centered */
+.staff-registration {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Add responsive styles */
+@media (max-width: 768px) {
+  .admin-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .admin-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .admin-sidebar.show {
+    transform: translateX(0);
+  }
+}

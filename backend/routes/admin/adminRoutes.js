@@ -1,11 +1,57 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-// const auth = require('../../middleware/auth');
+const auth = require('../../middleware/auth');
 const Customer = require('../../models/customer/Customer');
-const Staff = require('../../models/staff/Staff');
 const Order = require('../../Not neededany more/Shipping');
 const Transaction = require('../../models/customer/Transaction');
+const User = require('../../models/User');
+const mongoose = require('mongoose');
+
+// Staff Schema (added directly in the route file since we're not creating a new model)
+const staffSchema = new mongoose.Schema({
+    name: { 
+        type: String, 
+        required: true 
+    },
+    email: { 
+        type: String, 
+        required: true, 
+        unique: true 
+    },
+    password: { 
+        type: String, 
+        required: true 
+    },
+    address: String,
+    phone: String,
+    role: { 
+        type: String, 
+        default: 'staff' 
+    },
+    staffId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    department: {
+        type: String,
+        required: true
+    }
+}, { 
+    timestamps: true,
+    toJSON: { 
+        virtuals: true,
+        transform: function(doc, ret) {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.__v;
+            return ret;
+        }
+    }
+});
+
+const Staff = mongoose.model('Staff', staffSchema);
 
 // Admin Login
 router.post('/login', async (req, res) => {
@@ -45,7 +91,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Get Admin Profile
-router.get('/profile',  async (req, res) => {
+router.get('/profile', auth, async (req, res) => {
     try {
         const admin = await Admin.findById(req.user.id).select('-password');
         if (!admin) {
@@ -58,7 +104,7 @@ router.get('/profile',  async (req, res) => {
 });
 
 // Update Admin Profile
-router.put('/profile' , async (req, res) => {
+router.put('/profile', auth, async (req, res) => {
     try {
         const { username, email } = req.body;
         const admin = await Admin.findById(req.user.id);
@@ -74,7 +120,7 @@ router.put('/profile' , async (req, res) => {
 });
 
 // Change Password
-router.put('/change-password',   async (req, res) => {
+router.put('/change-password', auth, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
         const admin = await Admin.findById(req.user.id);
@@ -94,7 +140,7 @@ router.put('/change-password',   async (req, res) => {
 });
 
 // Get Dashboard Stats
-router.get('/dashboard-stats',   async (req, res) => {
+router.get('/dashboard-stats', auth, async (req, res) => {
   try {
     // Get counts
     const totalStaff = await Staff.countDocuments();
@@ -132,6 +178,69 @@ router.get('/dashboard-stats',   async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching dashboard stats',
+      error: error.message
+    });
+  }
+});
+
+// Register staff member
+router.post('/register-staff', auth, async (req, res) => {
+  try {
+    const { name, email, password, phone, address, staffId, department } = req.body;
+
+    // Check for existing staff
+    const existingStaff = await Staff.findOne({ 
+      $or: [{ email }, { staffId }] 
+    });
+
+    if (existingStaff) {
+      return res.status(400).json({ 
+        message: 'Staff member with this email or ID already exists' 
+      });
+    }
+
+    // Create new staff member
+    const staff = new Staff({
+      name,
+      email,
+      password,
+      phone,
+      address,
+      staffId,
+      department,
+      role: 'staff'
+    });
+
+    await staff.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Staff member registered successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error registering staff member', 
+      error: error.message 
+    });
+  }
+});
+
+// Get staff list
+router.get('/staff-list', auth, async (req, res) => {
+  try {
+    const staffList = await Staff.find()
+      .select('-password')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      staffList
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching staff list',
       error: error.message
     });
   }

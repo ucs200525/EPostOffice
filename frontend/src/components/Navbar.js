@@ -21,7 +21,20 @@ const Navbar = () => {
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
-  
+
+  const handleRoleLogin = (role) => {
+    switch(role) {
+      case 'admin':
+        navigate('/admin/login');
+        break;
+      case 'staff':
+        navigate('/staff/login');
+        break;
+      default:
+        navigate('/login');
+        break;
+    }
+  };
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -167,8 +180,24 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="auth-buttons">
-                  <Link to="/login" className="login-btn">Login</Link>
-                  <Link to="/register" className="register-btn">Register</Link>
+                  <button 
+                    className="nav-login-btn customer"
+                    onClick={() => handleRoleLogin('customer')}
+                  >
+                    Customer
+                  </button>
+                  <button 
+                    className="nav-login-btn staff"
+                    onClick={() => handleRoleLogin('staff')}
+                  >
+                    Staff
+                  </button>
+                  <button 
+                    className="nav-login-btn admin"
+                    onClick={() => handleRoleLogin('admin')}
+                  >
+                    Admin
+                  </button>
                 </div>
               )}
             </div>

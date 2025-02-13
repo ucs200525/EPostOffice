@@ -7,7 +7,8 @@ import StaffNavbar from '../components/StaffNavbar';
 import '../styles/StaffDashboard.css';
 
 const StaffDashboard = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [staffStats, setStaffStats] = useState({
     deliveriesCompleted: 0,
     pendingDeliveries: 0,
@@ -22,7 +23,7 @@ const StaffDashboard = () => {
   const fetchStaffStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:4000/api/staff/stats/${user._id}`, {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/staff/stats/${user._id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -34,9 +35,23 @@ const StaffDashboard = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/staff/login');
+  };
+
   return (
     <div className="staff-dashboard">
       <StaffNavbar />
+      <header className="dashboard-header">
+        <h1>Staff Dashboard</h1>
+        <div className="user-info">
+          <span>Welcome, {user?.name || 'Staff'}</span>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
+      </header>
       <div className="dashboard-content">
         <div className="staff-profile-section">
           <div className="staff-details">

@@ -1,0 +1,21 @@
+.admin-layout, .staff-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-content, .staff-content {
+  flex: 1;
+  padding: 2rem;
+  background: #f8fafc;
+}
+
+.sidebar {
+  width: 260px;
+  background: #1e293b;
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Add more styles for sidebar and layout */

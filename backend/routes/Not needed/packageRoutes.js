@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Package = require('../../Not neededany more/Package');
-const Customer = require('../../models/customer/Customer');
-const Transaction = require('../../models/customer/Transaction');
+const Customer = require('../models/customer/Customer');
+const Transaction = require('../models/customer/Transaction');
 const mongoose = require('mongoose');
 
 // Helper function to generate tracking number

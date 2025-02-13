@@ -24,7 +24,7 @@ const ManagePickupLocation = () => {
   const fetchPickupLocation = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:4000/api/customer/pickup-location?userId=${user._id}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/customer/pickup-location?userId=${user._id}`,
         {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }
@@ -39,7 +39,7 @@ const ManagePickupLocation = () => {
     e.preventDefault();
     try {
       await axios.put(
-        `http://localhost:4000/api/customer/pickup-location`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/customer/pickup-location`,
         locationForm,
         {
           params: { userId: user._id },

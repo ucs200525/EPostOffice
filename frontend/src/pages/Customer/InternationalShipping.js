@@ -32,7 +32,7 @@ const InternationalShipping = () => {
   const fetchAddresses = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:4000/api/customer/addresses?userId=${user._id}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses?userId=${user._id}`,
         {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }
@@ -50,7 +50,7 @@ const InternationalShipping = () => {
 
   const fetchCountries = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/shipping/countries');
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shipping/countries`);
       setCountries(response.data.countries);
     } catch (error) {
       console.error('Failed to fetch countries:', error);

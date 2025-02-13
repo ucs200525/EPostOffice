@@ -1,0 +1,106 @@
+.staff-management {
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.add-staff-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #2563eb;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.add-staff-btn:hover {
+  background: #1d4ed8;
+}
+
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.staff-table th,
+.staff-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.staff-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn {
+  background: #0ea5e9;
+  color: white;
+}
+
+.delete-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #0284c7;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+}
+
+.no-staff {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.loading,
+.error-message {
+  text-align: center;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 6px;
+}
+
+.error-message {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.loading {
+  background: #f0f9ff;
+  color: #0284c7;
+}

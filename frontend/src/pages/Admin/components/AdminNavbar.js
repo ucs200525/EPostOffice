@@ -1,35 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
+import { FaChartLine, FaUsers, FaCog, FaFileAlt, FaUserCog, FaSignOutAlt } from 'react-icons/fa';
+import '../styles/AdminNavbar.css';
 
 const AdminNavbar = () => {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    // Get initial state from localStorage
-    return JSON.parse(localStorage.getItem('navbarCollapsed')) || false;
-  });
-
-  const handleToggle = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    // Save state to localStorage
-    localStorage.setItem('navbarCollapsed', JSON.stringify(newState));
-    const content = document.querySelector('.dashboard-content');
-    if (content) {
-      content.style.transition = 'all 0.3s ease';
-    }
-  };
-
-  // On mount, apply the saved state
-  useEffect(() => {
-    const savedState = JSON.parse(localStorage.getItem('navbarCollapsed'));
-    if (savedState !== null) {
-      setIsCollapsed(savedState);
-    }
-  }, []);
 
   const handleLogout = () => {
-    navigate('/');
+    logout();
+    navigate('/admin/login');
   };
 
   const isActive = (path) => {
@@ -37,49 +19,50 @@ const AdminNavbar = () => {
   };
 
   return (
-    <nav className={`admin-navbar ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="nav-brand">
-        <h2>E-Post Office</h2>
-        <button className="nav-toggle" onClick={handleToggle}>
-          <i className={`fas fa-${isCollapsed ? 'chevron-right' : 'chevron-left'}`}></i>
-        </button>
+    <nav className="admin-top-navbar">
+      <div className="navbar-left">
+        <Link to="/admin" className="brand">
+          <h1>E-Post Office</h1>
+          <span>Admin Panel</span>
+        </Link>
       </div>
-      <ul className="nav-links">
-        <li className={isActive('/admin')}>
-          <Link to="/admin">
-            <i className="fas fa-chart-line"></i>
-            <span>Dashboard</span>
-          </Link>
-        </li>
-        <li className={isActive('/admin/staff')}>
-          <Link to="/admin/staff">
-            <i className="fas fa-users"></i>
-            <span>Staff Management</span>
-          </Link>
-        </li>
-        <li className={isActive('/admin/services')}>
-          <Link to="/admin/services">
-            <i className="fas fa-cog"></i>
-            <span>Services</span>
-          </Link>
-        </li>
-        <li className={isActive('/admin/reports')}>
-          <Link to="/admin/reports">
-            <i className="fas fa-file-alt"></i>
-            <span>Reports</span>
-          </Link>
-        </li>
-        <li className={isActive('/admin/settings')}>
-          <Link to="/admin/settings">
-            <i className="fas fa-cogs"></i>
-            <span>Settings</span>
-          </Link>
-        </li>
-      </ul>
-      <div className="nav-user">
-        <button className="logout-btn" onClick={handleLogout}>
-          <i className="fas fa-sign-out-alt"></i>
-          <span>Logout</span>
+
+      <div className="navbar-center">
+        <ul className="nav-links">
+          <li>
+            <Link to="/admin/dashboard" className={isActive('/admin/dashboard')}>
+              <FaChartLine /> Dashboard
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/staff" className={isActive('/admin/staff')}>
+              <FaUsers /> Staff
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/services" className={isActive('/admin/services')}>
+              <FaCog /> Services
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/reports" className={isActive('/admin/reports')}>
+              <FaFileAlt /> Reports
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/settings" className={isActive('/admin/settings')}>
+              <FaUserCog /> Settings
+            </Link>
+          </li>
+        </ul>
+      </div>
+
+      <div className="navbar-right">
+        <span className="user-info">
+          Welcome, {user?.name || 'Admin'}
+        </span>
+        <button onClick={handleLogout} className="logout-btn">
+          <FaSignOutAlt /> Logout
         </button>
       </div>
     </nav>

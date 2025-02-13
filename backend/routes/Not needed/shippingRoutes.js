@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Shipping = require('../../Not neededany more/Shipping');
-const Customer = require('../../models/customer/Customer');
+const Customer = require('../models/customer/Customer');
 const auth = require('../../middleware/auth');
 
 // Calculate shipping cost

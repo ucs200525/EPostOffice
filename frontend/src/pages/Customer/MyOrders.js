@@ -16,7 +16,7 @@ const MyOrders = () => {
         console.log('Fetching orders...'); // Debug log
 
         const response = await axios.get(
-          'http://localhost:4000/api/orders/my-orders',
+          `${process.env.REACT_APP_BACKEND_URL}/api/orders/my-orders`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,

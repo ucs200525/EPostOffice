@@ -72,7 +72,6 @@ staffSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to get full name
 staffSchema.methods.getFullName = function() {
     return `${this.firstName} ${this.lastName}`;
 };

@@ -119,7 +119,6 @@
 
 .staff-content {
   flex: 1;
-  margin-left: 280px;
   padding: 2rem;
   transition: all 0.3s ease;
 }

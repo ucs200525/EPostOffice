@@ -37,7 +37,7 @@ const Payment = () => {
     const fetchWalletBalance = async () => {
         try {
             const response = await axios.get(
-                `http://localhost:4000/api/customer/${user._id}/wallet`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user._id}/wallet`,
                 { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
             );
             setWalletBalance(response.data.balance);
@@ -49,7 +49,7 @@ const Payment = () => {
     const fetchTransactions = async () => {
         try {
             const response = await axios.get(
-                `http://localhost:4000/api/customer/${user._id}/transactions`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user._id}/transactions`,
                 { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
             );
             setTransactions(response.data.transactions);
@@ -66,7 +66,7 @@ const Payment = () => {
             }
 
             const response = await axios.post(
-                `http://localhost:4000/api/customer/topup`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/topup`,
                 {
                     customerId: user._id,
                     amount,

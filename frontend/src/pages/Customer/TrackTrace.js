@@ -26,7 +26,7 @@ const TrackTrace = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:4000/api/orders/track/${number}`
+        `${process.env.REACT_APP_BACKEND_URL}/api/orders/track/${number}`
       );
 
       if (response.data.success) {

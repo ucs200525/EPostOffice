@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const cors = require('cors');
 const logger = require('./utils/logger');
+// const adminRoutes = require('./routes/admin/adminRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -23,15 +24,14 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// Routes
 app.use('/api/auth', require('./routes/customer/authRoutes'));
 app.use('/api/customer', require('./routes/customer/customerRoutes'));
 app.use('/api/feedback', require('./routes/customer/feedbackRoutes'));
 app.use('/api/orders', require('./routes/orders/orderRoutes'));
 app.use('/api/user/settings', require('./routes/customer/userSettingsRoutes'));
 
-app.use('/api/admin', require('./routes/admin/adminRoutes'));
-app.use('/api/staff', require('./routes/staff/staffRoutes'));
+// app.use('/api/admin', adminRoutes);
+// app.use('/api/staff', require('./routes/staff/staffRoutes'));
 
 // Error Handling
 app.use((err, req, res, next) => {

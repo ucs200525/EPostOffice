@@ -41,7 +41,7 @@ const Settings = () => {
     const fetchUserData = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`http://localhost:4000/api/user/settings`, {
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/settings`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -135,7 +135,7 @@ const Settings = () => {
         setLoading(true);
         try {
             const response = await axios.put(
-                `http://localhost:4000/api/user/settings`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/user/settings`,
                 {
                     firstName: formData.firstName,
                     lastName: formData.lastName,

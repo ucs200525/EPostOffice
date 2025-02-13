@@ -1,17 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-
+import PrivateRoute from './components/PrivateRoute';
+// import AdminSidebar from './pages/Admin/components/AdminSidebar';
 
 import EPostOfficeNavbar from './components/Navbar';
-import SideBar from './components/sideBar';
 import Home from './pages/Customer/Home';
 import { AuthProvider } from './context/AuthContext';
 import { ShipmentProvider } from './context/ShipmentContext';
 import { DarkModeProvider } from './context/DarkModeContext';
 
-
+import './pages/Admin/styles/AdminLayout.css';
 import './pages/Customer/styles/DarkMode.css';
-
 
 import Login from './pages/Customer/Login';
 import Register from './pages/Customer/Register';
@@ -24,7 +23,6 @@ import Settings from './pages/Customer/Settings';
 import Dashboard from './pages/Customer/Dashboard';
 import DomesticShipping from './pages/Customer/DomesticShipping';
 import InternationalShipping from './pages/Customer/InternationalShipping';
-
 
 import StaffDashboard from './pages/Staff/pages/Dashboard';
 import CustomerManagement from './pages/Staff/pages/CustomerManagement';
@@ -40,6 +38,11 @@ import AdminSettings from './pages/Admin/pages/AdminSettings';
 import Orders from './pages/Staff/pages/Orders';
 import Deliveries from './pages/Staff/pages/Deliveries';
 import ReportsStaff from './pages/Staff/pages/Reports';
+import AdminLogin from './pages/Admin/AdminLogin';
+import StaffLogin from './pages/Staff/StaffLogin';
+import StaffNavbar from './pages/Staff/components/StaffNavbar';
+import StaffRegistration from './pages/Admin/components/StaffRegistration';
+import AdminNavbar from './pages/Admin/components/AdminNavbar';  // Change this line
 
 const App = () => {
   return (
@@ -48,17 +51,22 @@ const App = () => {
         <ShipmentProvider>
           <Router>
             <Routes>
-              <Route path="/admin/*" element={<AdminLayout />} />
-              <Route path="/staff/*" element={<StaffRoutes />} />
+              {/* Public routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/staff/login" element={<StaffLogin />} />
+              
+              {/* Protected routes with layouts */}
+              <Route path="/admin/*" element={
+                <PrivateRoute roles={['admin']}>
+                  <AdminLayout />
+                </PrivateRoute>
+              } />
+              <Route path="/staff/*" element={
+                <PrivateRoute roles={['staff']}>
+                  <StaffRoutes />
+                </PrivateRoute>
+              } />
               <Route path="/*" element={<CustomerLayout />} />
-              {/* Staff Routes */}
-              <Route path="/staff" element={<StaffDashboard />} />
-              <Route path="/staff/orders" element={<Orders />} />
-              <Route path="/staff/deliveries" element={<Deliveries />} />
-              <Route path="/staff/reports" element={<Reports />} />
-              <Route path="/staff/profile" element={<StaffProfile />} />
-              <Route path="/staff/customers" element={<CustomerManagement />} />
-              <Route path="/staff/customer/:id" element={<CustomerDetails />} />
             </Routes>
           </Router>
         </ShipmentProvider>
@@ -73,20 +81,20 @@ const CustomerLayout = () => {
     <>
       <EPostOfficeNavbar />
       <div className="customer-layout">
-        <SideBar />
         <div className="main-content">
           <Routes>
             <Route path="/" element={<Home />} />
-            
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-
             <Route path="/calculator" element={<PostalCalculator />} />
             <Route path="/payment" element={<Payment />} />
+            
+            {/* Add these new routes */}
             <Route path="/send-package" element={<SendPackage />} />
             <Route path="/send-package/domestic" element={<DomesticShipping />} />
             <Route path="/send-package/international" element={<InternationalShipping />} />
-            <Route path="/Shipments" element={<Shipments />} />
+            
+            <Route path="/shipments" element={<Shipments />} />
             <Route path="/track" element={<TrackTrace />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -98,18 +106,23 @@ const CustomerLayout = () => {
   );
 };
 
-// New AdminLayout component to wrap all admin routes
+// Update AdminLayout component to include AdminNavbar
 const AdminLayout = () => {
   return (
     <div className="admin-layout">
-      <Routes>
-        <Route path="/" element={<AdminDashboard />} />
-        <Route path="/staff" element={<StaffManagement />} />
-        <Route path="/services" element={<ServicesManagement />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<AdminSettings />} /> {/* Changed this line */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <AdminNavbar />  {/* Add the AdminNavbar here */}
+      <div className="admin-content">
+        <Routes>
+          <Route index element={<AdminDashboard />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="staff" element={<StaffManagement />} />
+          <Route path="staff/register" element={<StaffRegistration />} />
+          <Route path="services" element={<ServicesManagement />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
     </div>
   );
 };
@@ -117,17 +130,22 @@ const AdminLayout = () => {
 // Staff routes without default navigation
 const StaffRoutes = () => {
   return (
-    <Routes>
-      <Route path="/" element={<StaffDashboard />} />
-      <Route path="/customers" element={<CustomerManagement />} />
-      <Route path="/profile" element={<StaffProfile />} />
-      <Route path="/customer/:id" element={<CustomerDetails />} />
-      <Route path="/verify-customer/:id" element={<CustomerVerification />} />
-      <Route path="/modify-customer/:id" element={<CustomerModification />} />
-      <Route path="/orders" element={<Orders />} />
-      <Route path="/deliveries" element={<Deliveries />} />
-      <Route path="/reports" element={<ReportsStaff />} />
-    </Routes>
+    <div className="staff-layout">
+      <StaffNavbar />
+      <div className="staff-content">
+        <Routes>
+          <Route path="/" element={<StaffDashboard />} />
+          <Route path="/customers" element={<CustomerManagement />} />
+          <Route path="/profile" element={<StaffProfile />} />
+          <Route path="/customer/:id" element={<CustomerDetails />} />
+          <Route path="/verify-customer/:id" element={<CustomerVerification />} />
+          <Route path="/modify-customer/:id" element={<CustomerModification />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/deliveries" element={<Deliveries />} />
+          <Route path="/reports" element={<ReportsStaff />} />
+        </Routes>
+      </div>
+    </div>
   );
 };
 

@@ -25,7 +25,7 @@ const ManageAddresses = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:4000/api/customer/addresses?userId=${user._id}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses?userId=${user._id}`,
         {
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -91,7 +91,7 @@ const ManageAddresses = () => {
 
       const response = await axios({
         method: editingAddress ? 'put' : 'post',
-        url: `http://localhost:4000${endpoint}`,
+        url: `${process.env.REACT_APP_BACKEND_URL}${endpoint}`,
         params: { userId: user._id },
         data: addressForm,
         headers: { 
@@ -124,7 +124,7 @@ const ManageAddresses = () => {
       try {
         const token = localStorage.getItem('token');
         await axios.delete(
-          `http://localhost:4000/api/customer/addresses/${addressId}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${addressId}`,
           {
             headers: { 'Authorization': `Bearer ${token}` }
           }

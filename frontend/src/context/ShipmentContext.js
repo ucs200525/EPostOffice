@@ -16,7 +16,7 @@ export const ShipmentProvider = ({ children }) => {
     const fetchShipments = async () => {
         try {
             const response = await axios.get(
-                `http://localhost:4000/api/orders/user/${user._id}/shipments`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/orders/user/${user._id}/shipments`,
                 { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
             );
             setShipments(response.data.shipments);

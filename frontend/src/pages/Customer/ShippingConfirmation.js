@@ -31,7 +31,7 @@ const ShippingConfirmation = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:4000/api/orders/calculate', 
+        `${process.env.REACT_APP_BACKEND_URL}/api/orders/calculate`, 
         {
           weight: shippingDetails.weight,
           dimensions: shippingDetails.dimensions,
@@ -70,7 +70,7 @@ const ShippingConfirmation = () => {
       const token = localStorage.getItem('token');
       // First create the order
       const orderResponse = await axios.post(
-        'http://localhost:4000/api/orders/create',
+        `${process.env.REACT_APP_BACKEND_URL}/api/orders/create`,
         {
           userId: user._id,
           shippingDetails: {

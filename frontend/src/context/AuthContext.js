@@ -8,11 +8,19 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [token, setToken] = useState(localStorage.getItem('token') || ''); // Add token state
+
+    useEffect(() => {
+        // Check if token exists in local storage
+        if (token) {
+            setIsAuthenticated(true);
+        }
+    }, [token]);
 
     // Add verifyToken function
     const verifyToken = async (token) => {
         try {
-            const response = await axios.get('http://localhost:4000/api/auth/verify', {
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             return response.data.user;
@@ -40,27 +48,9 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    // const checkAuth = async () => {
-    //     const token = localStorage.getItem('token');
-    //     if (token) {
-    //         try {
-    //             const response = await axios.get('http://localhost:4000/api/customer/profile', {
-    //                 headers: { 'Authorization': `Bearer ${token}` }
-    //             });
-    //             setUser(response.data);
-    //             setIsAuthenticated(true);
-    //         } catch (error) {
-    //             localStorage.removeItem('token');
-    //             setIsAuthenticated(false);
-    //             setUser(null);
-    //         }
-    //     }
-    //     setLoading(false);
-    // };
-
     const login = async (email, password) => {
         try {
-            const response = await axios.post('http://localhost:4000/api/auth/login', {
+            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
                 email,
                 password
             });
@@ -105,9 +95,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (userData) => {
         try {
-            const response = await axios.post('http://localhost:4000/api/auth/register', userData);
-            localStorage.setItem('token', response.data.token);
-            setUser(response.data.user);
+            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, userData);
             setIsAuthenticated(true);
             return { success: true };
         } catch (error) {
@@ -127,6 +115,7 @@ export const AuthProvider = ({ children }) => {
             role,
             logout,
             register,
+            token,
         }}>
             {children}
         </AuthContext.Provider>

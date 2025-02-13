@@ -595,26 +595,38 @@ input[type="text"][placeholder="Enter tracking number..."] {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    font-size: 1.5rem;
+    width: 40px;  /* Set fixed width */
+    height: 40px; /* Set fixed height */
+    border-radius: 50%; /* Make it circular */
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
     color: var(--text-dark);
     cursor: pointer;
-    z-index: 1002;
-    padding: 0.5rem;
+    transition: all 0.3s ease;
+    padding: 0; /* Remove padding to maintain circle shape */
+  }
+
+  .nav-toggle i {
+    font-size: 14px; /* Adjust icon size */
     transition: transform 0.3s ease;
   }
 
   .nav-toggle:hover {
-    color: var (--accent-color);
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateX(2px);
   }
 
-  .nav-toggle.active {
-    transform: translateY(-50%) rotate(90deg);
+  .nav-toggle.active i {
+    transform: rotate(180deg);
+  }
+
+  .nav-toggle {
+    position: fixed;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1002;
   }
 
   .nav-menu {
@@ -813,4 +825,99 @@ input[type="text"][placeholder="Enter tracking number..."] {
   .nav-brand img {
     height: 40px;
   }
+}
+
+/* Login Buttons Styles */
+.login-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.nav-login-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-login-btn.customer {
+  background: #3b82f6;
+  color: white;
+}
+
+.nav-login-btn.staff {
+  background: #10b981;
+  color: white;
+}
+
+.nav-login-btn.admin {
+  background: #6366f1;
+  color: white;
+}
+
+.nav-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-login-btn.customer:hover {
+  background: #2563eb;
+}
+
+.nav-login-btn.staff:hover {
+  background: #059669;
+}
+
+.nav-login-btn.admin:hover {
+  background: #4f46e5;
+}
+
+.welcome-text {
+  margin-right: 15px;
+  color: #4b5563;
+}
+
+.logout-button {
+  padding: 8px 16px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-button:hover {
+  background: #dc2626;
+}
+
+/* Admin Navbar Styles */
+.admin-nav {
+  background: #1e293b;
+}
+
+.admin-nav .nav-brand h1,
+.admin-nav .nav-items li a,
+.admin-nav .welcome-text {
+  color: white;
+}
+
+.admin-nav .nav-items li a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-nav .nav-brand span {
+  color: #94a3b8;
+}
+
+.admin-nav .logout-button {
+  background: #dc2626;
+}
+
+.admin-nav .logout-button:hover {
+  background: #b91c1c;
 }

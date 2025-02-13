@@ -69,6 +69,22 @@ input:focus {
   outline: none;
 }
 
+.address-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.address-input:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+
 .password-toggle {
   position: absolute;
   right: 12px;
@@ -128,4 +144,56 @@ input:focus {
   color: #3b82f6;
   text-decoration: none;
   font-weight: 500;
+}
+
+.role-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.role-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 120px;
+}
+
+.role-button.customer {
+  background: #3b82f6;
+  color: white;
+}
+
+.role-button.staff {
+  background: #10b981;
+  color: white;
+}
+
+.role-button.admin {
+  background: #6366f1;
+  color: white;
+}
+
+.role-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.role-button.customer:hover {
+  background: #2563eb;
+}
+
+.role-button.staff:hover {
+  background: #059669;
+}
+
+.role-button.admin:hover {
+  background: #4f46e5;
 }

@@ -12,18 +12,132 @@
 }
 
 .admin-navbar {
-  width: 280px;
-  height: 100vh;
-  background: linear-gradient(165deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
-  padding: 2rem 1.5rem;
-  position: fixed;
-  left: 0;
-  top: 0;
-  color: var(--admin-white);
-  box-shadow: var(--admin-shadow);
+  width: 250px;
+  min-height: 100vh;
+  background: #1e293b;
+  color: white;
+  padding: 1rem 0;
   display: flex;
   flex-direction: column;
+}
+
+.admin-top-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1.5rem;
+  background: #1e293b;
+  color: white;
+  height: 64px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0; /* Ensure it starts from the very left */
+  right: 0; /* Ensure it spans full width */
   z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-left .brand {
+  text-decoration: none;
+  color: white;
+}
+
+.navbar-left .brand h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.navbar-left .brand span {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.navbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  margin: 0 2rem; /* Add some spacing around the center navigation */
+}
+
+.nav-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand {
+  text-decoration: none;
+  color: white;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.brand span {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 1rem;
+}
+
+.nav-links li a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #e2e8f0;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.nav-links li a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-links li a.active {
+  background: #2563eb;
+  color: white;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+  color: #94a3b8;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #b91c1c;
 }
 
 .admin-brand {
@@ -165,6 +279,41 @@
 
 .logout-btn:hover {
   color: #ff1744;
+}
+
+.admin-content {
+  margin-top: 64px !important;
+}
+
+.nav-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  color: var(--text-dark);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.3s ease;
+  overflow: hidden; /* Add this to ensure icon stays within circle */
+}
+
+.nav-toggle svg {
+  width: 20px;  /* Reduce icon size */
+  height: 20px; /* Keep aspect ratio */
+  transition: transform 0.3s ease;
+}
+
+.nav-toggle:hover {
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-toggle.active svg {
+  transform: rotate(180deg);
 }
 
 @media (max-width: 1024px) {

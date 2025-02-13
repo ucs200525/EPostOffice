@@ -16,7 +16,7 @@ export const DarkModeProvider = ({ children }) => {
             try {
                 const token = localStorage.getItem('token');
                 if (token) {
-                    const response = await axios.get('http://localhost:4000/api/user/settings', {
+                    const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/settings`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     if (response.data.darkMode !== undefined) {

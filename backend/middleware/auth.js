@@ -1,8 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const User = require('../../models/customer/Customer');
-const logger = require('../../utils/logger');
-const authenticateToken = require('../../middleware/auth'); // Corrected import
+const User = require('../models/customer/Customer');
+const logger = require('../utils/logger');
+const authenticateToken = require('../middleware/auth'); // Corrected import
 
 const router = express.Router();
 
@@ -119,4 +119,22 @@ router.get('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+
+
+const auth = (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ message: 'No token, authorization denied' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: 'Token is not valid' });
+  }
+};
+
+module.exports = auth;

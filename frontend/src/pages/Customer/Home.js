@@ -171,26 +171,29 @@ const Home = () => {
   useEffect(() => {
     setCustomerData(user);
   }, [user]);
-  const fetchProfile = async () => {
-    // try {
-    //   // Get customer ID from localStorage or another source
-    //   const customerId = localStorage.getItem('userId');
-      
-    //   const response = await axios.get(
-    //     `http://localhost:4000/api/customers/1`,
-    //     {
-    //       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    //     }
-    //   );
-      
-    //   setCustomerData(response.data);
-    //   setError(null);
-    // } catch (err) {
-    //   console.error('Profile fetch failed:', err);
-    //   setError(err.response?.data?.message || 'Failed to fetch profile');
-    //   setCustomerData(null);
-    // }
-  };
+const fetchProfile = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!user || !user._id) {
+      console.log('No user ID available');
+      return;
+    }
+    
+    const response = await axios.get(
+      `${process.env.REACT_APP_BACKEND_URL}/api/customers/${user._id}`,
+      {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }
+    );
+    
+    setCustomerData(response.data);
+    setError(null);
+  } catch (err) {
+    console.error('Profile fetch failed:', err);
+    setError(err.response?.data?.message || 'Failed to fetch profile');
+    setCustomerData(null);
+  }
+};
 
   // useEffect(() => {
   //   fetchProfile();
@@ -217,7 +220,7 @@ const Home = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:4000/api/orders/my-orders?userId=${user.id}`, // Changed from _id to id
+        `${process.env.REACT_APP_BACKEND_URL}/api/orders/my-orders?userId=${user.id}`, // Changed from _id to id
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
@@ -248,7 +251,7 @@ const Home = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/customer/notifications', {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customer/notifications`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       setNotifications(response.data);
@@ -268,7 +271,7 @@ const Home = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:4000/api/customer/${user.id}/wallet`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user.id}/wallet`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
@@ -298,7 +301,7 @@ const Home = () => {
         }
 
         const response = await axios.get(
-            `http://localhost:4000/api/packages/${user._id}/stats`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/packages/${user._id}/stats`,
             { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
         );
         
@@ -328,7 +331,7 @@ useEffect(() => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:4000/api/feedback/', {
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/feedback/`, {
         feedback,
         rating,
         userId: user._id
