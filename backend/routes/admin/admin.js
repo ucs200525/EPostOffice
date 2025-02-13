@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Admin = require('../../models/admin/admin');
 const Staff = require('../../models/staff/Staff');
-const auth = require('../../middleware/auth');
 const adminAuth = require('../../middleware/adminAuth');
 const logger = require('../../utils/logger');
 
