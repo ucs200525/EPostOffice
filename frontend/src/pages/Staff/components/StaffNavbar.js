@@ -1,76 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import { FaBars, FaTimes, FaUser, FaUsers, FaBox, 
+         FaTruck, FaChartBar, FaSignOutAlt } from 'react-icons/fa';
+import styles from '../styles/StaffNavbar.module.css';
 
 const StaffNavbar = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const { logout } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    return JSON.parse(localStorage.getItem('staffNavbarCollapsed')) || false;
-  });
+  const location = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const handleToggle = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    localStorage.setItem('staffNavbarCollapsed', JSON.stringify(newState));
+  const toggleNavbar = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/staff/login');
-  };
-
-  const isActive = (path) => {
-    return location.pathname === path ? 'active' : '';
-  };
+  const navLinks = [
+    { to: '/staff/dashboard', icon: <FaUser />, text: 'Dashboard' },
+    { to: '/staff/customers', icon: <FaUsers />, text: 'Customers' },
+    { to: '/staff/orders', icon: <FaBox />, text: 'Orders' },
+    { to: '/staff/deliveries', icon: <FaTruck />, text: 'Deliveries' },
+    { to: '/staff/reports', icon: <FaChartBar />, text: 'Reports' },
+  ];
 
   return (
-    <nav className={`staff-navbar ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="nav-brand">
-        <h2>E-Post Office</h2>
-        <button className="nav-toggle" onClick={handleToggle}>
-          <i className={`fas fa-${isCollapsed ? 'chevron-right' : 'chevron-left'}`}></i>
+    <nav className={`${styles.navbar} ${isCollapsed ? styles.collapsed : ''}`}>
+      <div className={styles.navHeader}>
+        <h2 className={styles.navTitle}>
+          {!isCollapsed && 'Staff Panel'}
+        </h2>
+        <button className={styles.toggleBtn} onClick={toggleNavbar}>
+          {isCollapsed ? <FaBars /> : <FaTimes />}
         </button>
       </div>
-      <ul className="nav-links">
-        <li className={isActive('/staff')}>
-          <Link to="/staff">
-            <i className="fas fa-home"></i>
-            <span>Dashboard</span>
+
+      <div className={styles.navLinks}>
+        {navLinks.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className={`${styles.navLink} ${
+              location.pathname === link.to ? styles.active : ''
+            }`}
+          >
+            <span className={styles.icon}>{link.icon}</span>
+            {!isCollapsed && <span className={styles.linkText}>{link.text}</span>}
           </Link>
-        </li>
-        <li className={isActive('/staff/orders')}>
-          <Link to="/staff/orders">
-            <i className="fas fa-box"></i>
-            <span>Orders</span>
-          </Link>
-        </li>
-        <li className={isActive('/staff/deliveries')}>
-          <Link to="/staff/deliveries">
-            <i className="fas fa-truck"></i>
-            <span>Deliveries</span>
-          </Link>
-        </li>
-        <li className={isActive('/staff/customers')}>
-          <Link to="/staff/customers">
-            <i className="fas fa-users"></i>
-            <span>Customers</span>
-          </Link>
-        </li>
-        <li className={isActive('/staff/profile')}>
-          <Link to="/staff/profile">
-            <i className="fas fa-user"></i>
-            <span>Profile</span>
-          </Link>
-        </li>
-      </ul>
-      <div className="nav-user">
-        <button className="logout-btn" onClick={handleLogout}>
-          <i className="fas fa-sign-out-alt"></i>
-          <span>Logout</span>
-        </button>
+        ))}
       </div>
+
+      <button 
+        onClick={logout} 
+        className={styles.logoutBtn}
+      >
+        <FaSignOutAlt />
+        {!isCollapsed && <span>Logout</span>}
+      </button>
     </nav>
   );
 };

@@ -31,6 +31,33 @@ const StaffManagement = () => {
     }
   };
 
+  const registerStaff = async (staffData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/admin/register-staff`,
+        staffData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        // Handle success
+        return { success: true, data: response.data };
+      }
+    } catch (error) {
+      console.error('Staff registration error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error registering staff'
+      };
+    }
+  };
+
   return (
     <div className="staff-management">
       <div className="header">

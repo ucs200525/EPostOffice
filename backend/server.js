@@ -4,7 +4,6 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const cors = require('cors');
 const logger = require('./utils/logger');
-// const adminRoutes = require('./routes/admin/adminRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -31,8 +30,8 @@ app.use('/api/orders', require('./routes/orders/orderRoutes'));
 app.use('/api/user/settings', require('./routes/customer/userSettingsRoutes'));
 
 // app.use('/api/admin', adminRoutes);
-// app.use('/api/staff', require('./routes/staff/staffRoutes'));
-
+app.use('/api/staff', require('./routes/staff/staffRoutes'));
+app.use('/api/admin',  require('./routes/admin/adminRoutes'));
 // Error Handling
 app.use((err, req, res, next) => {
     logger.error(`❌ Error: ${err.message}`);

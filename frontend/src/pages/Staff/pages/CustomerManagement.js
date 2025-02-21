@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import StaffNavbar from '../components/StaffNavbar';
 import { Link } from 'react-router-dom';
-import '../styles/StaffDashboard.css';
+// import '../styles/StaffDashboard.css';
 
 const CustomerManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');

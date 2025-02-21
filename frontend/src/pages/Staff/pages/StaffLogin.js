@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import '../Customer/Login.css';
+
 
 const StaffLogin = () => {
   const navigate = useNavigate();
@@ -93,7 +93,6 @@ const StaffLogin = () => {
             type="submit" 
             className="login-button" 
             disabled={loading}
-            style={{ background: '#10b981' }}
           >
             {loading ? 'Signing in...' : 'Sign In as Staff'}
           </button>
@@ -104,3 +103,4 @@ const StaffLogin = () => {
 };
 
 export default StaffLogin;
+

@@ -9,7 +9,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ShipmentProvider } from './context/ShipmentContext';
 import { DarkModeProvider } from './context/DarkModeContext';
 
-import './pages/Admin/styles/AdminLayout.css';
+import './pages/Admin/styles/AdminLayout.module.css';
 import './pages/Customer/styles/DarkMode.css';
 
 import Login from './pages/Customer/Login';
@@ -38,8 +38,8 @@ import AdminSettings from './pages/Admin/pages/AdminSettings';
 import Orders from './pages/Staff/pages/Orders';
 import Deliveries from './pages/Staff/pages/Deliveries';
 import ReportsStaff from './pages/Staff/pages/Reports';
-import AdminLogin from './pages/Admin/AdminLogin';
-import StaffLogin from './pages/Staff/StaffLogin';
+import AdminLogin from './pages/Admin/pages/AdminLogin';
+import StaffLogin from './pages/Staff/pages/StaffLogin';
 import StaffNavbar from './pages/Staff/components/StaffNavbar';
 import StaffRegistration from './pages/Admin/components/StaffRegistration';
 import AdminNavbar from './pages/Admin/components/AdminNavbar';  // Change this line
@@ -127,7 +127,7 @@ const AdminLayout = () => {
   );
 };
 
-// Staff routes without default navigation
+// Update the StaffRoutes component
 const StaffRoutes = () => {
   return (
     <div className="staff-layout">
@@ -135,14 +135,9 @@ const StaffRoutes = () => {
       <div className="staff-content">
         <Routes>
           <Route path="/" element={<StaffDashboard />} />
+          <Route path="/dashboard" element={<StaffDashboard />} />
           <Route path="/customers" element={<CustomerManagement />} />
-          <Route path="/profile" element={<StaffProfile />} />
-          <Route path="/customer/:id" element={<CustomerDetails />} />
-          <Route path="/verify-customer/:id" element={<CustomerVerification />} />
-          <Route path="/modify-customer/:id" element={<CustomerModification />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/deliveries" element={<Deliveries />} />
-          <Route path="/reports" element={<ReportsStaff />} />
+          {/* ...other routes... */}
         </Routes>
       </div>
     </div>

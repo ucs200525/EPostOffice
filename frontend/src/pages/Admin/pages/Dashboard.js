@@ -5,8 +5,48 @@ import { useAuth } from '../../../context/AuthContext'; // Fix import path
 import AdminNavbar from '../components/AdminNavbar';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS } from 'chart.js/auto';
-import '../styles/AdminDashboard.css';
 import { FaUserCircle, FaEdit, FaCog } from 'react-icons/fa';
+import { FaBox, FaTruck, FaUsers, FaClipboardList } from 'react-icons/fa';
+import styles from '../styles/AdminDashboard.module.css';
+
+const QuickActions = ({ actions, onActionClick }) => {
+  return (
+    <div className={styles.quickActionsContainer}>
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Quick Actions</h2>
+        <p className={styles.sectionSubtitle}>Frequently used administrative tools</p>
+      </div>
+      <div className={styles.quickActionsGrid}>
+        {actions.map(action => (
+          <div 
+            key={action.id} 
+            className={styles.actionCard}
+            onClick={() => onActionClick(action)}
+          >
+            <div 
+              className={styles.actionIcon} 
+              style={{ backgroundColor: action.color }}
+            >
+              <i className={`fas fa-${action.icon}`}></i>
+              {action.badge && (
+                <span className={styles.actionBadge}>
+                  {action.badge}
+                </span>
+              )}
+            </div>
+            <div className={styles.actionContent}>
+              <h3 className={styles.actionTitle}>{action.title}</h3>
+              <p className={styles.actionDescription}>{action.description}</p>
+            </div>
+            <div className={styles.actionArrow}>
+              <i className="fas fa-chevron-right"></i>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const AdminDashboard = () => {
   const navigate = useNavigate(); // Add this
@@ -133,244 +173,376 @@ const AdminDashboard = () => {
     }
   ];
 
+  const recentActivities = [
+    { id: 1, type: 'New Staff', message: 'New staff member registered', time: '2 hours ago' },
+    { id: 2, type: 'Order', message: 'Bulk order processed', time: '3 hours ago' },
+    { id: 3, type: 'System', message: 'Daily backup completed', time: '5 hours ago' }
+  ];
+
+  // Create an array of stats for mapping
+  const statsData = [
+    { 
+      id: 1, 
+      label: 'Total Revenue', 
+      value: `₹${stats.totalRevenue.toLocaleString()}`, 
+      icon: <FaBox className={styles.pendingIcon} />,
+      growth: `+${stats.monthlyGrowth}% from last month`
+    },
+    { 
+      id: 2, 
+      label: 'Active Customers', 
+      value: stats.activeCustomers.toLocaleString(), 
+      icon: <FaUsers className={styles.customersIcon} />
+    },
+    { 
+      id: 3, 
+      label: 'Total Orders', 
+      value: stats.totalOrders, 
+      icon: <FaTruck className={styles.completedIcon} />,
+      subText: `${Math.round((stats.completedOrders/stats.totalOrders) * 100)}% completion rate`
+    },
+    { 
+      id: 4, 
+      label: 'Staff Members', 
+      value: stats.totalStaff, 
+      icon: <FaClipboardList className={styles.tasksIcon} />
+    }
+  ];
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: true, // Change to true
+    aspectRatio: 2, // Add fixed aspect ratio
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          boxWidth: 20,
+          padding: 20,
+          usePointStyle: true,
+          font: { size: 12 }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          maxTicksLimit: 5, // Limit number of ticks
+          font: { size: 12 }
+        }
+      },
+      x: {
+        ticks: {
+          font: { size: 12 }
+        }
+      }
+    },
+    layout: {
+      padding: 20
+    },
+    animation: {
+      duration: 0 // Disable animations to prevent resize loops
+    }
+  };
+
+  const revenueData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    datasets: [{
+      label: 'Revenue',
+      data: [30000, 45000, 55000, 60000, 75000, 85000],
+      borderColor: '#4f46e5',
+      backgroundColor: 'rgba(79, 70, 229, 0.1)',
+      tension: 0.4,
+      fill: true,
+      pointBackgroundColor: '#4f46e5',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    }]
+  };
+
+  const orderData = {
+    labels: ['Completed', 'Pending', 'Cancelled'],
+    datasets: [{
+      data: [380, 70, 20],
+      backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+      borderWidth: 0,
+      borderRadius: 4,
+      hoverOffset: 4
+    }]
+  };
+
+  const handleActionClick = (action) => {
+    if (action.link) {
+      navigate(action.link);
+    } else if (action.action) {
+      action.action();
+    }
+  };
+
   return (
-    <div className="admin-dashboard">
+    <div className={styles.adminDashboard}>
       <AdminNavbar />
-      <div className="dashboard-content">
-        {/* <div className="admin-profile-section">
-          <div className="admin-details">
-            <div className="admin-avatar">
-              <FaUserCircle size={70} />
-            </div>
-            <div className="admin-info">
+      <div className={styles.dashboardContent}>
+        <div className={styles.adminProfileSection}>
+          <div className={styles.adminDetails}>
+            <FaUserCircle className={styles.adminAvatar} />
+            <div className={styles.adminInfo}>
               <h2>{user?.name || 'Administrator'}</h2>
-              <p>{user?.email}</p>
-              <span className="admin-role">Administrator</span>
-              <p>Last Login: {new Date(user?.lastLogin).toLocaleString()}</p>
-            </div>
-            <div className="admin-actions">
-              <button className="edit-profile-btn">
-                <FaEdit /> Edit Profile
-              </button>
-              <button className="settings-btn">
-                <FaCog /> Settings
-              </button>
-            </div>
-          </div>
-        </div> */}
-
-        <div className="dashboard-header">
-          <div className="header-left">
-            <div className="welcome-section">
-              <h1>Admin Dashboard</h1>
-              <p>Welcome back, Administrator</p>
-            </div>
-            <div className="date-time">
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </div>
-          </div>
-          <div className="header-stats">
-            <div className="header-stat-item">
-              <i className="fas fa-box"></i>
-              <div className="stat-details">
-                <span className="stat-label">Today's Orders</span>
-                <span className="stat-value">{headerStats.todayOrders}</span>
-              </div>
-            </div>
-            <div className="header-stat-item">
-              <i className="fas fa-truck"></i>
-              <div className="stat-details">
-                <span className="stat-label">Pending Deliveries</span>
-                <span className="stat-value">{headerStats.pendingDeliveries}</span>
-              </div>
-            </div>
-            <div className="header-stat-item">
-              <i className="fas fa-user-check"></i>
-              <div className="stat-details">
-                <span className="stat-label">Active Staff</span>
-                <span className="stat-value">{headerStats.activeStaff}</span>
-              </div>
-            </div>
-            <div className="header-stat-item">
-              <i className={`fas fa-circle ${headerStats.systemStatus.toLowerCase() === 'operational' ? 'text-success' : 'text-warning'}`}></i>
-              <div className="stat-details">
-                <span className="stat-label">System Status</span>
-                <span className="stat-value">{headerStats.systemStatus}</span>
-              </div>
+              <div className={styles.adminRole}>System Administrator</div>
             </div>
           </div>
         </div>
 
-        <div className="time-range-selector">
-          <button 
-            className={`range-btn ${selectedTimeRange === 'week' ? 'active' : ''}`}
-            onClick={() => handleTimeRangeChange('week')}
-          >
-            Week
-          </button>
-          <button 
-            className={`range-btn ${selectedTimeRange === 'month' ? 'active' : ''}`}
-            onClick={() => handleTimeRangeChange('month')}
-          >
-            Month
-          </button>
-          <button 
-            className={`range-btn ${selectedTimeRange === 'year' ? 'active' : ''}`}
-            onClick={() => handleTimeRangeChange('year')}
-          >
-            Year
-          </button>
-        </div>
-
-        <div className="stats-grid">
-          <div className="stat-card highlight">
-            <i className="fas fa-chart-line"></i>
-            <div className="stat-content">
-              <h3>Total Revenue</h3>
-              <p className="stat-number">₹{stats.totalRevenue.toLocaleString()}</p>
-              <span className="stat-growth">+{stats.monthlyGrowth}% from last month</span>
+        <div className={styles.dashboardHeader}>
+          <div className={styles.headerLeft}>
+            <div className={styles.welcomeSection}>
+              <h1 className={styles.welcomeTitle}>Admin Dashboard</h1>
+              <p className={styles.welcomeText}>Welcome back, {user?.name || 'Administrator'}</p>
+              <div className={styles.dateTime}>
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </div>
             </div>
           </div>
-          <div className="stat-card">
-            <i className="fas fa-users"></i>
-            <div className="stat-content">
-              <h3>Active Customers</h3>
-              <p className="stat-number">{stats.activeCustomers.toLocaleString()}</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <i className="fas fa-shipping-fast"></i>
-            <div className="stat-content">
-              <h3>Total Orders</h3>
-              <p className="stat-number">{stats.totalOrders}</p>
-              <span className="completion-rate">
-                {Math.round((stats.completedOrders/stats.totalOrders) * 100)}% completion rate
-              </span>
-            </div>
-          </div>
-          <div className="stat-card">
-            <i className="fas fa-user-shield"></i>
-            <div className="stat-content">
-              <h3>Staff Members</h3>
-              <p className="stat-number">{stats.totalStaff}</p>
-            </div>
-          </div>
-          <div className="stat-card performance">
-            <i className="fas fa-chart-pie"></i>
-            <div className="stat-content">
-              <h3>System Performance</h3>
-              <p className="stat-number">98.5%</p>
-              <span className="stat-label">Uptime</span>
-            </div>
-          </div>
-        </div>
 
-        <div className="dashboard-grid">
-          <div className="chart-container">
-            <h2>Revenue Analytics</h2>
-            <Line data={analyticsData.revenueData} options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { position: 'top' },
-                title: { display: true, text: 'Monthly Revenue Trend' }
-              }
-            }} />
-          </div>
-
-          <div className="chart-container">
-            <h2>Order Statistics</h2>
-            <Bar data={analyticsData.orderData} options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                title: { display: true, text: 'Order Distribution' }
-              }
-            }} />
-          </div>
-
-          <div className="chart-container services">
-            <h2>Service Distribution</h2>
-            <Doughnut data={analyticsData.serviceUsageData} options={{
-              responsive: true,
-              plugins: {
-                legend: { position: 'right' }
-              }
-            }} />
-          </div>
-
-          <div className="recent-activities">
-            <h2>System Alerts</h2>
-            <div className="alert-list">
-              {[
-                { type: 'warning', message: 'System maintenance scheduled for tonight' },
-                { type: 'success', message: 'Daily backup completed successfully' },
-                { type: 'error', message: 'Failed delivery attempts: 3 packages' }
-              ].map((alert, index) => (
-                <div key={index} className={`alert-item ${alert.type}`}>
-                  <i className={`fas fa-${alert.type === 'warning' ? 'exclamation-triangle' : 
-                                       alert.type === 'success' ? 'check-circle' : 'times-circle'}`}></i>
-                  <p>{alert.message}</p>
+          <div className={styles.statsGrid}>
+            {statsData.map(stat => (
+              <div key={stat.id} className={styles.statCard}>
+                <div className={`${styles.statIcon} ${styles[stat.iconClass]}`}>
+                  {stat.icon}
                 </div>
-              ))}
+                <div className={styles.statContent}>
+                  <h3 className={styles.statLabel}>{stat.label}</h3>
+                  <p className={styles.statValue}>{stat.value}</p>
+                  {stat.growth && <span className={styles.statGrowth}>{stat.growth}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.chartsContainer}>
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Revenue Overview</h3>
+            <div className={styles.chartWrapper}>
+              <Line
+                data={revenueData}
+                options={chartOptions}
+                redraw={false} // Add this to prevent unnecessary redraws
+              />
             </div>
           </div>
 
-          <div className="performance-metrics">
-            <h2>Performance Metrics</h2>
-            <div className="metrics-grid">
-              <div className="metric-card">
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Order Distribution</h3>
+            <div className={styles.chartWrapper}>
+              <Doughnut
+                data={orderData}
+                options={chartOptions}
+                redraw={false} // Add this to prevent unnecessary redraws
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.chartsContainer}>
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Revenue Analytics</h3>
+            <div className={styles.chartWrapper}>
+              <Line
+                data={revenueData}
+                options={{
+                  ...chartOptions,
+                  plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                      display: false
+                    }
+                  }
+                }}
+                redraw={false}
+              />
+            </div>
+          </div>
+
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>Order Statistics</h3>
+            <div className={styles.chartWrapper}>
+              <Bar
+                data={orderData}
+                options={{
+                  ...chartOptions,
+                  plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                      display: false
+                    },
+                    tooltip: {
+                      ...chartOptions.plugins.tooltip,
+                      callbacks: {
+                        label: (context) => `${context.parsed.y} orders`
+                      }
+                    }
+                  },
+                  scales: {
+                    ...chartOptions.scales,
+                    y: {
+                      ...chartOptions.scales.y,
+                      ticks: {
+                        maxTicksLimit: 5,
+                        callback: (value) => value,
+                        font: { size: 12 }
+                      }
+                    }
+                  }
+                }}
+                redraw={false}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.metricsAndActionsContainer}>
+          <div className={styles.performanceMetrics}>
+            <h2 className={styles.sectionTitle}>Performance Metrics</h2>
+            <div className={styles.metricsGrid}>
+              <div className={styles.metricCard}>
                 <h3>Average Response Time</h3>
-                <p className="metric-value">2.5s</p>
-                <div className="progress-bar">
-                  <div className="progress" style={{ width: '85%' }}></div>
+                <p className={styles.metricValue}>2.5s</p>
+                <div className={styles.progressBar}>
+                  <div className={styles.progressFill} style={{ width: '85%' }}></div>
                 </div>
               </div>
-              <div className="metric-card">
+              <div className={styles.metricCard}>
                 <h3>Customer Satisfaction</h3>
-                <p className="metric-value">4.8/5.0</p>
-                <div className="progress-bar">
-                  <div className="progress" style={{ width: '96%' }}></div>
+                <p className={styles.metricValue}>4.8/5.0</p>
+                <div className={styles.progressBar}>
+                  <div className={styles.progressFill} style={{ width: '96%' }}></div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="quick-actions-section">
-            <div className="section-header">
-              <h2>Quick Actions</h2>
-              <p>Frequently used administrative tools</p>
+          <QuickActions 
+            actions={quickActions} 
+            onActionClick={handleActionClick}
+          />
+        </div>
+
+        <div className={styles.statsGridContainer}>
+          <h2 className={styles.sectionTitle}>Key Metrics</h2>
+          <div className={styles.statsGrid}>
+            {statsData.map(stat => (
+              <div key={stat.id} className={styles.statCard}>
+                <div className={`${styles.statIcon} ${styles[stat.iconClass]}`}>
+                  {stat.icon}
+                </div>
+                <div className={styles.statContent}>
+                  <h3 className={styles.statLabel}>{stat.label}</h3>
+                  <p className={styles.statValue}>{stat.value || '0'}</p>
+                  {stat.growth && <span className={styles.statGrowth}>{stat.growth}</span>}
+                  {stat.subText && (
+                    <span className={styles.statSubText}>
+                      {isNaN(parseInt(stat.subText)) ? '0% completion rate' : stat.subText}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="recent-activities">
+          <h2>System Alerts</h2>
+          <div className="alert-list">
+            {[
+              { type: 'warning', message: 'System maintenance scheduled for tonight' },
+              { type: 'success', message: 'Daily backup completed successfully' },
+              { type: 'error', message: 'Failed delivery attempts: 3 packages' }
+            ].map((alert, index) => (
+              <div key={index} className={`alert-item ${alert.type}`}>
+                <i className={`fas fa-${alert.type === 'warning' ? 'exclamation-triangle' : 
+                                     alert.type === 'success' ? 'check-circle' : 'times-circle'}`}></i>
+                <p>{alert.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="performance-metrics">
+          <h2>Performance Metrics</h2>
+          <div className="metrics-grid">
+            <div className="metric-card">
+              <h3>Average Response Time</h3>
+              <p className="metric-value">2.5s</p>
+              <div className="progress-bar">
+                <div className="progress" style={{ width: '85%' }}></div>
+              </div>
             </div>
-            <div className="quick-actions-grid">
-              {quickActions.map(action => (
-                <div 
-                  key={action.id} 
-                  className="quick-action-card"
-                  onClick={() => action.link ? navigate(action.link) : action.action?.()}
-                >
-                  <div className="action-icon" style={{ backgroundColor: action.color }}>
-                    <i className={`fas fa-${action.icon}`}></i>
-                    {action.badge && <span className="action-badge">{action.badge}</span>}
-                  </div>
-                  <div className="action-content">
-                    <h3>{action.title}</h3>
-                    <p>{action.description}</p>
-                  </div>
-                  <div className="action-arrow">
-                    <i className="fas fa-chevron-right"></i>
+            <div className="metric-card">
+              <h3>Customer Satisfaction</h3>
+              <p className="metric-value">4.8/5.0</p>
+              <div className="progress-bar">
+                <div className="progress" style={{ width: '96%' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="quick-actions-section">
+          <div className="section-header">
+            <h2>Quick Actions</h2>
+            <p>Frequently used administrative tools</p>
+          </div>
+          <div className="quick-actions-grid">
+            {quickActions.map(action => (
+              <div 
+                key={action.id} 
+                className="quick-action-card"
+                onClick={() => action.link ? navigate(action.link) : action.action?.()}
+              >
+                <div className="action-icon" style={{ backgroundColor: action.color }}>
+                  <i className={`fas fa-${action.icon}`}></i>
+                  {action.badge && <span className="action-badge">{action.badge}</span>}
+                </div>
+                <div className="action-content">
+                  <h3>{action.title}</h3>
+                  <p>{action.description}</p>
+                </div>
+                <div className="action-arrow">
+                  <i className="fas fa-chevron-right"></i>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
+
+        <div className={styles.dashboardContent}>
+          <section className={styles.recentActivity}>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>Recent Activity</h3>
+              <button className={styles.viewAllBtn}>View All</button>
+            </div>
+            <div className={styles.activityList}>
+              {recentActivities.map(activity => (
+                <div key={activity.id} className={styles.activityItem}>
+                  <div className={styles.activityContent}>
+                    <div className={styles.activityMessage}>{activity.message}</div>
+                    <div className={styles.activityTime}>{activity.time}</div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>
