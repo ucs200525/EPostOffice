@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import './Login.css';
+import styles from './styles/Login.module.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login ,role} = useAuth();
+  const { login, googleLogin, role } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -39,13 +39,45 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await googleLogin();
+      if (result.success && result.user && result.user.role) {
+        const userRole = result.user.role.toLowerCase();
+        switch(userRole) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'staff':
+            navigate('/staff');
+            break;
+          case 'customer':
+            navigate('/');
+            break;
+          default:
+            navigate('/');
+        }
+      } else {
+        setError(result.error || 'Google login failed');
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
+      setError('Google login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password, formData.rememberMe);
       console.log('Login result:', result);
       
       if (result.success && result.user && result.user.role) {
@@ -80,38 +112,38 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <div className={styles.header}>
           <h2>Welcome Back</h2>
           <p>Sign in to access your account</p>
         </div>
 
-        <div className="role-buttons">
-         
-          {/* <button 
-            className="role-button staff"
+        <div className={styles.roleButtons}>
+          <button 
+            className={`${styles.roleButton} ${styles.roleButtonStaff}`}
             onClick={() => handleRoleButtonClick('staff')}
           >
             Staff Login
           </button>
           <button 
-            className="role-button admin"
+            className={`${styles.roleButton} ${styles.roleButtonAdmin}`}
             onClick={() => handleRoleButtonClick('admin')}
           >
             Admin Login
-          </button> */}
+          </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className={styles.errorMessage}>{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <div className="input-group">
-              <FaEnvelope className="input-icon" />
+          <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
+              <FaEnvelope className={styles.inputIcon} />
               <input
                 type="email"
                 name="email"
+                className={styles.input}
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Email Address"
@@ -120,12 +152,13 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <div className="input-group">
-              <FaLock className="input-icon" />
+          <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
+              <FaLock className={styles.inputIcon} />
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
+                className={styles.input}
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Password"
@@ -133,7 +166,7 @@ const Login = () => {
               />
               <button
                 type="button"
-                className="password-toggle"
+                className={styles.passwordToggle}
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -141,8 +174,8 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="form-options">
-            <label className="remember-me">
+          <div className={styles.formOptions}>
+            <label className={styles.rememberMe}>
               <input
                 type="checkbox"
                 name="rememberMe"
@@ -151,21 +184,31 @@ const Login = () => {
               />
               Remember me
             </label>
-            <a href="/forgot-password" className="forgot-password">
+            <a href="/forgot-password" className={styles.forgotPassword}>
               Forgot Password?
             </a>
           </div>
 
           <button 
             type="submit" 
-            className="login-button" 
+            className={styles.button} 
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
+
+          <button
+            type="button"
+            className={styles.googleButton}
+            onClick={handleGoogleLogin}
+            disabled={loading}
+          >
+            <img src="/google-icon.svg" alt="Google" className={styles.googleIcon} />
+            Sign in with Google
+          </button>
         </form>
 
-        <div className="register-prompt">
+        <div className={styles.registerPrompt}>
           <p>Don't have an account? <a href="/register">Register now</a></p>
         </div>
       </div>

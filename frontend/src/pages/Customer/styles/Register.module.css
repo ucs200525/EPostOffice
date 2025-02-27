@@ -68,6 +68,12 @@
 .formGroup {
   margin-bottom: 20px;
   transition: margin-bottom 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.formGroup:focus-within {
+  z-index: 50;
 }
 
 /* Grouping input fields for a grid layout */
@@ -82,30 +88,32 @@
 .inputGroup {
   position: relative;
   display: flex;
-  align-items: flex-start;
-  width: 522px;  /* Match exact width */
-  min-height: 63px; /* Match exact height */
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #ffffff;
   transition: all 0.3s ease;
-  margin-bottom: 6px;
+  margin-bottom: 0;
   padding: 0;
+  z-index: 1;
 }
 
 .inputGroup:focus-within {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  z-index: 50; /* Ensure focused input's suggestions appear on top */
 }
 
 /* Input and textarea shared styles */
 .inputGroup input,
 .inputGroup textarea {
   width: 100%;
-  padding: 14px 14px 14px 42px;
+  padding: 12px 12px 12px 36px;
   border: none;
   background: transparent;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
   color: #1e293b;
   transition: all 0.3s ease;
@@ -126,7 +134,7 @@
 }
 
 .inputGroup textarea {
-  width: 522px;
+  width: 100%;  /* Changed from 522px to 100% */
   height: 63px;
   padding: 12px 12px 12px 40px;
   border: none;
@@ -146,12 +154,13 @@
 /* Icon positioning */
 .icon {
   position: absolute;
-  left: 12px;
-  top: 14px;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   color: #94a3b8;
-  font-size: 16px;
+  font-size: 14px;
   transition: color 0.3s ease;
-  pointer-events: none; /* Prevents icon from interfering with input */
+  pointer-events: none;
 }
 
 /* Remove default textarea resize handle */
@@ -217,7 +226,6 @@ textarea::-webkit-resizer {
 }
 
 .inputGroup input:focus ~ .icon,
-
 
 .inputIconContainer:hover {
   background-color: #3b82f6; /* Highlight when hovering over icon */
@@ -373,6 +381,7 @@ textarea:focus {
 /* Location picker styles */
 .locationGroup {
   position: relative;
+  z-index: 20;
 }
 
 .locationActions {
@@ -404,7 +413,10 @@ textarea:focus {
   margin-top: 16px;
   border-radius: 12px;
   overflow: hidden;
-  height: 300px;
+  height: 400px;  /* Increased height */
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  z-index: 10;
 }
 
 .closeMap {
@@ -466,4 +478,194 @@ textarea:focus {
 /* Location group specific styles */
 .locationGroup .inputGroup {
   margin-bottom: 12px;
+}
+
+/* New address input components */
+.manualAddressInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.manualAddressInputs .inputGroup {
+  margin-bottom: 0;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.manualAddressInputs .inputGroup:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.manualAddressInputs .inputGroup input,
+.manualAddressInputs .inputGroup textarea {
+  font-size: 15px;
+  padding: 14px 14px 14px 42px;
+}
+
+.manualAddressInputs .icon {
+  left: 14px;
+  font-size: 16px;
+}
+
+.addressModeToggle {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.modeButton {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.modeButton.active {
+  background: #ffffff;
+  color: #3b82f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.modeButton:hover:not(.active) {
+  color: #3b82f6;
+  background: rgba(255, 255, 255, 0.5);
+}
+.autocompleteWrapper {
+  position: relative;
+  width: 100%;
+  z-index: 40;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% - 10px); /* Adjust to overlap with input slightly */
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 9999; /* Ensure it's above other elements */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 2px;
+  width: 100%;
+}
+
+.suggestionItem {
+  padding: 12px 16px;
+  cursor: pointer;
+  background-color: #ffffff;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestionItem:last-child {
+  border-bottom: none;
+}
+
+.suggestionItem:hover {
+  background-color: #f1f5f9;
+  color: #3b82f6;
+}
+
+.addressModeToggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.modeButton {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #3b82f6;
+  background: transparent;
+  color: #3b82f6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.modeButton.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.modeButton:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+.manualAddressInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.autocompleteWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.suggestionItem {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.suggestionItem:hover {
+  background-color: #f8fafc;
+}
+
+/* Fix input group width issue */
+.inputGroup {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure the map is visible */
+.locationGroup .mapContainer {
+  display: block;
+  width: 100%;
+  background: #ffffff;
 }

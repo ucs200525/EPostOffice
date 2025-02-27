@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { auth } from '../src/config/firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const AuthContext = createContext(null);
 
@@ -58,6 +60,46 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const googleLogin = async () => {
+        try {
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const { user: firebaseUser } = result;
+
+            // Send Firebase user data to backend for authentication
+            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google`, {
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                photoURL: firebaseUser.photoURL,
+                uid: firebaseUser.uid
+            });
+
+            const { token, user } = response.data;
+
+            if (!token || !user) {
+                throw new Error('Invalid response from server');
+            }
+
+            localStorage.setItem('token', token);
+            localStorage.setItem('userId', user.id);
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userRole', user.role);
+
+            setUser(user);
+            setIsAuthenticated(true);
+            setError(null);
+
+            return { success: true, user };
+        } catch (error) {
+            console.error('Google login error:', error);
+            setError('Google login failed');
+            return { 
+                success: false, 
+                error: error.response?.data?.message || 'Google login failed' 
+            };
+        }
+    };
+
     const login = async (email, password) => {
         try {
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
@@ -92,9 +134,6 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-// Optional: Call logout endpoint if you have one
-// await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/logout`);
-            
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
             localStorage.removeItem('userEmail');
@@ -165,7 +204,8 @@ export const AuthProvider = ({ children }) => {
             logout,
             register,
             updateProfile,
-            checkAuth
+            checkAuth,
+            googleLogin
         }}>
             {children}
         </AuthContext.Provider>

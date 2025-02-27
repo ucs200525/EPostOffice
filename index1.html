@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address Input</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #manualInput { display: none; }
+        input { width: 100%; padding: 8px; margin: 5px 0; }
+        .suggestions { border: 1px solid #ccc; max-height: 150px; overflow-y: auto; background: white; position: absolute; width: 100%; }
+        .suggestion-item { padding: 8px; cursor: pointer; }
+        .suggestion-item:hover { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+
+    <button id="pickFromMap">Pick from Map</button>
+    <button id="enterManually">Enter Manually</button>
+
+    <!-- Manual Input Form -->
+    <div id="manualInput">
+        <input type="text" id="street" placeholder="Street">
+        <div style="position: relative;">
+            <input type="text" id="city" placeholder="City">
+            <div id="cityList" class="suggestions"></div>
+        </div>
+        <div style="position: relative;">
+            <input type="text" id="state" placeholder="State">
+            <div id="stateList" class="suggestions"></div>
+        </div>
+        <div style="position: relative;">
+            <input type="text" id="country" placeholder="Country">
+            <div id="countryList" class="suggestions"></div>
+        </div>
+        <input type="text" id="pincode" placeholder="Pincode">
+    </div>
+
+    <script>
+        // Show manual input fields
+        $("#enterManually").click(function() {
+            $("#manualInput").show();
+        });
+
+        // Autocomplete function
+        function autocomplete(inputId, listId, type) {
+            $("#" + inputId).on("input", function() {
+                let query = $(this).val();
+                if (query.length < 2) return;
+                
+                $.getJSON(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&addressdetails=1`, function(data) {
+                    let suggestions = "";
+                    data.forEach(item => {
+                        let value = item.address[type] || item.display_name;
+                        suggestions += `<div class="suggestion-item" data-value="${value}">${value}</div>`;
+                    });
+                    $("#" + listId).html(suggestions).show();
+                });
+            });
+
+            $(document).on("click", "#" + listId + " .suggestion-item", function() {
+                $("#" + inputId).val($(this).data("value"));
+                $("#" + listId).hide();
+            });
+
+            $(document).click(function(e) {
+                if (!$(e.target).closest("#" + listId).length) $("#" + listId).hide();
+            });
+        }
+
+        // Apply autocomplete
+        autocomplete("city", "cityList", "city");
+        autocomplete("state", "stateList", "state");
+        autocomplete("country", "countryList", "country");
+    </script>
+
+</body>
+</html>

@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../config/firebase';
 
 const AuthContext = createContext(null);
 
@@ -8,7 +10,8 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [token, setToken] = useState(localStorage.getItem('token') || ''); // Add token state
+    const [token, setToken] = useState(localStorage.getItem('token') || '');
+    const [rememberMe, setRememberMe] = useState(localStorage.getItem('rememberMe') === 'true');
 
     useEffect(() => {
         // Check if token exists in local storage
@@ -48,7 +51,7 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    const login = async (email, password) => {
+    const login = async (email, password, remember = false) => {
         try {
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
                 email,
@@ -61,9 +64,16 @@ export const AuthProvider = ({ children }) => {
                 throw new Error('Invalid user data received');
             }
 
-            // Store auth data
-            localStorage.setItem('token', token);
-            localStorage.setItem('userRole', user.role);
+            // Store auth data based on remember me preference
+            if (remember) {
+                localStorage.setItem('token', token);
+                localStorage.setItem('userRole', user.role);
+                localStorage.setItem('rememberMe', 'true');
+            } else {
+                sessionStorage.setItem('token', token);
+                sessionStorage.setItem('userRole', user.role);
+                localStorage.removeItem('rememberMe');
+            }
             
             // Update context state
             setUser(user);
@@ -88,9 +98,57 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('rememberMe');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('userRole');
         setIsAuthenticated(false);
         setUser(null);
-        // Add any other cleanup needed
+        setRememberMe(false);
+    };
+
+    const googleLogin = async () => {
+        try {
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const { user: googleUser } = result;
+
+            // Send Google user data to backend for verification/registration
+            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google-login`, {
+                email: googleUser.email,
+                name: googleUser.displayName,
+                googleId: googleUser.uid
+            });
+
+            const { token, user } = response.data;
+
+            if (!user || !user.role) {
+                throw new Error('Invalid user data received');
+            }
+
+            // Store auth data
+            localStorage.setItem('token', token);
+            localStorage.setItem('userRole', user.role);
+            
+            // Update context state
+            setUser(user);
+            setRole(user.role);
+            setIsAuthenticated(true);
+
+            return {
+                success: true,
+                user: user,
+                role: user.role
+            };
+        } catch (error) {
+            console.error('Google login error:', error);
+            return { 
+                success: false,
+                error: 'Google login failed',
+                user: null,
+                role: null
+            };
+        }
     };
 
     const register = async (userData) => {
@@ -116,6 +174,7 @@ export const AuthProvider = ({ children }) => {
             logout,
             register,
             token,
+            googleLogin,
         }}>
             {children}
         </AuthContext.Provider>

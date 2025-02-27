@@ -24,6 +24,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/customer/authRoutes'));
+app.use('/api/auth', require('./routes/customer/googleAuthRoutes'));
 app.use('/api/customer', require('./routes/customer/customerRoutes'));
 app.use('/api/feedback', require('./routes/customer/feedbackRoutes'));
 app.use('/api/orders', require('./routes/orders/orderRoutes'));

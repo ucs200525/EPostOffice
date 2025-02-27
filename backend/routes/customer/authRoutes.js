@@ -2,7 +2,15 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../../models/customer/Customer');
 const logger = require('../../utils/logger');
+const admin = require('firebase-admin');
 const router = express.Router();
+
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault()
+  });
+}
 
 const JWT = process.env.JWT_SECRET || '4278730a297bd11c81de9d180300a0762b72ab2db17c1957bd7e92f4d23a8bf86a31abb506d1801449add58ebf2af3d2c0cb64fabb2059443cf44eafe8701f96b41ac7142d1928330e93c059a7d5c81bb5fc6721d183207bb5fc6721d183207bb4a2f0949417940082eef9a8c036a906d10448160b265e9bfa55499d58d1ca52bbfadf4b7c08bacff361045e5ac0ae5f30a0b9f6695bc2e5e2a701bc07bafa0ba2737de080dd826ffc08c983a48251073a82f7986216aec2bab7946cff20e2e7841b92e591bcaa12410d85c564de2b40b5f8499d6a471431b826757d029170d217149193e71858ac4c6bbf11221d4b75b0f92cd867a154e6a9a22a026a3a7e470700e65bd128da2b7c209e6b4c4358d1c422b63ffe2fd3e1a4c84ce2ba03f80d1b45feaf5d60754a';
 
@@ -142,6 +150,50 @@ router.get('/profile', async (req, res) => {
     res.status(500).json({
       message: 'Server error',
       error: error.message || 'An unknown error occurred'
+    });
+  }
+});
+
+// Google authentication route
+router.post('/google', async (req, res) => {
+  try {
+    const { email, displayName, photoURL, uid } = req.body;
+
+    // Find or create user
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name: displayName,
+        email,
+        password: uid, // Using Firebase UID as password
+        role: 'customer',
+        photoURL
+      });
+      logger.info(`New user registered via Google: ${email}`);
+    }
+
+    const token = jwt.sign({ id: user._id, role: user.role }, JWT, { expiresIn: '1h' });
+    logger.info(`User logged in via Google: ${email}`);
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        address: user.address,
+        walletBalance: user.walletBalance,
+        phone: user.phone
+      }
+    });
+  } catch (error) {
+    logger.error(`Google authentication error: ${error.message}`);
+    res.status(500).json({ 
+      success: false,
+      message: 'Google authentication failed',
+      error: error.message 
     });
   }
 });
