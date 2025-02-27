@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from './styles/Login.module.css';
+import { FaGoogle } from 'react-icons/fa';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -197,15 +198,20 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
 
+          <div className={styles.divider}>
+            <span>or</span>
+          </div>
+
           <button
             type="button"
-            className={styles.googleButton}
             onClick={handleGoogleLogin}
+            className={`${styles.button} ${styles.googleButton}`}
             disabled={loading}
           >
-            <img src="/google-icon.svg" alt="Google" className={styles.googleIcon} />
+            <i className="fa-brands fa-google"></i>
             Sign in with Google
           </button>
+          
         </form>
 
         <div className={styles.registerPrompt}>

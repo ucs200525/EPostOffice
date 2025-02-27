@@ -1,173 +1,125 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Form, Button, Row, Col, Alert, Spinner } from 'react-bootstrap';
+import { Container, Alert, Spinner, Row, Col, Card, Form, Button } from 'react-bootstrap';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import './styles/Settings.css';
-import { useDarkMode } from '../../context/DarkModeContext';
-import { Tabs } from 'antd';
-import ManageAddresses from './Settings/ManageAddresses';
 import ManagePickupLocation from './Settings/ManagePickupLocation';
-// import 'antd/dist/antd.css'; // Add this line for antd styles
-
-const { TabPane } = Tabs;
 
 const Settings = () => {
-    const { isDarkMode, toggleDarkMode } = useDarkMode();
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        notifications: false,
-        language: 'en',
-        darkMode: false,
+    const { user } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [showAlert, setShowAlert] = useState({ show: false, variant: 'success', message: '' });
+    const [profile, setProfile] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || ''
+    });
+    const [notifications, setNotifications] = useState({
+        emailNotifications: true,
+        smsNotifications: true,
+        orderUpdates: true,
+        promotionalEmails: false
+    });
+    const [password, setPassword] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
 
-    const [loading, setLoading] = useState(true);
-    const [showAlert, setShowAlert] = useState({ show: false, variant: 'success', message: '' });
-    const [errors, setErrors] = useState({});
-
-    useEffect(() => {
-        fetchUserData();
-        // Sync dark mode state with form data
-        setFormData(prev => ({
-            ...prev,
-            darkMode: isDarkMode
-        }));
-    }, [isDarkMode]);
-
-    const fetchUserData = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/settings`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            
-            const userData = response.data;
-            setFormData(prev => ({
-                ...prev,
-                firstName: userData.firstName || '',
-                lastName: userData.lastName || '',
-                email: userData.email || '',
-                phone: userData.phone || '',
-                notifications: userData.notifications || false,
-                language: userData.language || 'en',
-                darkMode: userData.darkMode || false
-            }));
-        } catch (error) {
-            setShowAlert({
-                show: true,
-                variant: 'danger',
-                message: 'Error loading user data. Please try again.'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const validateForm = () => {
-        const newErrors = {};
-        
-        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-        if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-            newErrors.email = 'Invalid email address';
-        }
-        if (formData.phone && !formData.phone.match(/^\+?[\d\s-]{10,}$/)) {
-            newErrors.phone = 'Invalid phone number';
-        }
-        
-        // Password validation
-        if (formData.newPassword) {
-            if (formData.newPassword.length < 8) {
-                newErrors.newPassword = 'Password must be at least 8 characters';
-            }
-            if (formData.newPassword !== formData.confirmPassword) {
-                newErrors.confirmPassword = 'Passwords do not match';
-            }
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        const newValue = type === 'checkbox' ? checked : value;
-        
-        if (name === 'darkMode') {
-            toggleDarkMode(); // Use context's toggle function
-        }
-        
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: newValue
-        }));
-
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: null }));
-        }
-    };
-
-    const applyDarkMode = (isDark) => {
-        if (isDark) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
-        localStorage.setItem('darkMode', isDark);
-    };
-
-    const applyLanguage = (lang) => {
-        localStorage.setItem('language', lang);
-        // Implement language change logic here
-        // You might want to use i18n library for proper implementation
-    };
-
-    const handleSubmit = async (e) => {
+    const handleProfileUpdate = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
-
         setLoading(true);
         try {
-            const response = await axios.put(
-                `${process.env.REACT_APP_BACKEND_URL}/api/user/settings`,
+            await axios.put(
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/profile`,
+                profile,
                 {
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: formData.email,
-                    phone: formData.phone,
-                    notifications: formData.notifications,
-                    language: formData.language,
-                    darkMode: formData.darkMode
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 }
             );
-
-            if (response.data.success) {
-                setShowAlert({
-                    show: true,
-                    variant: 'success',
-                    message: 'Settings saved successfully!'
-                });
-            }
+            setShowAlert({
+                show: true,
+                variant: 'success',
+                message: 'Profile updated successfully!'
+            });
         } catch (error) {
             setShowAlert({
                 show: true,
                 variant: 'danger',
-                message: error.response?.data?.message || 'Error saving settings. Please try again.'
+                message: 'Failed to update profile. Please try again.'
             });
         } finally {
             setLoading(false);
-            setTimeout(() => setShowAlert(prev => ({ ...prev, show: false })), 3000);
+        }
+    };
+
+    const handleNotificationUpdate = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await axios.put(
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/notifications`,
+                notifications,
+                {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                }
+            );
+            setShowAlert({
+                show: true,
+                variant: 'success',
+                message: 'Notification preferences updated successfully!'
+            });
+        } catch (error) {
+            setShowAlert({
+                show: true,
+                variant: 'danger',
+                message: 'Failed to update notification preferences. Please try again.'
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePasswordChange = async (e) => {
+        e.preventDefault();
+        if (password.newPassword !== password.confirmPassword) {
+            setShowAlert({
+                show: true,
+                variant: 'danger',
+                message: 'New passwords do not match!'
+            });
+            return;
+        }
+        setLoading(true);
+        try {
+            await axios.put(
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/password`,
+                {
+                    currentPassword: password.currentPassword,
+                    newPassword: password.newPassword
+                },
+                {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                }
+            );
+            setShowAlert({
+                show: true,
+                variant: 'success',
+                message: 'Password updated successfully!'
+            });
+            setPassword({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+        } catch (error) {
+            setShowAlert({
+                show: true,
+                variant: 'danger',
+                message: 'Failed to update password. Please check your current password and try again.'
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -189,16 +141,137 @@ const Settings = () => {
                 </Alert>
             )}
             
-            <h2 className="mb-4">Settings</h2>
-            
-            <Tabs defaultActiveKey="1">
-                <TabPane tab="Delivery Addresses" key="1">
-                    <ManageAddresses />
-                </TabPane>
-                <TabPane tab="Pickup Location" key="2">
-                    <ManagePickupLocation />
-                </TabPane>
-            </Tabs>
+            <Row>
+                <Col md={6} className="mb-4">
+                    <Card>
+                        <Card.Header as="h5">Profile Information</Card.Header>
+                        <Card.Body>
+                            <Form onSubmit={handleProfileUpdate}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Name</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        value={profile.name}
+                                        onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Email</Form.Label>
+                                    <Form.Control
+                                        type="email"
+                                        value={profile.email}
+                                        onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Phone</Form.Label>
+                                    <Form.Control
+                                        type="tel"
+                                        value={profile.phone}
+                                        onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Button type="submit" variant="primary">Update Profile</Button>
+                            </Form>
+                        </Card.Body>
+                    </Card>
+                </Col>
+
+                <Col md={6} className="mb-4">
+                    <Card>
+                        <Card.Header as="h5">Notification Preferences</Card.Header>
+                        <Card.Body>
+                            <Form onSubmit={handleNotificationUpdate}>
+                                <Form.Check
+                                    type="switch"
+                                    id="email-notifications"
+                                    label="Email Notifications"
+                                    checked={notifications.emailNotifications}
+                                    onChange={(e) => setNotifications(prev => ({ ...prev, emailNotifications: e.target.checked }))}
+                                    className="mb-3"
+                                />
+                                <Form.Check
+                                    type="switch"
+                                    id="sms-notifications"
+                                    label="SMS Notifications"
+                                    checked={notifications.smsNotifications}
+                                    onChange={(e) => setNotifications(prev => ({ ...prev, smsNotifications: e.target.checked }))}
+                                    className="mb-3"
+                                />
+                                <Form.Check
+                                    type="switch"
+                                    id="order-updates"
+                                    label="Order Updates"
+                                    checked={notifications.orderUpdates}
+                                    onChange={(e) => setNotifications(prev => ({ ...prev, orderUpdates: e.target.checked }))}
+                                    className="mb-3"
+                                />
+                                <Form.Check
+                                    type="switch"
+                                    id="promotional-emails"
+                                    label="Promotional Emails"
+                                    checked={notifications.promotionalEmails}
+                                    onChange={(e) => setNotifications(prev => ({ ...prev, promotionalEmails: e.target.checked }))}
+                                    className="mb-3"
+                                />
+                                <Button type="submit" variant="primary">Save Preferences</Button>
+                            </Form>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+
+            <Row>
+                <Col md={6} className="mb-4">
+                    <Card>
+                        <Card.Header as="h5">Change Password</Card.Header>
+                        <Card.Body>
+                            <Form onSubmit={handlePasswordChange}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Current Password</Form.Label>
+                                    <Form.Control
+                                        type="password"
+                                        value={password.currentPassword}
+                                        onChange={(e) => setPassword(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>New Password</Form.Label>
+                                    <Form.Control
+                                        type="password"
+                                        value={password.newPassword}
+                                        onChange={(e) => setPassword(prev => ({ ...prev, newPassword: e.target.value }))}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Confirm New Password</Form.Label>
+                                    <Form.Control
+                                        type="password"
+                                        value={password.confirmPassword}
+                                        onChange={(e) => setPassword(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Button type="submit" variant="primary">Change Password</Button>
+                            </Form>
+                        </Card.Body>
+                    </Card>
+                </Col>
+
+                <Col md={6} className="mb-4">
+                    <Card>
+                        <Card.Header as="h5">Pickup Location Settings</Card.Header>
+                        <Card.Body>
+                            <ManagePickupLocation />
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
         </Container>
     );
 };

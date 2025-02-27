@@ -83,10 +83,87 @@ const ManagePickupLocation = () => {
         </button>
       )}
 
-      {/* Form Modal */}
       {showForm && (
         <div className={styles.modal}>
-          {/* Form implementation similar to ManageAddresses but for single location */}
+          <div className={styles.modalContent}>
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <div className={styles.formGroup}>
+                <label htmlFor="label">Location Label</label>
+                <input
+                  type="text"
+                  id="label"
+                  value={locationForm.label}
+                  onChange={(e) => setLocationForm(prev => ({ ...prev, label: e.target.value }))}
+                  placeholder="Home, Office, etc."
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="streetAddress">Street Address</label>
+                <input
+                  type="text"
+                  id="streetAddress"
+                  value={locationForm.streetAddress}
+                  onChange={(e) => setLocationForm(prev => ({ ...prev, streetAddress: e.target.value }))}
+                  placeholder="Enter street address"
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="city">City</label>
+                <input
+                  type="text"
+                  id="city"
+                  value={locationForm.city}
+                  onChange={(e) => setLocationForm(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="Enter city"
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="state">State</label>
+                <input
+                  type="text"
+                  id="state"
+                  value={locationForm.state}
+                  onChange={(e) => setLocationForm(prev => ({ ...prev, state: e.target.value }))}
+                  placeholder="Enter state"
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="postalCode">Postal Code</label>
+                <input
+                  type="text"
+                  id="postalCode"
+                  value={locationForm.postalCode}
+                  onChange={(e) => setLocationForm(prev => ({ ...prev, postalCode: e.target.value }))}
+                  placeholder="Enter postal code"
+                  required
+                />
+              </div>
+              <div className={styles.buttonGroup}>
+                <button type="submit" className={styles.saveButton}>Save Location</button>
+                <button
+                  type="button"
+                  className={styles.cancelButton}
+                  onClick={() => {
+                    setShowForm(false);
+                    setLocationForm({
+                      label: '',
+                      streetAddress: '',
+                      city: '',
+                      state: '',
+                      postalCode: '',
+                      country: 'India'
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
