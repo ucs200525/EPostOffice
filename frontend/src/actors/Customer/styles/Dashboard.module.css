@@ -1,0 +1,285 @@
+.financial-dashboard {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.security-info {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.security-icon {
+    font-size: 1.5rem;
+    color: #28a745;
+    margin-right: 1rem;
+}
+
+.security-message {
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.account-summary {
+    margin-bottom: 2rem;
+}
+
+.balance-card {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.balance-card:hover {
+    transform: translateY(-5px);
+}
+
+.balance-icon {
+    font-size: 2.5rem;
+    margin-right: 1.5rem;
+}
+
+.balance-info h3 {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.balance-info h2 {
+    margin: 0.5rem 0 0;
+    font-size: 2rem;
+}
+
+.money-order-section {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.money-order-form {
+    margin-top: 1.5rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.submit-button {
+    background-color: #6366f1;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 1.5rem;
+    width: 100%;
+}
+
+.submit-button:hover {
+    background-color: #4f46e5;
+}
+
+.savings-schemes {
+    margin-bottom: 2rem;
+}
+
+.schemes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.scheme-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.scheme-card:hover {
+    transform: translateY(-5px);
+}
+
+.scheme-details {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.scheme-details li {
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+}
+
+.scheme-button {
+    background-color: #6366f1;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%;
+}
+
+.scheme-button:hover {
+    background-color: #4f46e5;
+}
+
+.recent-transactions {
+    margin-bottom: 2rem;
+}
+
+.transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.transaction-item {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.transaction-icon {
+    font-size: 1.25rem;
+    color: #6366f1;
+    margin-right: 1rem;
+}
+
+.transaction-details {
+    flex: 1;
+}
+
+.transaction-details h4 {
+    margin: 0;
+    color: #1f2937;
+}
+
+.transaction-details p {
+    margin: 0.25rem 0;
+    color: #4b5563;
+    font-size: 0.9rem;
+}
+
+.transaction-time {
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.transaction-amount {
+    font-weight: 600;
+}
+
+.transaction-amount.debit {
+    color: #ef4444;
+}
+
+.transaction-amount.credit {
+    color: #10b981;
+}
+
+.feedback-section {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-form {
+    margin-top: 1.5rem;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.star {
+    font-size: 1.5rem;
+    color: #d1d5db;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.star.active {
+    color: #fbbf24;
+}
+
+.error-message {
+    color: #ef4444;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.success-message {
+    color: #10b981;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: #6366f1;
+    font-size: 1.1rem;
+}

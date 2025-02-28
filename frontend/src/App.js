@@ -1,48 +1,51 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
-// import AdminSidebar from './pages/Admin/components/AdminSidebar';
+// import AdminSidebar from './actors/Admin/components/AdminSidebar';
 
-import EPostOfficeNavbar from './components/Navbar';
-import Home from './pages/Customer/Home';
+import EPostOfficeNavbar from './actors/Customer/components/Navbar';
+import Home from './actors/Customer/pages/Home';
 import { AuthProvider } from './context/AuthContext';
 import { ShipmentProvider } from './context/ShipmentContext';
 import { DarkModeProvider } from './context/DarkModeContext';
 
-import './pages/Admin/styles/AdminLayout.module.css';
-import './pages/Customer/styles/DarkMode.css';
+import './actors/Admin/styles/AdminLayout.module.css';
+import './actors/Customer/styles/DarkMode.css';
 
-import Login from './pages/Customer/Login';
-import Register from './pages/Customer/Register';
-import PostalCalculator from './pages/Customer/PostalCalculator';
-import Payment from './pages/Customer/Payment';
-import SendPackage from './pages/Customer/SendPackage';
-import Shipments from './pages/Customer/Shipments';
-import TrackTrace from './pages/Customer/TrackTrace';
-import Settings from './pages/Customer/Settings';
-import Dashboard from './pages/Customer/Dashboard';
-import DomesticShipping from './pages/Customer/DomesticShipping';
-import InternationalShipping from './pages/Customer/InternationalShipping';
+import Login from './actors/Customer/pages/Login';
+import Register from './actors/Customer/pages/Register';
+import PostalCalculator from './actors/Customer/pages/PostalCalculator';
+import Payment from './actors/Customer/pages/Payment';
+import SendPackage from './actors/Customer/pages/SendPackage';
+import Shipments from './actors/Customer/pages/Shipments';
+import TrackTrace from './actors/Customer/pages/TrackTrace';
+import Settings from './actors/Customer/Settings/Settings';
+import Dashboard from './actors/Customer/pages/Dashboard';
+import DomesticShipping from './actors/Customer/pages/DomesticShipping';
+import InternationalShipping from './actors/Customer/pages/InternationalShipping';
+import HelpCenter from './actors/Customer/pages/HelpCenter';
+import ContactSupport from './actors/Customer/pages/ContactSupport';
+import TermsOfService from './actors/Customer/pages/TermsOfService';
 
-import StaffDashboard from './pages/Staff/pages/Dashboard';
-import CustomerManagement from './pages/Staff/pages/CustomerManagement';
-import StaffProfile from './pages/Staff/pages/Profile';
-import CustomerDetails from './pages/Staff/components/CustomerDetails';
-import CustomerVerification from './pages/Staff/components/CustomerVerification';
-import CustomerModification from './pages/Staff/components/CustomerModification';
-import AdminDashboard from './pages/Admin/pages/Dashboard';
-import StaffManagement from './pages/Admin/pages/StaffManagement';
-import ServicesManagement from './pages/Admin/pages/ServicesManagement';
-import Reports from './pages/Admin/pages/Reports';
-import AdminSettings from './pages/Admin/pages/AdminSettings';
-import Orders from './pages/Staff/pages/Orders';
-import Deliveries from './pages/Staff/pages/Deliveries';
-import ReportsStaff from './pages/Staff/pages/Reports';
-import AdminLogin from './pages/Admin/pages/AdminLogin';
-import StaffLogin from './pages/Staff/pages/StaffLogin';
-import StaffNavbar from './pages/Staff/components/StaffNavbar';
-import StaffRegistration from './pages/Admin/components/StaffRegistration';
-import AdminNavbar from './pages/Admin/components/AdminNavbar';  // Change this line
+import StaffDashboard from './actors/Staff/pages/Dashboard';
+import CustomerManagement from './actors/Staff/pages/CustomerManagement';
+import StaffProfile from './actors/Staff/pages/Profile';
+import CustomerDetails from './actors/Staff/components/CustomerDetails';
+import CustomerVerification from './actors/Staff/components/CustomerVerification';
+import CustomerModification from './actors/Staff/components/CustomerModification';
+import AdminDashboard from './actors/Admin/pages/Dashboard';
+import StaffManagement from './actors/Admin/pages/StaffManagement';
+import ServicesManagement from './actors/Admin/pages/ServicesManagement';
+import Reports from './actors/Admin/pages/Reports';
+import AdminSettings from './actors/Admin/pages/AdminSettings';
+import Orders from './actors/Staff/pages/Orders';
+import Deliveries from './actors/Staff/pages/Deliveries';
+import ReportsStaff from './actors/Staff/pages/Reports';
+import AdminLogin from './actors/Admin/pages/AdminLogin';
+import StaffLogin from './actors/Staff/pages/StaffLogin';
+import StaffNavbar from './actors/Staff/components/StaffNavbar';
+import StaffRegistration from './actors/Admin/components/StaffRegistration';
+import AdminNavbar from './actors/Admin/components/AdminNavbar';  // Change this line
 
 const App = () => {
   return (
@@ -98,6 +101,9 @@ const CustomerLayout = () => {
             <Route path="/track" element={<TrackTrace />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/help" element={<HelpCenter />} />
+            <Route path="/contact" element={<ContactSupport />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
