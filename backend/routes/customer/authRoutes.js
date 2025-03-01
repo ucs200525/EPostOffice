@@ -13,7 +13,7 @@ if (!admin.apps.length) {
   });
 }
 
-const JWT = process.env.JWT_SECRET || '4278730a297bd11c81de9d180300a0762b72ab2db17c1957bd7e92f4d23a8bf86a31abb506d1801449add58ebf2af3d2c0cb64fabb2059443cf44eafe8701f96b41ac7142d1928330e93c059a7d5c81bb5fc6721d183207bb5fc6721d183207bb4a2f0949417940082eef9a8c036a906d10448160b265e9bfa55499d58d1ca52bbfadf4b7c08bacff361045e5ac0ae5f30a0b9f6695bc2e5e2a701bc07bafa0ba2737de080dd826ffc08c983a48251073a82f7986216aec2bab7946cff20e2e7841b92e591bcaa12410d85c564de2b40b5f8499d6a471431b826757d029170d217149193e71858ac4c6bbf11221d4b75b0f92cd867a154e6a9a22a026a3a7e470700e65bd128da2b7c209e6b4c4358d1c422b63ffe2fd3e1a4c84ce2ba03f80d1b45feaf5d60754a';
+const JWT = process.env.JWT_SECRET;
 
 // Register route
 router.post('/register', async (req, res) => {
@@ -123,6 +123,7 @@ router.post('/login', async (req, res) => {
     res.status(200).json({
       success: true,
       token,
+      redirectToAddress,
       user: {
         id: user._id,
         name: user.name,
@@ -140,19 +141,42 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Profile route
-router.get('/profile', async (req, res) => {
+// Profile route - updated to handle customer ID parameter
+router.get('/:customerId/profile', async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
+    const { customerId } = req.params;
+
+    // Validate if the requesting user has permission to access this profile
+    if (req.user && req.user.id !== customerId) {
+      logger.warn(`Unauthorized profile access attempt: ${req.user.id} tried to access ${customerId}`);
+      return res.status(403).json({ message: 'Unauthorized access' });
+    }
+
+    const user = await User.findById(customerId)
       .select('-password')
       .populate('pickupAddress')
       .populate('deliveryAddresses')
       .populate('orders');
+
     if (!user) {
-      logger.warn(`User not found: ID ${req.user.id}`);
+      logger.warn(`User not found: ID ${customerId}`);
       return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json(user);
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        walletBalance: user.walletBalance,
+        pickupAddress: user.pickupAddress,
+        deliveryAddresses: user.deliveryAddresses,
+        orders: user.orders
+      }
+    });
   } catch (error) {
     logger.error(`Profile fetch error: ${error.message}`);
     res.status(500).json({

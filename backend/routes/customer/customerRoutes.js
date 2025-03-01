@@ -1,376 +1,242 @@
 const express = require('express');
 const router = express.Router();
 const Customer = require('../../models/customer/Customer');
-const Transaction = require('../../models/customer/Transaction');
-const axios = require('axios');
+const Order = require('../../models/order/Order');
 const { getCoordinates } = require('../../utils/geocoding');
 
-// Get Wallet Balance for Customer
-router.get('/:customerId/wallet', async (req, res) => {
+// Get customer profile
+router.get('/profile', async (req, res) => {
     try {
-        const { customerId } = req.params;
-
-        const customer = await Customer.findById(customerId);
+        const customer = await Customer.findById(req.user.id)
+            .select('-password')
+            .populate('orders');
+        
         if (!customer) {
-            return res.status(404).json({ message: 'Customer not found' });
-        }
-
-        res.status(200).json({
-            customerId,
-            balance :  customer.walletBalance
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching wallet balance', error: error.message });
-    }
-});
-
-// Get transaction history for a customer
-router.get('/:customerId/transactions', async (req, res) => {
-    try {
-        const { customerId } = req.params;
-
-        const customer = await Customer.findById(customerId);
-        if (!customer) {
-            return res.status(404).json({ message: 'Customer not found' });
-        }
-
-        const transactions = await Transaction.find({ customerId });
-
-        if (!transactions.length) {
-            return res.status(404).json({ message: 'No transactions found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Customer not found'
+            });
         }
 
         res.json({
             success: true,
-            transactions
+            data: customer
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 });
 
-// Add a transaction (credit or debit)
-router.post('/add-transaction', async (req, res) => {
+// Update customer profile
+router.put('/profile', async (req, res) => {
     try {
-        const { customerId, type, amount, description } = req.body;
+        const { name, phone } = req.body;
+        const customer = await Customer.findByIdAndUpdate(
+            req.user.id,
+            { name, phone },
+            { new: true, runValidators: true }
+        ).select('-password');
 
-        const customer = await Customer.findById(customerId);
+        res.json({
+            success: true,
+            data: customer
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// Get addresses by type
+router.get('/addresses/:type', async (req, res) => {
+    try {
+        const { type } = req.params;
+        const customer = await Customer.findById(req.user.id);
+
         if (!customer) {
-            return res.status(404).json({ message: 'Customer not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Customer not found'
+            });
         }
 
-        const newTransaction = new Transaction({
-            customerId,
-            type,
-            amount,
-            description
-        });
+        const addresses = type === 'pickup' 
+            ? { address: customer.pickupAddress }
+            : { addresses: customer.deliveryAddresses };
 
-        await newTransaction.save();
+        res.json({
+            success: true,
+            ...addresses
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// Add new address
+router.post('/addresses', async (req, res) => {
+    try {
+        const { label, streetAddress, city, state, postalCode, country, type } = req.body;
+        const customer = await Customer.findById(req.user.id);
+
+        const coordinates = await getCoordinates(
+            `${streetAddress}, ${city}, ${state}, ${postalCode}, ${country}`
+        );
+
+        const newAddress = {
+            label,
+            streetAddress,
+            city,
+            state,
+            postalCode,
+            country,
+            coordinates,
+            type
+        };
+
+        if (type === 'pickup') {
+            customer.pickupAddress = newAddress;
+        } else {
+            newAddress.isDefault = !customer.deliveryAddresses.length;
+            customer.deliveryAddresses.push(newAddress);
+        }
+
+        await customer.save();
 
         res.status(201).json({
             success: true,
-            message: 'Transaction added successfully',
-            transaction: newTransaction
+            message: 'Address added successfully',
+            address: newAddress
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
-// Top Up Wallet
-router.post('/topup', async (req, res) => {
-    try {
-        const { customerId, amount, paymentDetails } = req.body;
-
-        const customer = await Customer.findById(customerId);
-        if (!customer) {
-            return res.status(404).json({ message: 'Customer not found' });
-        }
-
-        const newTransaction = new Transaction({
-            customerId,
-            type: 'credit',
-            amount,
-            description: 'Wallet top-up'
+        res.status(500).json({
+            success: false,
+            message: error.message
         });
-
-        await newTransaction.save();
-        await customer.updateWalletBalance(amount);
-
-        res.status(200).json({
-            message: 'Wallet topped up successfully',
-            newBalance: customer.walletBalance
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error processing top-up', error: error.message });
     }
-});
-
-// Pay for Order
-router.post('/payForOrder', async (req, res) => {
-    try {
-        const { customerId, orderId, amount } = req.body;
-
-        const customer = await Customer.findById(customerId);
-        if (!customer) {
-            return res.status(404).json({ message: 'Customer not found' });
-        }
-
-        if (customer.walletBalance < amount) {
-            return res.status(400).json({ message: 'Insufficient funds' });
-        }
-
-        const newTransaction = new Transaction({
-            customerId,
-            type: 'debit',
-            amount,
-            description: `Payment for order ${orderId}`
-        });
-
-        await newTransaction.save();
-        await customer.updateWalletBalance(-amount);
-
-        res.status(200).json({
-            message: 'Payment successful',
-            newBalance: customer.walletBalance
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error processing payment', error: error.message });
-    }
-});
-
-// Get addresses - Updated with better error handling and logging
-router.get('/addresses', async (req, res) => {
-  try {
-    // Get userId from query params or auth token
-    const userId = req.query.userId || (req.user && req.user.id);
-
-    if (!userId) {
-      console.log('No userId provided');
-      return res.status(400).json({ 
-        success: false, 
-        message: 'User ID is required' 
-      });
-    }
-
-    console.log('Looking for customer with ID:', userId);
-
-    const customer = await Customer.findById(userId);
-    
-    if (!customer) {
-      console.log('Customer not found for ID:', userId);
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Customer not found' 
-      });
-    }
-
-    console.log('Found customer:', customer.name);
-    console.log('Addresses:', customer.addresses);
-
-    res.json({ 
-      success: true, 
-      addresses: customer.addresses || [] 
-    });
-  } catch (error) {
-    console.error('Error in /addresses route:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message,
-      details: 'Error fetching addresses'
-    });
-  }
-});
-
-// Add new address with improved geocoding
-router.post('/addresses', async (req, res) => {
-  try {
-    const { label, streetAddress, city, state, postalCode, country } = req.body;
-    const userId = req.query.userId;
-
-    // Validate required fields
-    if (!userId || !label || !streetAddress || !city || !state || !postalCode || !country) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required',
-        receivedFields: { label, streetAddress, city, state, postalCode, country }
-      });
-    }
-
-    const customer = await Customer.findById(userId);
-    if (!customer) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Customer not found' 
-      });
-    }
-
-    // Get coordinates with properly formatted address data
-    const fullAddress = `${streetAddress}, ${city}, ${state}, ${postalCode}, ${country}`;
-    const coordinates = await getCoordinates(fullAddress);
-
-    console.log('Geocoding result:', coordinates);
-
-    const newAddress = {
-      label,
-      streetAddress,
-      city,
-      state,
-      postalCode,
-      country,
-      coordinates,
-      isDefault: customer.addresses.length === 0
-    };
-
-    customer.addresses.push(newAddress);
-    await customer.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Address added successfully',
-      address: newAddress,
-      geocodingDetails: {
-        isApproximate: coordinates.isApproximate,
-        source: coordinates.source,
-        displayName: coordinates.displayName
-      }
-    });
-  } catch (error) {
-    console.error('Address creation error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message,
-      details: error.stack
-    });
-  }
 });
 
 // Update address
 router.put('/addresses/:addressId', async (req, res) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.query.userId;
-    const { label, streetAddress, city, state, postalCode, country, isDefault } = req.body;
+    try {
+        const { addressId } = req.params;
+        const { label, streetAddress, city, state, postalCode, country, isDefault, type } = req.body;
+        const customer = await Customer.findById(req.user.id);
 
-    console.log('Update address request:', { addressId, userId, body: req.body });
+        const coordinates = await getCoordinates(
+            `${streetAddress}, ${city}, ${state}, ${postalCode}, ${country}`
+        );
 
-    const customer = await Customer.findById(userId);
-    if (!customer) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Customer not found' 
-      });
+        if (type === 'pickup') {
+            customer.pickupAddress = {
+                label, streetAddress, city, state, postalCode, country, coordinates, type
+            };
+        } else {
+            const addressIndex = customer.deliveryAddresses.findIndex(
+                addr => addr._id.toString() === addressId
+            );
+
+            if (addressIndex === -1) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Address not found'
+                });
+            }
+
+            if (isDefault) {
+                customer.deliveryAddresses.forEach(addr => addr.isDefault = false);
+            }
+
+            customer.deliveryAddresses[addressIndex] = {
+                ...customer.deliveryAddresses[addressIndex].toObject(),
+                label, streetAddress, city, state, postalCode, country, coordinates, isDefault, type
+            };
+        }
+
+        await customer.save();
+
+        res.json({
+            success: true,
+            message: 'Address updated successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
-
-    // Find the address in the customer's addresses array
-    const addressIndex = customer.addresses.findIndex(
-      addr => addr._id.toString() === addressId
-    );
-
-    if (addressIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Address not found'
-      });
-    }
-
-    // Format address for geocoding
-    const fullAddress = `${streetAddress}, ${city}, ${state}, ${postalCode}, ${country}`;
-    const coordinates = await getCoordinates(fullAddress);
-    console.log('Received coordinates:', coordinates);
-
-    // Update the address
-    const updatedAddress = {
-      label,
-      streetAddress,
-      city,
-      state,
-      postalCode,
-      country,
-      coordinates: coordinates || customer.addresses[addressIndex].coordinates,
-      isDefault: isDefault || customer.addresses[addressIndex].isDefault
-    };
-
-    // If this address is being set as default, remove default from other addresses
-    if (isDefault) {
-      customer.addresses.forEach(addr => {
-        addr.isDefault = false;
-      });
-    }
-
-    // Update the address in the array
-    customer.addresses[addressIndex] = {
-      ...customer.addresses[addressIndex].toObject(),
-      ...updatedAddress
-    };
-
-    await customer.save();
-    console.log('Address updated successfully');
-
-    res.json({
-      success: true,
-      message: 'Address updated successfully',
-      address: customer.addresses[addressIndex]
-    });
-  } catch (error) {
-    console.error('Update address error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-      details: 'Error updating address'
-    });
-  }
 });
 
 // Delete address
-router.delete('/addresses/:addressId', async (req, res) => {
-  try {
-    const { addressId } = req.params;
-    const userId = req.query.userId;
+router.delete('/addresses/:type/:addressId', async (req, res) => {
+    try {
+        const { type, addressId } = req.params;
+        const customer = await Customer.findById(req.user.id);
 
-    console.log('Delete address request:', { addressId, userId });
+        if (type === 'pickup') {
+            customer.pickupAddress = null;
+        } else {
+            customer.deliveryAddresses = customer.deliveryAddresses.filter(
+                addr => addr._id.toString() !== addressId
+            );
+        }
 
-    const customer = await Customer.findById(userId);
-    if (!customer) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Customer not found' 
-      });
+        await customer.save();
+
+        res.json({
+            success: true,
+            message: 'Address deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
+});
 
-    // Find the address in the customer's addresses array
-    const addressIndex = customer.addresses.findIndex(
-      addr => addr._id.toString() === addressId
-    );
-
-    if (addressIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Address not found'
-      });
+// Get wallet balance
+router.get('/wallet', async (req, res) => {
+    try {
+        const customer = await Customer.findById(req.user.id).select('walletBalance');
+        res.json({
+            success: true,
+            balance: customer.walletBalance
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
+});
 
-    // Remove the address from the array
-    customer.addresses.splice(addressIndex, 1);
+// Top up wallet
+router.post('/wallet/topup', async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const customer = await Customer.findById(req.user.id);
+        await customer.updateWalletBalance(amount);
 
-    await customer.save();
-    console.log('Address deleted successfully');
-
-    res.json({
-      success: true,
-      message: 'Address deleted successfully'
-    });
-  } catch (error) {
-    console.error('Delete address error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-      details: 'Error deleting address'
-    });
-  }
+        res.json({
+            success: true,
+            message: 'Wallet topped up successfully',
+            newBalance: customer.walletBalance
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
 });
 
 module.exports = router;

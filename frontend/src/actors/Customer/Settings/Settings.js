@@ -3,7 +3,7 @@ import { Container, Alert, Spinner, Row, Col, Card, Form, Button } from 'react-b
 import { useAuth } from '../../../context/AuthContext';
 import axios from 'axios';
 import './styles/Settings.css';
-import ManagePickupLocation from './ManagePickupLocation';
+import AddressManager from './AddressManager';
 
 const Settings = () => {
     const { user } = useAuth();
@@ -26,12 +26,34 @@ const Settings = () => {
         confirmPassword: ''
     });
 
+    // Fetch user profile data
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await axios.get(
+                    `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user.id}/profile`,
+                    {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    }
+                );
+                setProfile(response.data);
+            } catch (error) {
+                setShowAlert({
+                    show: true,
+                    variant: 'danger',
+                    message: 'Failed to fetch profile data'
+                });
+            }
+        };
+        if (user?.id) fetchUserData();
+    }, [user]);
+
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
             await axios.put(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/profile`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/profile/${user.id}`,
                 profile,
                 {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -46,7 +68,7 @@ const Settings = () => {
             setShowAlert({
                 show: true,
                 variant: 'danger',
-                message: 'Failed to update profile. Please try again.'
+                message: error.response?.data?.message || 'Failed to update profile'
             });
         } finally {
             setLoading(false);
@@ -227,6 +249,26 @@ const Settings = () => {
             <Row>
                 <Col md={6} className="mb-4">
                     <Card>
+                        <Card.Header as="h5">Pickup Address</Card.Header>
+                        <Card.Body>
+                            <AddressManager userId={user?.id} type="pickup" />
+                        </Card.Body>
+                    </Card>
+                </Col>
+
+                <Col md={6} className="mb-4">
+                    <Card>
+                        <Card.Header as="h5">Delivery Addresses</Card.Header>
+                        <Card.Body>
+                            <AddressManager userId={user?.id} type="delivery" />
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+
+            <Row>
+                <Col md={6} className="mb-4">
+                    <Card>
                         <Card.Header as="h5">Change Password</Card.Header>
                         <Card.Body>
                             <Form onSubmit={handlePasswordChange}>
@@ -259,15 +301,6 @@ const Settings = () => {
                                 </Form.Group>
                                 <Button type="submit" variant="primary">Change Password</Button>
                             </Form>
-                        </Card.Body>
-                    </Card>
-                </Col>
-
-                <Col md={6} className="mb-4">
-                    <Card>
-                        <Card.Header as="h5">Pickup Location Settings</Card.Header>
-                        <Card.Body>
-                            <ManagePickupLocation />
                         </Card.Body>
                     </Card>
                 </Col>

@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [rememberMe, setRememberMe] = useState(localStorage.getItem('rememberMe') === 'true');
-
+    const [error, setError] = useState(null);
     useEffect(() => {
         // Check if token exists in local storage
         if (token) {
@@ -59,9 +59,9 @@ export const AuthProvider = ({ children }) => {
             });
     
             const { token, user } = response.data;
-    
+           
             if (!user || !user.role) {
-                throw new Error('Invalid user data received');
+                throw new Error('Invalid response from server');
             }
     
             // Store auth data based on remember me preference
@@ -74,11 +74,10 @@ export const AuthProvider = ({ children }) => {
                 sessionStorage.setItem('userRole', user.role);
                 localStorage.removeItem('rememberMe');
             }
-            
-            // Update context state
+    
             setUser(user);
-            setRole(user.role);
             setIsAuthenticated(true);
+            setError(null);
     
             // Check if customer has address when role is customer
             if (user.role === 'customer') {
@@ -107,9 +106,9 @@ export const AuthProvider = ({ children }) => {
                 redirectToAddress: false
             };
         } catch (error) {
-            console.error('Login error:', error);
+            setError(error.response?.data?.message || 'Login failed');
             return { 
-                success: false,
+                success: false, 
                 error: error.response?.data?.message || 'Login failed',
                 user: null,
                 role: null
@@ -132,29 +131,27 @@ export const AuthProvider = ({ children }) => {
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
-            const { user: googleUser } = result;
+            const { user: firebaseUser } = result;
     
-            // Send Google user data to backend for verification/registration
+            // Send Firebase user data to backend for authentication
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google-login`, {
-                email: googleUser.email,
-                name: googleUser.displayName,
-                googleId: googleUser.uid
+                email: firebaseUser.email,
+                name: firebaseUser.displayName,
+                googleId: firebaseUser.uid
             });
     
             const { token, user } = response.data;
     
-            if (!user || !user.role) {
-                throw new Error('Invalid user data received');
+            if (!token || !user) {
+                throw new Error('Invalid response from server');
             }
     
-            // Store auth data
             localStorage.setItem('token', token);
             localStorage.setItem('userRole', user.role);
-            
-            // Update context state
+    
             setUser(user);
-            setRole(user.role);
             setIsAuthenticated(true);
+            setError(null);
     
             // Check if customer has address when role is customer
             if (user.role === 'customer') {
@@ -183,10 +180,10 @@ export const AuthProvider = ({ children }) => {
                 redirectToAddress: false
             };
         } catch (error) {
-            console.error('Google login error:', error);
+            setError('Google login failed');
             return { 
-                success: false,
-                error: 'Google login failed',
+                success: false, 
+                error: error.response?.data?.message || 'Google login failed',
                 user: null,
                 role: null
             };

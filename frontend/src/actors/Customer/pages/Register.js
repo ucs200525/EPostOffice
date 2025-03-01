@@ -134,13 +134,9 @@ const Register = () => {
           message: 'Registration with Google successful!',
           type: 'success'
         });
-        if (result.redirectToAddress) {
-          navigate('/customer/address/add');
-        } else {
-          navigate('/login', {
-            state: { message: 'Registration successful! Please login.' },
-          });
-        }
+        navigate('/login', {
+          state: { message: 'Registration successful! Please login.' },
+        });
       }
     } catch (err) {
       setNotification({

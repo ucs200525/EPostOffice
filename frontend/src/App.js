@@ -26,6 +26,7 @@ import InternationalShipping from './actors/Customer/pages/InternationalShipping
 import HelpCenter from './actors/Customer/pages/HelpCenter';
 import ContactSupport from './actors/Customer/pages/ContactSupport';
 import TermsOfService from './actors/Customer/pages/TermsOfService';
+import CustomerAddress from './actors/Customer/pages/CustomerAddress';
 
 import StaffDashboard from './actors/Staff/pages/Dashboard';
 import CustomerManagement from './actors/Staff/pages/CustomerManagement';
@@ -57,6 +58,7 @@ const App = () => {
               {/* Public routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/staff/login" element={<StaffLogin />} />
+              <Route path="/login" element={<Login />} />
               
               {/* Protected routes with layouts */}
               <Route path="/admin/*" element={
@@ -104,6 +106,11 @@ const CustomerLayout = () => {
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/contact" element={<ContactSupport />} />
             <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/customer/address" element={
+              <PrivateRoute>
+                <CustomerAddress />
+              </PrivateRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

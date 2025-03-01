@@ -1,5 +1,45 @@
 const mongoose = require('mongoose');
 
+const addressSchema = new mongoose.Schema({
+    label: {
+        type: String,
+        required: true
+    },
+    streetAddress: {
+        type: String,
+        required: true
+    },
+    city: {
+        type: String,
+        required: true
+    },
+    state: {
+        type: String,
+        required: true
+    },
+    postalCode: {
+        type: String,
+        required: true
+    },
+    country: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        enum: ['pickup', 'delivery'],
+        required: true
+    },
+    isDefault: {
+        type: Boolean,
+        default: false
+    },
+    coordinates: {
+        lat: Number,
+        lng: Number
+    }
+});
+
 const customerSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -14,44 +54,33 @@ const customerSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    walletBalance: {
-        type: Number,
-        default: 0
+    phone: {
+        type: String,
+        required: true
     },
-    phone: String,
     role: {
         type: String,
         default: 'customer'
     },
-    pickupAddress: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Address'
+    walletBalance: {
+        type: Number,
+        default: 0
     },
-    deliveryAddresses: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Address'
-    }],
+    pickupAddress: addressSchema,
+    deliveryAddresses: [addressSchema],
     orders: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order'
-    }]
-}, { 
-    timestamps: true,
-    toJSON: { 
-        virtuals: true,
-        transform: function(doc, ret) {
-            ret.id = ret._id;
-            delete ret._id;
-            delete ret.__v;
-            return ret;
-        }
-    }
+    }],
+}, {
+    timestamps: true
 });
 
-// Method to update wallet balance
+// Add method to update wallet balance
 customerSchema.methods.updateWalletBalance = async function(amount) {
     this.walletBalance += amount;
     return this.save();
 };
 
+// Remove the separate Address model import and just export the Customer model
 module.exports = mongoose.model('Customer', customerSchema);

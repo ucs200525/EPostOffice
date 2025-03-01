@@ -6,11 +6,7 @@ const addressSchema = new mongoose.Schema({
         ref: 'Customer',
         required: true
     },
-    label: {
-        type: String,
-        required: true
-    },
-    streetAddress: {
+    street: {
         type: String,
         required: true
     },
@@ -30,30 +26,17 @@ const addressSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    coordinates: {
-        latitude: Number,
-        longitude: Number
-    },
-    isDefault: {
+    isPickupAddress: {
         type: Boolean,
         default: false
     },
-    addressType: {
-        type: String,
-        enum: ['pickup', 'delivery'],
-        required: true
-    }
-}, {
-    timestamps: true,
-    toJSON: {
-        virtuals: true,
-        transform: function(doc, ret) {
-            ret.id = ret._id;
-            delete ret._id;
-            delete ret.__v;
-            return ret;
-        }
+    coordinates: {
+        lat: Number,
+        lng: Number
     }
 });
 
-module.exports = mongoose.model('Address', addressSchema);
+const Address = mongoose.model('Address', addressSchema);
+
+module.exports = Address;
+module.exports.addressSchema = addressSchema;
