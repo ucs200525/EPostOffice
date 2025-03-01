@@ -57,13 +57,13 @@ export const AuthProvider = ({ children }) => {
                 email,
                 password
             });
-
+    
             const { token, user } = response.data;
-
+    
             if (!user || !user.role) {
                 throw new Error('Invalid user data received');
             }
-
+    
             // Store auth data based on remember me preference
             if (remember) {
                 localStorage.setItem('token', token);
@@ -79,11 +79,32 @@ export const AuthProvider = ({ children }) => {
             setUser(user);
             setRole(user.role);
             setIsAuthenticated(true);
-
+    
+            // Check if customer has address when role is customer
+            if (user.role === 'customer') {
+                try {
+                    const addressResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (!addressResponse.data || addressResponse.data.length === 0) {
+                        return {
+                            success: true,
+                            user: user,
+                            role: user.role,
+                            redirectToAddress: true
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error checking addresses:', error);
+                }
+            }
+    
             return {
                 success: true,
                 user: user,
-                role: user.role
+                role: user.role,
+                redirectToAddress: false
             };
         } catch (error) {
             console.error('Login error:', error);
@@ -95,7 +116,7 @@ export const AuthProvider = ({ children }) => {
             };
         }
     };
-
+    
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userRole');
@@ -106,26 +127,26 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setRememberMe(false);
     };
-
+    
     const googleLogin = async () => {
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
             const { user: googleUser } = result;
-
+    
             // Send Google user data to backend for verification/registration
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google-login`, {
                 email: googleUser.email,
                 name: googleUser.displayName,
                 googleId: googleUser.uid
             });
-
+    
             const { token, user } = response.data;
-
+    
             if (!user || !user.role) {
                 throw new Error('Invalid user data received');
             }
-
+    
             // Store auth data
             localStorage.setItem('token', token);
             localStorage.setItem('userRole', user.role);
@@ -134,11 +155,32 @@ export const AuthProvider = ({ children }) => {
             setUser(user);
             setRole(user.role);
             setIsAuthenticated(true);
-
+    
+            // Check if customer has address when role is customer
+            if (user.role === 'customer') {
+                try {
+                    const addressResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (!addressResponse.data || addressResponse.data.length === 0) {
+                        return {
+                            success: true,
+                            user: user,
+                            role: user.role,
+                            redirectToAddress: true
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error checking addresses:', error);
+                }
+            }
+    
             return {
                 success: true,
                 user: user,
-                role: user.role
+                role: user.role,
+                redirectToAddress: false
             };
         } catch (error) {
             console.error('Google login error:', error);
@@ -150,20 +192,40 @@ export const AuthProvider = ({ children }) => {
             };
         }
     };
-
     const register = async (userData) => {
         try {
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, userData);
-            setIsAuthenticated(true);
-            return { success: true };
+            const { token, user } = response.data;
+    
+            if (!user || !user.role) {
+                throw new Error('Invalid user data received');
+            }
+    
+            // Store auth data
+            // localStorage.setItem('token', token);
+            // localStorage.setItem('userRole', user.role);
+            
+            // Update context state
+            setUser(user);
+            setRole(user.role);
+            // setIsAuthenticated(true);
+    
+            return {
+                success: true,
+                user: user,
+                role: user.role
+            };
         } catch (error) {
+            console.error('Registration error:', error);
             return { 
                 success: false, 
-                error: error.response?.data?.message || 'Registration failed' 
+                error: error.response?.data?.message || 'Registration failed',
+                user: null,
+                role: null
             };
         }
     };
-
+    
     return (
         <AuthContext.Provider value={{
             isAuthenticated,

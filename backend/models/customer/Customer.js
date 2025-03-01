@@ -18,45 +18,18 @@ const customerSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    address: String,
     phone: String,
     role: {
         type: String,
         default: 'customer'
     },
-    addresses: [{
-        label: {
-            type: String,
-            required: true
-        },
-        streetAddress: {
-            type: String,
-            required: true
-        },
-        city: {
-            type: String,
-            required: true
-        },
-        state: {
-            type: String,
-            required: true
-        },
-        postalCode: {
-            type: String,
-            required: true
-        },
-        country: {
-            type: String,
-            required: true
-        },
-        coordinates: {
-            latitude: Number,
-            longitude: Number
-        },
-        isDefault: {
-            type: Boolean,
-            default: false
-        }
+    pickupAddress: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Address'
+    },
+    deliveryAddresses: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Address'
     }],
     orders: [{
         type: mongoose.Schema.Types.ObjectId,

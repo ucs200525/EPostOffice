@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import styles from '../styles/Register.module.css';
-import LocationPicker from '../../../components/LocationPicker';
-import Toast from '../../../components/Toast';
+// import LocationPicker from '../../../components/LocationPicker';
+import Notification from '../../../components/Notification';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -21,10 +21,8 @@ const Register = () => {
     role: 'customer',
   });
   const [errors, setErrors] = useState({});
-  const [manualAddress, setManualAddress] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showToast, setShowToast] = useState({ show: false, message: '', type: '' });
-  const [showMap, setShowMap] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   const validateForm = () => {
     const newErrors = {};
@@ -41,7 +39,6 @@ const Register = () => {
     if (!formData.phone.match(/^\d{10}$/)) {
       newErrors.phone = 'Invalid phone number format';
     }
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
     return newErrors;
   };
 
@@ -78,27 +75,7 @@ const Register = () => {
     return null;
   };
 
-  const handleLocationClick = () => {
-    setShowMap(!showMap);
-    if (!showMap) {
-      setManualAddress(false);
-    }
-  };
-
-  const handleLocationSelect = ({ address, coordinates }) => {
-    setFormData((prev) => ({
-      ...prev,
-      address: address,
-      coordinates: coordinates,
-    }));
-    setShowMap(false);
-    setManualAddress(false);
-  };
-
-  const handleAddressChange = async (e) => {
-    const address = e.target.value;
-    setFormData((prev) => ({ ...prev, address }));
-  };
+  // Removed map-related functions
 
   const getPasswordStrength = (password) => {
     const checks = {
@@ -127,19 +104,19 @@ const Register = () => {
         role: 'customer',
       });
       if (result.success) {
-        setShowToast({
+        setNotification({
           show: true,
-          message: 'Registration successful!',
+          message: 'Registration successful! Please proceed to login.',
           type: 'success'
         });
-        navigate('/', {
-          state: { message: 'Registration successful! Please login.' },
-        });
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       }
     } catch (err) {
-      setShowToast({
+      setNotification({
         show: true,
-        message: 'Registration failed',
+        message: 'Registration failed. Please try again.',
         type: 'error'
       });
       setErrors({ submit: 'Registration failed. Please try again.' });
@@ -152,17 +129,21 @@ const Register = () => {
     try {
       const result = await googleLogin();
       if (result.success) {
-        setShowToast({
+        setNotification({
           show: true,
           message: 'Registration with Google successful!',
           type: 'success'
         });
-        navigate('/login', {
-          state: { message: 'Registration successful! Please login.' },
-        });
+        if (result.redirectToAddress) {
+          navigate('/customer/address/add');
+        } else {
+          navigate('/login', {
+            state: { message: 'Registration successful! Please login.' },
+          });
+        }
       }
     } catch (err) {
-      setShowToast({
+      setNotification({
         show: true,
         message: 'Registration with Google failed',
         type: 'error'
@@ -275,46 +256,7 @@ const Register = () => {
             </div>
           </div>
 
-          <div className={`${styles.formGroup} ${styles.locationGroup}`}>
-            <div className={styles.inputGroup}>
-              <FaMapMarkerAlt className={styles.icon} />
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={manualAddress ? handleAddressChange : undefined}
-                placeholder="Address"
-                readOnly={!manualAddress}
-                className={`${styles.input} ${formData.address ? 'has-value' : ''}`}
-              />
-            </div>
-            
-            <div className={styles.locationActions}>
-              <button
-                type="button"
-                className={styles.locationToggle}
-                onClick={handleLocationClick}
-              >
-                {showMap ? 'Hide Map' : 'Pick Location on Map'}
-              </button>
-            </div>
-
-            {showMap && (
-              <div className={`${styles.mapContainer} fade-in`}>
-                <LocationPicker onLocationSelect={handleLocationSelect} />
-                <button 
-                  type="button" 
-                  className={styles.closeMap}
-                  onClick={() => setShowMap(false)}
-                >
-                  &times;
-                </button>
-              </div>
-            )}
-            
-            {errors.address && (
-              <span className={styles.errorText}>{errors.address}</span>
-            )}
-          </div>
+          {/* Address input temporarily removed */}
 
           <div className={styles.formGroup}>
             <div className={styles.inputGroup}>
@@ -342,7 +284,13 @@ const Register = () => {
           </p>
         </div>
       </div>
-      <Toast {...showToast} onClose={() => setShowToast({ show: false })} />
+      {notification.show && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification({ show: false })}
+        />
+      )}
     </div>
   );
 };

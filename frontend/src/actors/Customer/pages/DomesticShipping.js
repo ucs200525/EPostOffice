@@ -20,29 +20,48 @@ const DomesticShipping = () => {
   // Fetch saved delivery addresses
   useEffect(() => {
     const fetchAddresses = async () => {
+      if (!user?._id) {
+        console.error('User ID is not available');
+        return;
+      }
+
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses?userId=${user._id}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
           {
+            params: { userId: user._id },
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
           }
         );
-        setAddresses(response.data.addresses || []);
+
+        if (response.data.success === false) {
+          console.error('Failed to fetch addresses:', response.data.message);
+          alert('Unable to fetch delivery addresses. Please try again.');
+          return;
+        }
+
+        const addressList = response.data.addresses || [];
+        setAddresses(addressList);
         
+        if (addressList.length === 0) {
+          alert('You need to add at least one delivery address before proceeding with shipping.');
+          navigate('/customer/addresses');
+          return;
+        }
+
         // Set default delivery address if exists
-        const defaultAddress = response.data.addresses.find(addr => addr.isDefault);
+        const defaultAddress = addressList.find(addr => addr.isDefault);
         if (defaultAddress) {
           setSelectedDeliveryAddress(defaultAddress._id);
         }
       } catch (error) {
-        console.error('Failed to fetch addresses:', error);
+        console.error('Failed to fetch addresses:', error.response?.data?.message || error.message);
+        alert('Error fetching addresses. Please try again later.');
       }
     };
 
-    if (user?._id) {
-      fetchAddresses();
-    }
-  }, [user]);
+    fetchAddresses();
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

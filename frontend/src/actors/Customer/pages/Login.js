@@ -4,6 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from '../styles/Login.module.css';
 import { FaGoogle } from 'react-icons/fa';
+import Notification from '../../../components/Notification';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,10 +15,10 @@ const Login = () => {
     password: '',
     rememberMe: false
   });
-  const [error, setError] = useState('');
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  const [error, setError] = useState('');
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
     setFormData(prev => ({
@@ -25,7 +26,6 @@ const Login = () => {
       [name]: name === 'rememberMe' ? checked : value
     }));
   };
-
   const handleRoleButtonClick = (role) => {
     switch(role) {
       case 'admin':
@@ -39,11 +39,10 @@ const Login = () => {
         break;
     }
   };
-
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
-
+  
     try {
       const result = await googleLogin();
       if (result.success && result.user && result.user.role) {
@@ -66,17 +65,20 @@ const Login = () => {
       }
     } catch (err) {
       console.error('Google login error:', err);
-      setError('Google login failed. Please try again.');
+      setNotification({
+        show: true,
+        message: 'Google login failed. Please try again.',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
+  
     try {
       const result = await login(formData.email, formData.password, formData.rememberMe);
       console.log('Login result:', result);
@@ -84,34 +86,44 @@ const Login = () => {
       if (result.success && result.user && result.user.role) {
         // Handle navigation based on user role
         const userRole = result.user.role.toLowerCase();
-        switch(userRole) {
-          case 'admin':
-            console.log('Redirecting to admin dashboard');
-            navigate('/admin');
-            break;
-          case 'staff':
-            console.log('Redirecting to staff dashboard');
-            navigate('/staff');
-            break;
-          case 'customer':
-            console.log('Redirecting to customer dashboard');
-            navigate('/');
-            break;
-          default:
-            console.log('Unknown role, redirecting to home');
-            navigate('/');
-        }
+        setNotification({
+          show: true,
+          message: `Welcome back! Redirecting to ${userRole} dashboard...`,
+          type: 'success'
+        });
+        setTimeout(() => {
+          switch(userRole) {
+            case 'admin':
+              navigate('/admin');
+              break;
+            case 'staff':
+              navigate('/staff');
+              break;
+            case 'customer':
+              navigate('/');
+              break;
+            default:
+              navigate('/');
+          }
+        }, 1500);
       } else {
-        setError(result.error || 'Invalid credentials');
+        setNotification({
+        show: true,
+        message: result.error || 'Invalid credentials',
+        type: 'error'
+      });
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Login failed. Please try again.');
+      setNotification({
+        show: true,
+        message: 'Login failed. Please try again.',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className={styles.container}>
       <div className={styles.card}>
@@ -119,7 +131,7 @@ const Login = () => {
           <h2>Welcome Back</h2>
           <p>Sign in to access your account</p>
         </div>
-
+  
         <div className={styles.roleButtons}>
           <button 
             className={`${styles.roleButton} ${styles.roleButtonStaff}`}
@@ -134,9 +146,15 @@ const Login = () => {
             Admin Login
           </button>
         </div>
-
-        {error && <div className={styles.errorMessage}>{error}</div>}
-
+  
+        {notification.show && (
+          <Notification
+            message={notification.message}
+            type={notification.type}
+            onClose={() => setNotification({ show: false })}
+          />
+        )}
+  
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <div className={styles.inputGroup}>
@@ -152,7 +170,7 @@ const Login = () => {
               />
             </div>
           </div>
-
+  
           <div className={styles.formGroup}>
             <div className={styles.inputGroup}>
               <FaLock className={styles.inputIcon} />
@@ -174,7 +192,7 @@ const Login = () => {
               </button>
             </div>
           </div>
-
+  
           <div className={styles.formOptions}>
             <label className={styles.rememberMe}>
               <input
@@ -189,7 +207,7 @@ const Login = () => {
               Forgot Password?
             </a>
           </div>
-
+  
           <button 
             type="submit" 
             className={styles.button} 
@@ -197,11 +215,11 @@ const Login = () => {
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
-
+  
           <div className={styles.divider}>
             <span>or</span>
           </div>
-
+  
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -213,7 +231,7 @@ const Login = () => {
           </button>
           
         </form>
-
+  
         <div className={styles.registerPrompt}>
           <p>Don't have an account? <a href="/register">Register now</a></p>
         </div>

@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../../models/customer/Customer');
+const Address = require('../../models/Address');
 const logger = require('../../utils/logger');
 const admin = require('firebase-admin');
 const router = express.Router();
@@ -17,7 +18,7 @@ const JWT = process.env.JWT_SECRET || '4278730a297bd11c81de9d180300a0762b72ab2db
 // Register route
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone, address, coordinates } = req.body;
+    const { name, email, password, phone } = req.body;
     const role = 'customer';
 
     const userExists = await User.findOne({ email });
@@ -26,25 +27,15 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    let resolvedCoordinates = coordinates;
-    if (!coordinates) {
-      if (!address) {
-        return res.status(400).json({ message: 'Address is required if coordinates are not provided' });
-      }
-      resolvedCoordinates = await geocodeService.getCoordinatesFromAddress(address);
-      if (!resolvedCoordinates) {
-        return res.status(400).json({ message: 'Failed to fetch coordinates from address. Please provide a valid address.' });
-      }
-    }
-
     const user = await User.create({
       name,
       email,
       password,
       phone,
       role,
-      address,
-      coordinates: resolvedCoordinates
+      walletBalance: 0,
+      pickupAddress: null,
+      deliveryAddresses: []
     });
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT, { expiresIn: '1h' });
@@ -58,7 +49,10 @@ router.post('/register', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        coordinates: user.coordinates
+        phone: user.phone,
+        walletBalance: user.walletBalance,
+        pickupAddress: user.pickupAddress,
+        deliveryAddresses: user.deliveryAddresses
       }
     });
   } catch (error) {
@@ -74,7 +68,10 @@ router.post('/register', async (req, res) => {
 // Verify route
 router.get('/verify', async (req, res) => {
   try {
-    const customer = await User.findById(req.user.id).select('-password');
+    const customer = await User.findById(req.user.id)
+      .select('-password')
+      .populate('pickupAddress')
+      .populate('deliveryAddresses');
     if (!customer) {
       return res.status(404).json({ 
         success: false, 
@@ -103,7 +100,9 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email })
+      .populate('pickupAddress')
+      .populate('deliveryAddresses');
     if (!user) {
       logger.warn(`Login attempt with non-existent email: ${email}`);
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -117,6 +116,10 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, JWT, { expiresIn: '1h' });
     logger.info(`User logged in successfully: ${email}`);
 
+    // Check if customer has any addresses
+    const redirectToAddress = user.role === 'customer' && 
+      (!user.pickupAddress && (!user.deliveryAddresses || user.deliveryAddresses.length === 0));
+
     res.status(200).json({
       success: true,
       token,
@@ -125,9 +128,10 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        address: user.address,
+        phone: user.phone,
         walletBalance: user.walletBalance,
-        phone: user.phone
+        pickupAddress: user.pickupAddress,
+        deliveryAddresses: user.deliveryAddresses
       }
     });
   } catch (error) {
@@ -139,7 +143,11 @@ router.post('/login', async (req, res) => {
 // Profile route
 router.get('/profile', async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id)
+      .select('-password')
+      .populate('pickupAddress')
+      .populate('deliveryAddresses')
+      .populate('orders');
     if (!user) {
       logger.warn(`User not found: ID ${req.user.id}`);
       return res.status(404).json({ message: 'User not found' });
@@ -167,7 +175,10 @@ router.post('/google', async (req, res) => {
         email,
         password: uid, // Using Firebase UID as password
         role: 'customer',
-        photoURL
+        photoURL,
+        walletBalance: 0,
+        pickupAddress: null,
+        deliveryAddresses: []
       });
       logger.info(`New user registered via Google: ${email}`);
     }
@@ -183,9 +194,10 @@ router.post('/google', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        address: user.address,
+        phone: user.phone,
         walletBalance: user.walletBalance,
-        phone: user.phone
+        pickupAddress: user.pickupAddress,
+        deliveryAddresses: user.deliveryAddresses
       }
     });
   } catch (error) {
