@@ -115,7 +115,7 @@ router.post('/login', async (req, res) => {
  * @desc    Get Admin Profile
  * @access  Admin only
  */
-router.get('/profile', auth, async (req, res) => {
+router.get('/profile', async (req, res) => {
     try {
         const admin = await Customer.findById(req.user.id).select('-password');
         if (!admin) return res.status(404).json({ message: 'Admin not found' });
@@ -130,7 +130,7 @@ router.get('/profile', auth, async (req, res) => {
  * @desc    Update Admin Profile
  * @access  Admin only
  */
-router.put('/profile', auth, async (req, res) => {
+router.put('/profile', async (req, res) => {
     try {
         const { username, email } = req.body;
         const admin = await Customer.findById(req.user.id);
@@ -148,7 +148,7 @@ router.put('/profile', auth, async (req, res) => {
  * @desc    Change Admin Password
  * @access  Admin only
  */
-router.put('/change-password', auth, async (req, res) => {
+router.put('/change-password', async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
         const admin = await Customer.findById(req.user.id);
@@ -168,7 +168,7 @@ router.put('/change-password', auth, async (req, res) => {
  * @desc    Get Dashboard Stats
  * @access  Admin only
  */
-router.get('/dashboard-stats', auth, async (req, res) => {
+router.get('/dashboard-stats', async (req, res) => {
     try {
         const totalStaff = await Staff.countDocuments();
         const activeCustomers = await Customer.countDocuments({ status: 'active' });
@@ -184,7 +184,7 @@ router.get('/dashboard-stats', auth, async (req, res) => {
  * @desc    Register Staff Member
  * @access  Admin only
  */
-router.post('/register-staff', auth, async (req, res) => {
+router.post('/register-staff', async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
         const existingStaff = await Staff.findOne({ email });

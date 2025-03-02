@@ -1,9 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Alert, Spinner, Row, Col, Card, Form, Button } from 'react-bootstrap';
+import { Container, Spinner, Row, Col } from 'react-bootstrap';
+import Notification from '../../../components/Notification';
 import { useAuth } from '../../../context/AuthContext';
 import axios from 'axios';
-import './styles/Settings.css';
+import styles from './styles/Settings.module.css';
 import AddressManager from './AddressManager';
+
+const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
+  if (!address) return null;
+  
+  return (
+    <div className={styles.addressCard}>
+      <div className={styles.addressHeader}>
+        <h4 className={styles.addressLabel}>{address.label || type}</h4>
+        {address.isDefault && <span className={styles.defaultBadge}>Default</span>}
+      </div>
+      <div className={styles.addressDetails}>
+        <p className={styles.addressLine}>{address.streetAddress}</p>
+        <p className={styles.addressLine}>
+          {address.city}, {address.state} {address.postalCode}
+        </p>
+        <p className={styles.addressLine}>{address.country}</p>
+      </div>
+      <div className={styles.addressActions}>
+        <button 
+          onClick={() => onEdit(address)} 
+          className={`${styles.button} ${styles.secondaryButton}`}
+        >
+          Edit
+        </button>
+        <button 
+          onClick={() => onDelete(address._id)} 
+          className={`${styles.button} ${styles.deleteButton}`}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const Settings = () => {
     const { user } = useAuth();
@@ -25,18 +60,22 @@ const Settings = () => {
         newPassword: '',
         confirmPassword: ''
     });
+    const [addresses, setAddresses] = useState({
+        pickup: null,
+        delivery: []
+    });
 
     // Fetch user profile data
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 const response = await axios.get(
-                    `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user.id}/profile`,
+                    `${process.env.REACT_APP_BACKEND_URL}/api/customer/settings`,
                     {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                     }
                 );
-                setProfile(response.data);
+                setProfile(response.data.data);
             } catch (error) {
                 setShowAlert({
                     show: true,
@@ -48,12 +87,130 @@ const Settings = () => {
         if (user?.id) fetchUserData();
     }, [user]);
 
+    const fetchAddresses = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            const response = await axios.get(
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.data.success) {
+                setAddresses({
+                    pickup: response.data.data.pickup,
+                    delivery: response.data.data.delivery
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching addresses:', error);
+            setShowAlert({
+                show: true,
+                variant: 'danger',
+                message: 'Failed to fetch addresses: ' + (error.response?.data?.message || error.message)
+            });
+        }
+    };
+
+    const handleAddAddress = async (type) => {
+        try {
+            const response = await axios.post(
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
+                { type },
+                {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                }
+            );
+            if (response.data.success) {
+                await fetchAddresses();
+                setShowAlert({
+                    show: true,
+                    variant: 'success',
+                    message: 'Address added successfully'
+                });
+            }
+        } catch (error) {
+            setShowAlert({
+                show: true,
+                variant: 'danger',
+                message: 'Failed to add address'
+            });
+        }
+    };
+
+    const handleEditAddress = async (address) => {
+        try {
+            const response = await axios.put(
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${address._id}`,
+                address,
+                {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                }
+            );
+            if (response.data.success) {
+                await fetchAddresses();
+                setShowAlert({
+                    show: true,
+                    variant: 'success',
+                    message: 'Address updated successfully'
+                });
+            }
+        } catch (error) {
+            setShowAlert({
+                show: true,
+                variant: 'danger',
+                message: 'Failed to update address'
+            });
+        }
+    };
+
+    const handleDeleteAddress = async (addressId) => {
+        if (!window.confirm('Are you sure you want to delete this address?')) return;
+
+        try {
+            const response = await axios.delete(
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${addressId}`,
+                {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                }
+            );
+            if (response.data.success) {
+                await fetchAddresses();
+                setShowAlert({
+                    show: true,
+                    variant: 'success',
+                    message: 'Address deleted successfully'
+                });
+            }
+        } catch (error) {
+            setShowAlert({
+                show: true,
+                variant: 'danger',
+                message: 'Failed to delete address'
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (user?.id) {
+            fetchAddresses();
+        }
+    }, [user]);
+
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
             await axios.put(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/profile/${user.id}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/settings`,
                 profile,
                 {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -147,7 +304,7 @@ const Settings = () => {
 
     if (loading) {
         return (
-            <div className="loading-spinner">
+            <div className={styles.loadingSpinner}>
                 <Spinner animation="border" role="status">
                     <span className="visually-hidden">Loading...</span>
                 </Spinner>
@@ -156,153 +313,208 @@ const Settings = () => {
     }
 
     return (
-        <Container className="settings-container my-4">
+        <Container className={styles.settingsContainer}>
             {showAlert.show && (
-                <Alert variant={showAlert.variant} onClose={() => setShowAlert(prev => ({ ...prev, show: false }))} dismissible>
-                    {showAlert.message}
-                </Alert>
+                <Notification
+                    type={showAlert.variant}
+                    message={showAlert.message}
+                    onClose={() => setShowAlert(prev => ({ ...prev, show: false }))}
+                />
             )}
             
             <Row>
                 <Col md={6} className="mb-4">
-                    <Card>
-                        <Card.Header as="h5">Profile Information</Card.Header>
-                        <Card.Body>
-                            <Form onSubmit={handleProfileUpdate}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Name</Form.Label>
-                                    <Form.Control
+                    <div className={styles.card}>
+                        <div className={styles.cardHeader}>Profile Information</div>
+                        <div className={styles.cardBody}>
+                            <form onSubmit={handleProfileUpdate}>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Name</label>
+                                    <input
+                                        className={styles.formControl}
                                         type="text"
                                         value={profile.name}
                                         onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
                                         required
                                     />
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Email</Form.Label>
-                                    <Form.Control
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Email</label>
+                                    <input
+                                        className={styles.formControl}
                                         type="email"
                                         value={profile.email}
                                         onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
                                         required
                                     />
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Phone</Form.Label>
-                                    <Form.Control
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Phone</label>
+                                    <input
+                                        className={styles.formControl}
                                         type="tel"
                                         value={profile.phone}
                                         onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
                                         required
                                     />
-                                </Form.Group>
-                                <Button type="submit" variant="primary">Update Profile</Button>
-                            </Form>
-                        </Card.Body>
-                    </Card>
+                                </div>
+                                <button type="submit" className={styles.primaryButton}>
+                                    Update Profile
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </Col>
 
                 <Col md={6} className="mb-4">
-                    <Card>
-                        <Card.Header as="h5">Notification Preferences</Card.Header>
-                        <Card.Body>
-                            <Form onSubmit={handleNotificationUpdate}>
-                                <Form.Check
-                                    type="switch"
-                                    id="email-notifications"
-                                    label="Email Notifications"
-                                    checked={notifications.emailNotifications}
-                                    onChange={(e) => setNotifications(prev => ({ ...prev, emailNotifications: e.target.checked }))}
-                                    className="mb-3"
-                                />
-                                <Form.Check
-                                    type="switch"
-                                    id="sms-notifications"
-                                    label="SMS Notifications"
-                                    checked={notifications.smsNotifications}
-                                    onChange={(e) => setNotifications(prev => ({ ...prev, smsNotifications: e.target.checked }))}
-                                    className="mb-3"
-                                />
-                                <Form.Check
-                                    type="switch"
-                                    id="order-updates"
-                                    label="Order Updates"
-                                    checked={notifications.orderUpdates}
-                                    onChange={(e) => setNotifications(prev => ({ ...prev, orderUpdates: e.target.checked }))}
-                                    className="mb-3"
-                                />
-                                <Form.Check
-                                    type="switch"
-                                    id="promotional-emails"
-                                    label="Promotional Emails"
-                                    checked={notifications.promotionalEmails}
-                                    onChange={(e) => setNotifications(prev => ({ ...prev, promotionalEmails: e.target.checked }))}
-                                    className="mb-3"
-                                />
-                                <Button type="submit" variant="primary">Save Preferences</Button>
-                            </Form>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-
-            <Row>
-                <Col md={6} className="mb-4">
-                    <Card>
-                        <Card.Header as="h5">Pickup Address</Card.Header>
-                        <Card.Body>
-                            <AddressManager userId={user?.id} type="pickup" />
-                        </Card.Body>
-                    </Card>
-                </Col>
-
-                <Col md={6} className="mb-4">
-                    <Card>
-                        <Card.Header as="h5">Delivery Addresses</Card.Header>
-                        <Card.Body>
-                            <AddressManager userId={user?.id} type="delivery" />
-                        </Card.Body>
-                    </Card>
+                    <div className={styles.card}>
+                        <div className={styles.cardHeader}>Notification Preferences</div>
+                        <div className={styles.cardBody}>
+                            <form onSubmit={handleNotificationUpdate}>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Email Notifications</label>
+                                    <input
+                                        className={styles.formControl}
+                                        type="checkbox"
+                                        checked={notifications.emailNotifications}
+                                        onChange={(e) => setNotifications(prev => ({ ...prev, emailNotifications: e.target.checked }))}
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>SMS Notifications</label>
+                                    <input
+                                        className={styles.formControl}
+                                        type="checkbox"
+                                        checked={notifications.smsNotifications}
+                                        onChange={(e) => setNotifications(prev => ({ ...prev, smsNotifications: e.target.checked }))}
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Order Updates</label>
+                                    <input
+                                        className={styles.formControl}
+                                        type="checkbox"
+                                        checked={notifications.orderUpdates}
+                                        onChange={(e) => setNotifications(prev => ({ ...prev, orderUpdates: e.target.checked }))}
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Promotional Emails</label>
+                                    <input
+                                        className={styles.formControl}
+                                        type="checkbox"
+                                        checked={notifications.promotionalEmails}
+                                        onChange={(e) => setNotifications(prev => ({ ...prev, promotionalEmails: e.target.checked }))}
+                                    />
+                                </div>
+                                <button type="submit" className={styles.primaryButton}>
+                                    Save Preferences
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </Col>
             </Row>
 
             <Row>
                 <Col md={6} className="mb-4">
-                    <Card>
-                        <Card.Header as="h5">Change Password</Card.Header>
-                        <Card.Body>
-                            <Form onSubmit={handlePasswordChange}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Current Password</Form.Label>
-                                    <Form.Control
+                    <div className={styles.card}>
+                        <div className={styles.cardHeader}>Pickup Address</div>
+                        <div className={styles.cardBody}>
+                            {addresses.pickup ? (
+                                <AddressDisplay
+                                  address={addresses.pickup}
+                                  type="Pickup"
+                                  onEdit={handleEditAddress}
+                                  onDelete={handleDeleteAddress}
+                                />
+                              ) : (
+                                <div className={styles.noAddress}>
+                                  <p>No pickup address set</p>
+                                  <button 
+                                    className={styles.addAddressButton}
+                                    onClick={() => handleAddAddress('pickup')}
+                                  >
+                                    + Add Pickup Address
+                                  </button>
+                                </div>
+                              )}
+                        </div>
+                    </div>
+                </Col>
+
+                <Col md={6} className="mb-4">
+                    <div className={styles.card}>
+                        <div className={styles.cardHeader}>Delivery Addresses</div>
+                        <div className={styles.cardBody}>
+                            {addresses.delivery?.length > 0 ? (
+                                addresses.delivery.map(address => (
+                                  <AddressDisplay
+                                    key={address._id}
+                                    address={address}
+                                    type="Delivery"
+                                    onEdit={handleEditAddress}
+                                    onDelete={handleDeleteAddress}
+                                  />
+                                ))
+                              ) : (
+                                <div className={styles.noAddress}>
+                                  <p>No delivery addresses added</p>
+                                  <button 
+                                    className={styles.addAddressButton}
+                                    onClick={() => handleAddAddress('delivery')}
+                                  >
+                                    + Add Delivery Address
+                                  </button>
+                                </div>
+                              )}
+                        </div>
+                    </div>
+                </Col>
+            </Row>
+
+            <Row>
+                <Col md={6} className="mb-4">
+                    <div className={styles.card}>
+                        <div className={styles.cardHeader}>Change Password</div>
+                        <div className={styles.cardBody}>
+                            <form onSubmit={handlePasswordChange}>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Current Password</label>
+                                    <input
+                                        className={styles.formControl}
                                         type="password"
                                         value={password.currentPassword}
                                         onChange={(e) => setPassword(prev => ({ ...prev, currentPassword: e.target.value }))}
                                         required
                                     />
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>New Password</Form.Label>
-                                    <Form.Control
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>New Password</label>
+                                    <input
+                                        className={styles.formControl}
                                         type="password"
                                         value={password.newPassword}
                                         onChange={(e) => setPassword(prev => ({ ...prev, newPassword: e.target.value }))}
                                         required
                                     />
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Confirm New Password</Form.Label>
-                                    <Form.Control
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Confirm New Password</label>
+                                    <input
+                                        className={styles.formControl}
                                         type="password"
                                         value={password.confirmPassword}
                                         onChange={(e) => setPassword(prev => ({ ...prev, confirmPassword: e.target.value }))}
                                         required
                                     />
-                                </Form.Group>
-                                <Button type="submit" variant="primary">Change Password</Button>
-                            </Form>
-                        </Card.Body>
-                    </Card>
+                                </div>
+                                <button type="submit" className={styles.primaryButton}>
+                                    Change Password
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </Col>
             </Row>
         </Container>

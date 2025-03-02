@@ -16,46 +16,36 @@ const Shipments = () => {
   });
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchShipments = async () => {
+      setLoading(true);
       try {
-        if (!user?._id) {
-          console.log('No user ID available');
-          return;
-        }
-
-        const token = localStorage.getItem('token');
-        console.log('Fetching orders...'); // Debug log
-
         const response = await axios.get(
           `${process.env.REACT_APP_BACKEND_URL}/api/orders/my-orders`,
           {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
           }
         );
-
-        console.log('Orders response:', response.data); // Debug log
-
         if (response.data.success) {
-          setOrders(response.data.data.orders || []);
+          setOrders(response.data.data);
           setStats(response.data.data.stats || {
             active: 0,
             transit: 0,
             completed: 0,
             total: 0
           });
+        } else {
+          setError(response.data.message || 'Failed to fetch shipments');
         }
       } catch (error) {
-        console.error('Error fetching orders:', error);
-        setError('Failed to fetch orders');
+        setError(error.response?.data?.message || 'Failed to fetch shipments');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrders();
+    if (user?.id) {
+      fetchShipments();
+    }
   }, [user]);
 
   const formatAddress = (addressDetails) => {

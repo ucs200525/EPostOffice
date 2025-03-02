@@ -106,7 +106,7 @@ const CustomerLayout = () => {
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/contact" element={<ContactSupport />} />
             <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/customer/address" element={
+            <Route path="/customer/addresses" element={
               <PrivateRoute>
                 <CustomerAddress />
               </PrivateRoute>

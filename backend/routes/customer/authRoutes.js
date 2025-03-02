@@ -1,7 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../../models/customer/Customer');
-const Address = require('../../models/Address');
 const logger = require('../../utils/logger');
 const admin = require('firebase-admin');
 const router = express.Router();
@@ -14,6 +13,9 @@ if (!admin.apps.length) {
 }
 
 const JWT = process.env.JWT_SECRET;
+if (!process.env.JWT_SECRET) {
+  console.log("JWT missing")
+}
 
 // Register route
 router.post('/register', async (req, res) => {
@@ -65,28 +67,50 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Verify route
+// Verify route - doesn't require auth middleware
 router.get('/verify', async (req, res) => {
   try {
-    const customer = await User.findById(req.user.id)
-      .select('-password')
-      .populate('pickupAddress')
-      .populate('deliveryAddresses');
-    if (!customer) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found' 
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
       });
     }
-    res.json({ 
-      success: true, 
-      user: customer 
-    });
+
+    try {
+      const decoded = jwt.verify(token, JWT);
+      const customer = await User.findById(decoded.id)
+        .select('-password')
+        .populate('pickupAddress')
+        .populate('deliveryAddresses');
+
+      if (!customer) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'User not found' 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        user: customer 
+      });
+    } catch (tokenError) {
+      if (tokenError.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token expired'
+        });
+      }
+      throw tokenError;
+    }
   } catch (error) {
     logger.error(`Verification error: ${error.message}`);
-    res.status(500).json({ 
+    res.status(401).json({ 
       success: false, 
-      message: 'Verification error' 
+      message: 'Authentication failed' 
     });
   }
 });

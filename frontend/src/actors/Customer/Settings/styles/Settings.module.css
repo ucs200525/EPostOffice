@@ -1,0 +1,214 @@
+.settingsContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.loadingSpinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 2rem;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.cardHeader {
+  background-color: #fff !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 1.5rem !important;
+  font-weight: 600;
+  color: #2c3e50;
+  border-top-left-radius: 10px !important;
+  border-top-right-radius: 10px !important;
+  font-size: 1.1rem;
+}
+
+.cardBody {
+  padding: 1.75rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formLabel {
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.formControl {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.formControl:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+.formSwitch {
+  padding-left: 2.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.formCheckInput {
+  width: 2.5em;
+  margin-left: -2.5em;
+  background-color: #cbd5e0;
+  border-color: #cbd5e0;
+  cursor: pointer;
+}
+
+.formCheckInput:checked {
+  background-color: #3182ce;
+  border-color: #3182ce;
+}
+
+.formCheckLabel {
+  font-size: 0.95rem;
+  color: #4a5568;
+  cursor: pointer;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.primaryButton {
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+  background-color: #3182ce;
+  color: white;
+  border: none;
+}
+
+.primaryButton:hover {
+  background-color: #2c5282;
+  transform: translateY(-1px);
+}
+
+.addressSection {
+  margin-bottom: 2rem;
+}
+
+.addressCard {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.25rem;
+  border-left: 4px solid #4299e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
+}
+
+.addressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.addressLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.defaultBadge {
+  background: #48bb78;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.addressDetails {
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.addressLine {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.addressActions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.noAddress {
+  text-align: center;
+  padding: 2rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  color: #718096;
+}
+
+.addAddressButton {
+  width: 100%;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 2px dashed #e2e8f0;
+  border-radius: 8px;
+  background: transparent;
+  color: #4a5568;
+  transition: all 0.2s ease;
+}
+
+.addAddressButton:hover {
+  border-color: #4299e1;
+  color: #4299e1;
+  background: #ebf8ff;
+}
+
+@media (max-width: 768px) {
+  .settingsContainer {
+    padding: 15px;
+  }
+  
+  .card {
+    margin-bottom: 1.5rem;
+  }
+  
+  .cardHeader {
+    padding: 1.25rem;
+  }
+  
+  .cardBody {
+    padding: 1.5rem;
+  }
+  
+  .formControl {
+    font-size: 16px;
+  }
+}

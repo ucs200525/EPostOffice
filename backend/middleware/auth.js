@@ -3,15 +3,37 @@ const jwt = require('jsonwebtoken');
 const auth = async (req, res, next) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
+        
         if (!token) {
-            throw new Error('No authentication token provided');
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication required'
+            });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
-        next();
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            // Store the entire decoded object and specifically set id
+            req.user = {
+                ...decoded,
+                id: decoded.id || decoded._id // Handle both id formats
+            };
+            next();
+        } catch (tokenError) {
+            if (tokenError.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Token expired'
+                });
+            }
+            throw tokenError;
+        }
     } catch (error) {
-        res.status(401).json({ success: false, message: 'Please authenticate' });
+        console.error('Auth error:', error);
+        res.status(401).json({
+            success: false,
+            message: 'Authentication failed'
+        });
     }
 };
 

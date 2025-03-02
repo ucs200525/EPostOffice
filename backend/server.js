@@ -1,10 +1,9 @@
+require('dotenv').config();  // Load environment variables at the very top
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const path = require('path');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
 // Import routes with fallbacks
@@ -12,15 +11,22 @@ const customerRoutes = require('./routes/customer/customerRoutes');
 const authRoutes = require('./routes/customer/authRoutes');
 const adminRoutes = require('./routes/admin/adminRoutes') || express.Router();
 const staffRoutes = require('./routes/staff/staffRoutes') || express.Router();
-const orderRoutes = require('./routes/order/orderRoutes') || express.Router();
+const orderRoutes = require('./routes/order/orderRoutes');
+const packageRoutes = require('./routes/order/packageRoutes');
+const notificationRoutes = require('./routes/customer/notificationRoutes') || express.Router();
 
-// Import middleware with fallback
+// Import middleware
 const errorHandler = require('./middleware/errorHandler');
-const auth = require('./middleware/auth') || ((req, res, next) => next());
+const auth = require('./middleware/auth');
 
 // Initialize express app
 const app = express();
-dotenv.config();
+
+// Check for JWT_SECRET at startup
+if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET is missing in environment variables');
+    process.exit(1);
+}
 
 // Security Middleware
 app.use(helmet());
@@ -28,13 +34,6 @@ app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true
 }));
-
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use('/api/', limiter);
 
 // Middleware
 app.use(morgan('dev'));
@@ -64,10 +63,13 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/customer', auth, customerRoutes);
-app.use('/api/admin', auth, adminRoutes);
-app.use('/api/staff', auth, staffRoutes);
-app.use('/api/orders', auth, orderRoutes);
+app.use('/api/customer', customerRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/packages', packageRoutes);
+app.use('/api/customer/notifications', notificationRoutes);
+app.use('/api/orders/user/:userId/shipments', orderRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

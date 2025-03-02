@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AdminNavbar from '../components/AdminNavbar';
+import Notification from '../../../components/Notification';
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState({
@@ -15,16 +16,30 @@ const AdminSettings = () => {
     timeZone: 'Asia/Kolkata'
   });
 
+  const [showAlert, setShowAlert] = useState({ show: false, variant: 'success', message: '' });
+
   const handleSubmit = (e) => {
     e.preventDefault();
     // Add API call to save settings
     console.log('Settings saved:', settings);
+    setShowAlert({
+      show: true,
+      variant: 'success',
+      message: 'Settings saved successfully!'
+    });
   };
 
   return (
     <div className="admin-dashboard">
       <AdminNavbar />
       <div className="dashboard-content">
+        {showAlert.show && (
+          <Notification
+            type={showAlert.variant}
+            message={showAlert.message}
+            onClose={() => setShowAlert(prev => ({ ...prev, show: false }))}
+          />
+        )}
         <div className="dashboard-header">
           <div className="header-left">
             <h1>System Settings</h1>

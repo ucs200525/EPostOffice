@@ -5,135 +5,129 @@ import { auth } from '../config/firebase';
 
 const AuthContext = createContext(null);
 
+const verifyToken = async (token) => {
+    try {
+        const response = await axios.get(
+            `${process.env.REACT_APP_BACKEND_URL}/api/customer/profile`,
+            {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }
+        );
+        return response.data.user;
+    } catch (error) {
+        throw new Error('Token verification failed');
+    }
+};
+
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
-    const [role, setRole] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [token, setToken] = useState(localStorage.getItem('token') || '');
-    const [rememberMe, setRememberMe] = useState(localStorage.getItem('rememberMe') === 'true');
+    const [role, setRole] = useState(null);
+    const [token, setToken] = useState(null);
     const [error, setError] = useState(null);
-    useEffect(() => {
-        // Check if token exists in local storage
-        if (token) {
-            setIsAuthenticated(true);
-        }
-    }, [token]);
 
-    // Add verifyToken function
-    const verifyToken = async (token) => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            return response.data.user;
-        } catch (error) {
-            throw new Error('Token verification failed');
-        }
-    };
-
+    // Verify token and restore session on mount
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            verifyToken(token)
-                .then(userData => {
+        const initAuth = async () => {
+            const storedToken = localStorage.getItem('token');
+            if (!storedToken) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // First try to get user data from localStorage
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    const userData = JSON.parse(storedUser);
                     setUser(userData);
+                    setToken(storedToken);
+                    setRole(userData.role);
                     setIsAuthenticated(true);
-                })
-                .catch(() => {
-                    logout();
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        } else {
-            setLoading(false); // Make sure to set loading to false when no token exists
-        }
+                }
+                
+                // Then verify with the backend
+                const response = await axios.get(
+                    `${process.env.REACT_APP_BACKEND_URL}/api/auth/verify`,
+                    {
+                        headers: { 'Authorization': `Bearer ${storedToken}` }
+                    }
+                );
+
+                if (response.data.success) {
+                    const userData = response.data.user;
+                    
+                    setUser(userData);
+                    setToken(storedToken);
+                    setRole(userData.role);
+                    setIsAuthenticated(true);
+                } else {
+                    handleLogout();
+                }
+            } catch (error) {
+                console.error('Auth verification failed:', error);
+                // Don't log out immediately on network errors
+                // This allows the app to work offline with stored credentials
+                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                    handleLogout();
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initAuth();
     }, []);
 
-    const login = async (email, password, remember = false) => {
+    const login = async (email, password) => {
         try {
-            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
-                email,
-                password
-            });
-    
+            const response = await axios.post(
+                `${process.env.REACT_APP_BACKEND_URL}/api/auth/login`,
+                { email, password }
+            );
+
             const { token, user } = response.data;
-           
-            if (!user || !user.role) {
-                throw new Error('Invalid response from server');
-            }
-    
-            // Store auth data based on remember me preference
-            if (remember) {
-                localStorage.setItem('token', token);
-                localStorage.setItem('userRole', user.role);
-                localStorage.setItem('rememberMe', 'true');
-            } else {
-                sessionStorage.setItem('token', token);
-                sessionStorage.setItem('userRole', user.role);
-                localStorage.removeItem('rememberMe');
-            }
-    
+
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('userId', user.id);
+            localStorage.setItem('userName', user.name);
+            localStorage.setItem('userRole', user.role);
+
             setUser(user);
+            setToken(token);
+            setRole(user.role);
             setIsAuthenticated(true);
-            setError(null);
-    
-            // Check if customer has address when role is customer
-            if (user.role === 'customer') {
-                try {
-                    const addressResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    
-                    if (!addressResponse.data || addressResponse.data.length === 0) {
-                        return {
-                            success: true,
-                            user: user,
-                            role: user.role,
-                            redirectToAddress: true
-                        };
-                    }
-                } catch (error) {
-                    console.error('Error checking addresses:', error);
-                }
-            }
-    
-            return {
-                success: true,
-                user: user,
-                role: user.role,
-                redirectToAddress: false
-            };
+
+            return { success: true, user };
         } catch (error) {
-            setError(error.response?.data?.message || 'Login failed');
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Login failed',
-                user: null,
-                role: null
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Login failed'
             };
         }
     };
-    
-    const logout = () => {
+
+    const handleLogout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
         localStorage.removeItem('userRole');
-        localStorage.removeItem('rememberMe');
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('userRole');
-        setIsAuthenticated(false);
+        
         setUser(null);
-        setRememberMe(false);
+        setToken(null);
+        setRole(null);
+        setIsAuthenticated(false);
     };
-    
+
     const googleLogin = async () => {
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
             const { user: firebaseUser } = result;
     
-            // Send Firebase user data to backend for authentication
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google-login`, {
                 email: firebaseUser.email,
                 name: firebaseUser.displayName,
@@ -147,18 +141,23 @@ export const AuthProvider = ({ children }) => {
             }
     
             localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
             localStorage.setItem('userRole', user.role);
+            localStorage.setItem('userId', user.id);
+            localStorage.setItem('userName', user.name);
     
             setUser(user);
+            setToken(token);
+            setRole(user.role);
             setIsAuthenticated(true);
             setError(null);
     
-            // Check if customer has address when role is customer
             if (user.role === 'customer') {
                 try {
-                    const addressResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const addressResponse = await axios.get(
+                        `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
+                        { headers: { 'Authorization': `Bearer ${token}` } }
+                    );
                     
                     if (!addressResponse.data || addressResponse.data.length === 0) {
                         return {
@@ -191,21 +190,18 @@ export const AuthProvider = ({ children }) => {
     };
     const register = async (userData) => {
         try {
-            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, userData);
+            const response = await axios.post(
+                `${process.env.REACT_APP_BACKEND_URL}/api/auth/register`,
+                userData
+            );
             const { token, user } = response.data;
     
             if (!user || !user.role) {
                 throw new Error('Invalid user data received');
             }
     
-            // Store auth data
-            // localStorage.setItem('token', token);
-            // localStorage.setItem('userRole', user.role);
-            
-            // Update context state
             setUser(user);
             setRole(user.role);
-            // setIsAuthenticated(true);
     
             return {
                 success: true,
@@ -230,12 +226,12 @@ export const AuthProvider = ({ children }) => {
             loading,
             login,
             role,
-            logout,
+            logout: handleLogout,
             register,
             token,
             googleLogin,
         }}>
-            {children}
+            {!loading && children}
         </AuthContext.Provider>
     );
 };

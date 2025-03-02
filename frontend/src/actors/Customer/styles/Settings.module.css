@@ -1,0 +1,172 @@
+.settingsContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.cardHeader {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #edf2f7;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.cardHeader h5 {
+  margin: 0;
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.cardBody {
+  padding: 1.5rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formLabel {
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.formControl {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.formControl:focus {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+  outline: none;
+}
+
+.switchGroup {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.switchLabel {
+  margin-left: 1rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.primaryButton {
+  background-color: #4299e1;
+  color: white;
+  border: none;
+}
+
+.primaryButton:hover {
+  background-color: #3182ce;
+}
+
+.secondaryButton {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+}
+
+.secondaryButton:hover {
+  background-color: #cbd5e0;
+}
+
+.addressCard {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #4299e1;
+}
+
+.addressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.addressLabel {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.defaultBadge {
+  background-color: #48bb78;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.addressDetail {
+  color: #718096;
+  margin: 0.25rem 0;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.iconButton {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: transparent;
+  color: #4a5568;
+  transition: all 0.2s ease;
+}
+
+.iconButton:hover {
+  background-color: #f7fafc;
+  color: #2d3748;
+}
+
+.deleteButton:hover {
+  color: #e53e3e;
+  border-color: #e53e3e;
+}
+
+@media (max-width: 768px) {
+  .settingsContainer {
+    padding: 1rem;
+  }
+
+  .card {
+    margin-bottom: 1rem;
+  }
+
+  .formControl {
+    font-size: 16px; /* Prevent zoom on mobile */
+  }
+}

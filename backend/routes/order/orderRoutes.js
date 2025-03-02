@@ -1,18 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../../models/order/Order');
+const auth = require('../../middleware/auth');
 
-// Get all orders
-router.get('/', async (req, res) => {
+// Get all orders for the logged-in user
+router.get('/my-orders', async (req, res) => {
     try {
         const orders = await Order.find({ customerId: req.user.id })
             .populate('items')
             .sort({ createdAt: -1 });
+
+        if (!orders) {
+            return res.status(404).json({
+                success: false,
+                message: 'No orders found for this customer'
+            });
+        }
+
         res.json({
             success: true,
             data: orders
         });
     } catch (error) {
+        console.error('Error fetching orders:', error);
         res.status(500).json({
             success: false,
             message: error.message

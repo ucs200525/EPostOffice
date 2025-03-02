@@ -120,7 +120,7 @@ const Home = () => {
     balance: 0
   });
   const [orders, setOrders] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([]); // Initialize as empty array
   const [trackingNumber, setTrackingNumber] = useState('');
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState(0);
@@ -169,8 +169,23 @@ const Home = () => {
 
   
   useEffect(() => {
-    setCustomerData(user);
+    // First try to get data from auth context
+    if (user) {
+      setCustomerData(user);
+    } else {
+      // If not in auth context, try localStorage
+      const userFromLocal = localStorage.getItem('user');
+      if (userFromLocal) {
+        try {
+          const parsedUser = JSON.parse(userFromLocal);
+          setCustomerData(parsedUser);
+        } catch (error) {
+          console.error('Error parsing user data from localStorage:', error);
+        }
+      }
+    }
   }, [user]);
+
 const fetchProfile = async () => {
   try {
     const token = localStorage.getItem('token');
@@ -190,7 +205,7 @@ const fetchProfile = async () => {
     setError(null);
   } catch (err) {
     console.error('Profile fetch failed:', err);
-    setError(err.response?.data?.message || 'Failed to fetch profile');
+    // setError(err.response?.data?.message || 'Failed to fetch profile');
     setCustomerData(null);
   }
 };
@@ -254,9 +269,15 @@ const fetchProfile = async () => {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customer/notifications`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      setNotifications(response.data);
+      
+      // Ensure we always have an array
+      setNotifications(response.data.data || []);
     } catch (err) {
       console.error('Notifications fetch failed:', err);
+      setError('Failed to load notifications');
+      setNotifications([]); // Set empty array on error
+    } finally {
+      setLoading(false);
     }
   };
 

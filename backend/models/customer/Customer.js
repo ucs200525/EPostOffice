@@ -40,6 +40,26 @@ const addressSchema = new mongoose.Schema({
     }
 });
 
+const notificationSchema = new mongoose.Schema({
+    message: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        enum: ['order', 'delivery', 'system', 'promotional'],
+        required: true
+    },
+    isRead: {
+        type: Boolean,
+        default: false
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
 const customerSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -72,6 +92,25 @@ const customerSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order'
     }],
+    notificationSettings: {
+        emailNotifications: {
+            type: Boolean,
+            default: true
+        },
+        smsNotifications: {
+            type: Boolean,
+            default: true
+        },
+        orderUpdates: {
+            type: Boolean,
+            default: true
+        },
+        promotionalEmails: {
+            type: Boolean,
+            default: false
+        }
+    },
+    notifications: [notificationSchema]
 }, {
     timestamps: true
 });
