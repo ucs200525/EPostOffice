@@ -353,17 +353,15 @@ router.put('/addresses/:customerId', async (req, res) => {
     });
   }
 });
-
 // Delete address
-router.delete('/addresses/:addressId', async (req, res) => {
+router.delete('/addresses/:customerId/:addressType', async (req, res) => {
   try {
-    const { addressId } = req.params;
-    const userId = req.query.userId;
-    const { type } = req.query;
+    const { customerId, addressType } = req.params;
+    const { addressId } = req.query;
 
-    console.log('Delete address request:', { addressId, userId, type });
+    console.log('Delete address request:', { customerId, addressId, addressType });
 
-    const customer = await Customer.findById(userId);
+    const customer = await Customer.findById(customerId);
     if (!customer) {
       return res.status(404).json({ 
         success: false, 
@@ -371,11 +369,10 @@ router.delete('/addresses/:addressId', async (req, res) => {
       });
     }
 
-    if (type === 'pickup') {
-      // Clear pickup address
+    if (addressType === 'pickup') {
       customer.pickupAddress = null;
-    } else {
-      // Find and remove delivery address
+    } else if (addressType === 'delivery') {
+      // Safely find the address index
       const addressIndex = customer.deliveryAddresses.findIndex(
         addr => addr._id.toString() === addressId
       );
@@ -387,19 +384,23 @@ router.delete('/addresses/:addressId', async (req, res) => {
         });
       }
 
-      // If removing default address, set new default if other addresses exist
-      if (customer.deliveryAddresses[addressIndex].isDefault && 
-          customer.deliveryAddresses.length > 1) {
+      // Safely handle default address reassignment
+      const deletingAddress = customer.deliveryAddresses[addressIndex];
+      if (deletingAddress && deletingAddress.isDefault && customer.deliveryAddresses.length > 1) {
         const newDefaultIndex = addressIndex === 0 ? 1 : 0;
         customer.deliveryAddresses[newDefaultIndex].isDefault = true;
       }
 
-      // Remove the address from the array
+      // Remove the address
       customer.deliveryAddresses.splice(addressIndex, 1);
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid address type'
+      });
     }
 
     await customer.save();
-    console.log('Address deleted successfully');
 
     res.json({
       success: true,
@@ -409,8 +410,8 @@ router.delete('/addresses/:addressId', async (req, res) => {
     console.error('Delete address error:', error);
     res.status(500).json({
       success: false,
-      message: error.message,
-      details: 'Error deleting address'
+      message: 'Error deleting address',
+      details: error.message
     });
   }
 });

@@ -9,34 +9,63 @@ import AddressManager from './AddressManager';
 const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    label: address?.label || '',
-    streetAddress: address?.streetAddress || '',
-    city: address?.city || '',
-    state: address?.state || '',
-    postalCode: address?.postalCode || '',
-    country: address?.country || 'India',
-    isDefault: address?.isDefault || false,
+    label: '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: 'India',
+    isDefault: false,
+    type: type.toLowerCase(),
+    _id: ''
+  });
+
+  // Add new state for handling new address form
+  const [isAdding, setIsAdding] = useState(false);
+  const [newAddressForm, setNewAddressForm] = useState({
+    label: '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: 'India',
+    isDefault: false,
     type: type.toLowerCase()
   });
 
+  // Initialize editForm when edit button is clicked
+  const handleEditClick = () => {
+    setEditForm({
+      label: address.label || '',
+      streetAddress: address.streetAddress || '',
+      city: address.city || '',
+      state: address.state || '',
+      postalCode: address.postalCode || '',
+      country: address.country || 'India',
+      isDefault: address.isDefault || false,
+      type: type.toLowerCase(),
+      _id: address._id
+    });
+    setIsEditing(true);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onEdit({ ...editForm, _id: address._id });
+    onEdit(editForm);
     setIsEditing(false);
   };
 
-  if (!address) return null;
-
-  if (isEditing) {
+  // Form for adding new address
+  const renderAddressForm = (formData, setFormData, onSubmit, isNew = false) => {
     return (
       <div className={styles.addressCard}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={onSubmit}>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>Label</label>
             <input
               className={styles.formControl}
-              value={editForm.label}
-              onChange={(e) => setEditForm(prev => ({ ...prev, label: e.target.value }))}
+              value={formData.label}
+              onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
               required
             />
           </div>
@@ -44,8 +73,8 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
             <label className={styles.formLabel}>Street Address</label>
             <input
               className={styles.formControl}
-              value={editForm.streetAddress}
-              onChange={(e) => setEditForm(prev => ({ ...prev, streetAddress: e.target.value }))}
+              value={formData.streetAddress}
+              onChange={(e) => setFormData(prev => ({ ...prev, streetAddress: e.target.value }))}
               required
             />
           </div>
@@ -53,8 +82,8 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
             <label className={styles.formLabel}>City</label>
             <input
               className={styles.formControl}
-              value={editForm.city}
-              onChange={(e) => setEditForm(prev => ({ ...prev, city: e.target.value }))}
+              value={formData.city}
+              onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
               required
             />
           </div>
@@ -62,8 +91,8 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
             <label className={styles.formLabel}>State</label>
             <input
               className={styles.formControl}
-              value={editForm.state}
-              onChange={(e) => setEditForm(prev => ({ ...prev, state: e.target.value }))}
+              value={formData.state}
+              onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
               required
             />
           </div>
@@ -71,8 +100,8 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
             <label className={styles.formLabel}>Postal Code</label>
             <input
               className={styles.formControl}
-              value={editForm.postalCode}
-              onChange={(e) => setEditForm(prev => ({ ...prev, postalCode: e.target.value }))}
+              value={formData.postalCode}
+              onChange={(e) => setFormData(prev => ({ ...prev, postalCode: e.target.value }))}
               required
             />
           </div>
@@ -80,8 +109,8 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
             <label className={styles.formCheck}>
               <input
                 type="checkbox"
-                checked={editForm.isDefault}
-                onChange={(e) => setEditForm(prev => ({ ...prev, isDefault: e.target.checked }))}
+                checked={formData.isDefault}
+                onChange={(e) => setFormData(prev => ({ ...prev, isDefault: e.target.checked }))}
                 className={styles.formCheckInput}
               />
               Set as default address
@@ -89,17 +118,47 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
           </div>
           <div className={styles.addressActions}>
             <button type="submit" className={styles.primaryButton}>
-              Save Changes
+              {isNew ? 'Add Address' : 'Save Changes'}
             </button>
             <button
               type="button"
-              onClick={() => setIsEditing(false)}
+              onClick={() => isNew ? setIsAdding(false) : setIsEditing(false)}
               className={styles.secondaryButton}
             >
               Cancel
             </button>
           </div>
         </form>
+      </div>
+    );
+  };
+
+  if (!address) return null;
+
+  if (isEditing) {
+    return renderAddressForm(editForm, setEditForm, handleSubmit);
+  }
+
+  // Modify the no address section to show form when adding
+  if (!address && isAdding) {
+    return renderAddressForm(newAddressForm, setNewAddressForm, (e) => {
+      e.preventDefault();
+      onEdit(newAddressForm);
+      setIsAdding(false);
+    }, true);
+  }
+
+  // Update the empty state render
+  if (!address) {
+    return (
+      <div className={styles.noAddress}>
+        <p>No {type.toLowerCase()} address set</p>
+        <button 
+          className={styles.addAddressButton}
+          onClick={() => setIsAdding(true)}
+        >
+          + Add {type} Address
+        </button>
       </div>
     );
   }
@@ -119,13 +178,13 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
       </div>
       <div className={styles.addressActions}>
         <button 
-          onClick={() => setIsEditing(true)} 
+          onClick={handleEditClick}  // Changed from setIsEditing(true)
           className={`${styles.button} ${styles.secondaryButton}`}
         >
           Edit
         </button>
         <button 
-          onClick={() => onDelete(address._id)} 
+          onClick={() => onDelete(address._id, type.toLowerCase())} 
           className={`${styles.button} ${styles.deleteButton}`}
         >
           Delete
@@ -159,6 +218,17 @@ const Settings = () => {
         pickup: null,
         delivery: []
     });
+    const [showAddressForm, setShowAddressForm] = useState(false);
+    const [newAddressData, setNewAddressData] = useState({
+        label: '',
+        streetAddress: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'India',
+        type: '',
+        isDefault: false
+    });
 
     // Fetch user profile data
     useEffect(() => {
@@ -186,19 +256,15 @@ const Settings = () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                setShowAlert({
-                    show: true,
-                    variant: 'danger',
-                    message: 'Please log in to manage addresses'
-                });
-                return;
+                throw new Error('No authentication token found');
             }
 
             const response = await axios.get(
                 `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?.id}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 }
             );
@@ -214,40 +280,43 @@ const Settings = () => {
             setShowAlert({
                 show: true,
                 variant: 'danger',
-                message: error.response?.data?.message || 'Failed to fetch addresses'
+                message: 'Failed to fetch addresses: ' + (error.response?.data?.message || error.message)
             });
         }
     };
 
-    const handleAddAddress = async (type) => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) return;
+    const handleAddAddress = (type) => {
+        setNewAddressData(prev => ({ ...prev, type }));
+        setShowAddressForm(true);
+    };
 
+    const handleAddressSubmit = async (e) => {
+        e.preventDefault();
+        try {
             const response = await axios.post(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?.id}`,
+                newAddressData,
                 {
-                    type,
-                    label: 'Default',
-                    streetAddress: '',
-                    city: '',
-                    state: '',
-                    postalCode: '',
-                    country: 'India'
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 }
             );
-
             if (response.data.success) {
                 await fetchAddresses();
                 setShowAlert({
                     show: true,
                     variant: 'success',
                     message: 'Address added successfully'
+                });
+                setShowAddressForm(false);
+                setNewAddressData({
+                    label: '',
+                    streetAddress: '',
+                    city: '',
+                    state: '',
+                    postalCode: '',
+                    country: 'India',
+                    type: '',
+                    isDefault: false
                 });
             }
         } catch (error) {
@@ -262,16 +331,12 @@ const Settings = () => {
     const handleEditAddress = async (address) => {
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user.id}`,
-                {
-                    ...address,
-                    addressId: address._id // Include the address ID in the body
-                },
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?.id}`,
+                address,
                 {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 }
             );
-            
             if (response.data.success) {
                 await fetchAddresses();
                 setShowAlert({
@@ -284,21 +349,23 @@ const Settings = () => {
             setShowAlert({
                 show: true,
                 variant: 'danger',
-                message: error.response?.data?.message || 'Failed to update address'
+                message: 'Failed to update address'
             });
         }
     };
 
-    const handleDeleteAddress = async (addressId) => {
+    const handleDeleteAddress = async (addressId, addressType) => {
         if (!window.confirm('Are you sure you want to delete this address?')) return;
 
         try {
             const response = await axios.delete(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${addressId}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user.id}/${addressType}`,
                 {
+                    params: { addressId },
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 }
             );
+            
             if (response.data.success) {
                 await fetchAddresses();
                 setShowAlert({
@@ -311,7 +378,7 @@ const Settings = () => {
             setShowAlert({
                 show: true,
                 variant: 'danger',
-                message: 'Failed to delete address'
+                message: error.response?.data?.message || 'Failed to delete address'
             });
         }
     };
@@ -538,24 +605,118 @@ const Settings = () => {
                     <div className={styles.card}>
                         <div className={styles.cardHeader}>Pickup Address</div>
                         <div className={styles.cardBody}>
-                            {addresses.pickup ? (
+                            {showAddressForm ? (
+                                <form onSubmit={handleAddressSubmit} className={styles.addressForm}>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Label</label>
+                                        <input
+                                            className={styles.formControl}
+                                            type="text"
+                                            value={newAddressData.label}
+                                            onChange={(e) => setNewAddressData(prev => ({ 
+                                                ...prev, 
+                                                label: e.target.value 
+                                            }))}
+                                            required
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Street Address</label>
+                                        <input
+                                            className={styles.formControl}
+                                            type="text"
+                                            value={newAddressData.streetAddress}
+                                            onChange={(e) => setNewAddressData(prev => ({ 
+                                                ...prev, 
+                                                streetAddress: e.target.value 
+                                            }))}
+                                            required
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>City</label>
+                                        <input
+                                            className={styles.formControl}
+                                            type="text"
+                                            value={newAddressData.city}
+                                            onChange={(e) => setNewAddressData(prev => ({ 
+                                                ...prev, 
+                                                city: e.target.value 
+                                            }))}
+                                            required
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>State</label>
+                                        <input
+                                            className={styles.formControl}
+                                            type="text"
+                                            value={newAddressData.state}
+                                            onChange={(e) => setNewAddressData(prev => ({ 
+                                                ...prev, 
+                                                state: e.target.value 
+                                            }))}
+                                            required
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Postal Code</label>
+                                        <input
+                                            className={styles.formControl}
+                                            type="text"
+                                            value={newAddressData.postalCode}
+                                            onChange={(e) => setNewAddressData(prev => ({ 
+                                                ...prev, 
+                                                postalCode: e.target.value 
+                                            }))}
+                                            required
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formCheck}>
+                                            <input
+                                                type="checkbox"
+                                                checked={newAddressData.isDefault}
+                                                onChange={(e) => setNewAddressData(prev => ({ 
+                                                    ...prev, 
+                                                    isDefault: e.target.checked 
+                                                }))}
+                                                className={styles.formCheckInput}
+                                            />
+                                            Set as default address
+                                        </label>
+                                    </div>
+                                    <div className={styles.addressActions}>
+                                        <button type="submit" className={styles.primaryButton}>
+                                            Add Address
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddressForm(false)}
+                                            className={styles.secondaryButton}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : addresses.pickup ? (
                                 <AddressDisplay
-                                  address={addresses.pickup}
-                                  type="Pickup"
-                                  onEdit={handleEditAddress}
-                                  onDelete={handleDeleteAddress}
+                                    address={addresses.pickup}
+                                    type="Pickup"
+                                    onEdit={handleEditAddress}
+                                    onDelete={handleDeleteAddress}
                                 />
-                              ) : (
+                            ) : (
                                 <div className={styles.noAddress}>
-                                  <p>No pickup address set</p>
-                                  <button 
-                                    className={styles.addAddressButton}
-                                    onClick={() => handleAddAddress('pickup')}
-                                  >
-                                    + Add Pickup Address
-                                  </button>
+                                    <p>No pickup address set</p>
+                                    <button 
+                                        className={styles.addAddressButton}
+                                        onClick={() => handleAddAddress('pickup')}
+                                    >
+                                        + Add Pickup Address
+                                    </button>
                                 </div>
-                              )}
+                            )}
                         </div>
                     </div>
                 </Col>
