@@ -191,6 +191,47 @@
   background: #ebf8ff;
 }
 
+.formCheck {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.formCheckInput {
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryButton:hover {
+  background-color: #cbd5e0;
+}
+
+.deleteButton {
+  background-color: #fff;
+  color: #e53e3e;
+  border: 1px solid #e53e3e;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteButton:hover {
+  background-color: #e53e3e;
+  color: #fff;
+}
+
 @media (max-width: 768px) {
   .settingsContainer {
     padding: 15px;

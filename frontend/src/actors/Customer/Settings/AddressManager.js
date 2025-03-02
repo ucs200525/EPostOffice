@@ -59,10 +59,15 @@ const AddressManager = ({ type }) => {
 
     try {
       setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication required');
+        return;
+      }
+
       const addressData = {
         ...formData,
-        type, // Make sure type is included
-        isDefault: formData.isDefault || false
+        type
       };
 
       if (editingAddress) {
@@ -70,8 +75,7 @@ const AddressManager = ({ type }) => {
           `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${editingAddress._id}`,
           addressData,
           {
-            params: { userId: user._id },
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            headers: { 'Authorization': `Bearer ${token}` }
           }
         );
       } else {
@@ -79,8 +83,7 @@ const AddressManager = ({ type }) => {
           `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
           addressData,
           {
-            params: { userId: user._id },
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            headers: { 'Authorization': `Bearer ${token}` }
           }
         );
       }

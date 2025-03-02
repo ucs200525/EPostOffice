@@ -4,7 +4,7 @@ const Customer = require('../../models/customer/Customer');
 const auth = require('../../middleware/auth');
 
 // Get notification settings
-router.get('/settings', auth, async (req, res) => {
+router.get('/settings', async (req, res) => {
     try {
         const customer = await Customer.findById(req.user.id)
             .select('notificationSettings');
@@ -34,7 +34,7 @@ router.get('/settings', auth, async (req, res) => {
 });
 
 // Update notification settings
-router.put('/settings', auth, async (req, res) => {
+router.put('/settings', async (req, res) => {
     try {
         const { emailNotifications, smsNotifications, orderUpdates, promotionalEmails } = req.body;
         
@@ -72,7 +72,7 @@ router.put('/settings', auth, async (req, res) => {
 });
 
 // Get notifications
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const customer = await Customer.findById(req.user.id)
             .select('notifications')
@@ -94,7 +94,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Mark notification as read
-router.patch('/:notificationId/read', auth, async (req, res) => {
+router.patch('/:notificationId/read', async (req, res) => {
     try {
         const { notificationId } = req.params;
         const customer = await Customer.findById(req.user.id);
@@ -130,7 +130,7 @@ router.patch('/:notificationId/read', auth, async (req, res) => {
 });
 
 // Delete notification
-router.delete('/:notificationId', auth, async (req, res) => {
+router.delete('/:notificationId', async (req, res) => {
     try {
         const { notificationId } = req.params;
         const customer = await Customer.findById(req.user.id);

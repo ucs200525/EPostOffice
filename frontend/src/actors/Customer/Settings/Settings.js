@@ -7,8 +7,103 @@ import styles from './styles/Settings.module.css';
 import AddressManager from './AddressManager';
 
 const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    label: address?.label || '',
+    streetAddress: address?.streetAddress || '',
+    city: address?.city || '',
+    state: address?.state || '',
+    postalCode: address?.postalCode || '',
+    country: address?.country || 'India',
+    isDefault: address?.isDefault || false,
+    type: type.toLowerCase()
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onEdit({ ...editForm, _id: address._id });
+    setIsEditing(false);
+  };
+
   if (!address) return null;
-  
+
+  if (isEditing) {
+    return (
+      <div className={styles.addressCard}>
+        <form onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Label</label>
+            <input
+              className={styles.formControl}
+              value={editForm.label}
+              onChange={(e) => setEditForm(prev => ({ ...prev, label: e.target.value }))}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Street Address</label>
+            <input
+              className={styles.formControl}
+              value={editForm.streetAddress}
+              onChange={(e) => setEditForm(prev => ({ ...prev, streetAddress: e.target.value }))}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>City</label>
+            <input
+              className={styles.formControl}
+              value={editForm.city}
+              onChange={(e) => setEditForm(prev => ({ ...prev, city: e.target.value }))}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>State</label>
+            <input
+              className={styles.formControl}
+              value={editForm.state}
+              onChange={(e) => setEditForm(prev => ({ ...prev, state: e.target.value }))}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Postal Code</label>
+            <input
+              className={styles.formControl}
+              value={editForm.postalCode}
+              onChange={(e) => setEditForm(prev => ({ ...prev, postalCode: e.target.value }))}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formCheck}>
+              <input
+                type="checkbox"
+                checked={editForm.isDefault}
+                onChange={(e) => setEditForm(prev => ({ ...prev, isDefault: e.target.checked }))}
+                className={styles.formCheckInput}
+              />
+              Set as default address
+            </label>
+          </div>
+          <div className={styles.addressActions}>
+            <button type="submit" className={styles.primaryButton}>
+              Save Changes
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className={styles.secondaryButton}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.addressCard}>
       <div className={styles.addressHeader}>
@@ -24,7 +119,7 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
       </div>
       <div className={styles.addressActions}>
         <button 
-          onClick={() => onEdit(address)} 
+          onClick={() => setIsEditing(true)} 
           className={`${styles.button} ${styles.secondaryButton}`}
         >
           Edit
@@ -91,15 +186,19 @@ const Settings = () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                throw new Error('No authentication token found');
+                setShowAlert({
+                    show: true,
+                    variant: 'danger',
+                    message: 'Please log in to manage addresses'
+                });
+                return;
             }
 
             const response = await axios.get(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?.id}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     }
                 }
             );
@@ -115,20 +214,34 @@ const Settings = () => {
             setShowAlert({
                 show: true,
                 variant: 'danger',
-                message: 'Failed to fetch addresses: ' + (error.response?.data?.message || error.message)
+                message: error.response?.data?.message || 'Failed to fetch addresses'
             });
         }
     };
 
     const handleAddAddress = async (type) => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
             const response = await axios.post(
                 `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
-                { type },
                 {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    type,
+                    label: 'Default',
+                    streetAddress: '',
+                    city: '',
+                    state: '',
+                    postalCode: '',
+                    country: 'India'
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                 }
             );
+
             if (response.data.success) {
                 await fetchAddresses();
                 setShowAlert({
@@ -141,7 +254,7 @@ const Settings = () => {
             setShowAlert({
                 show: true,
                 variant: 'danger',
-                message: 'Failed to add address'
+                message: error.response?.data?.message || 'Failed to add address'
             });
         }
     };
@@ -149,12 +262,16 @@ const Settings = () => {
     const handleEditAddress = async (address) => {
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${address._id}`,
-                address,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user.id}`,
+                {
+                    ...address,
+                    addressId: address._id // Include the address ID in the body
+                },
                 {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 }
             );
+            
             if (response.data.success) {
                 await fetchAddresses();
                 setShowAlert({
@@ -167,7 +284,7 @@ const Settings = () => {
             setShowAlert({
                 show: true,
                 variant: 'danger',
-                message: 'Failed to update address'
+                message: error.response?.data?.message || 'Failed to update address'
             });
         }
     };

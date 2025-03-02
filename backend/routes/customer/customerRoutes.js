@@ -143,71 +143,49 @@ router.post('/payForOrder', async (req, res) => {
 });
 
 // Get addresses - Updated with better error handling and logging
-router.get('/addresses', async (req, res) => {
+router.get('/addresses/:customerId', async (req, res) => {
   try {
-    // Get userId from query params or auth token
-    const userId = req.query.userId || (req.user && req.user.id);
-    const type = req.query.type; // Optional: filter by address type
-
-    if (!userId) {
-      console.log('No userId provided');
-      return res.status(400).json({ 
-        success: false, 
-        message: 'User ID is required' 
+    const { customerId } = req.params;
+    if (!customerId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
       });
     }
 
-    console.log('Looking for customer with ID:', userId);
-
-    const customer = await Customer.findById(userId);
+    const customer = await Customer.findById(customerId);
     
     if (!customer) {
-      console.log('Customer not found for ID:', userId);
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Customer not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found'
       });
     }
 
-    console.log('Found customer:', customer.name);
-
-    let addresses;
-    if (type === 'pickup') {
-      addresses = customer.pickupAddress ? [customer.pickupAddress] : [];
-    } else if (type === 'delivery') {
-      addresses = customer.deliveryAddresses || [];
-    } else {
-      // If no type specified, return all addresses
-      addresses = [
-        ...(customer.pickupAddress ? [customer.pickupAddress] : []),
-        ...(customer.deliveryAddresses || [])
-      ];
-    }
-
-    console.log('Addresses:', addresses);
-
-    res.json({ 
-      success: true, 
-      addresses: addresses
+    res.json({
+      success: true,
+      data: {
+        pickup: customer.pickupAddress || null,
+        delivery: customer.deliveryAddresses || []
+      }
     });
   } catch (error) {
     console.error('Error in /addresses route:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message,
-      details: 'Error fetching addresses'
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching addresses'
     });
   }
 });
 
 // Add new address with improved geocoding
-router.post('/addresses', async (req, res) => {
+router.post('/addresses/:customerId', async (req, res) => {
   try {
     const { label, streetAddress, city, state, postalCode, country, type } = req.body;
-    const userId = req.query.userId;
+    const { customerId } = req.params;
 
     // Validate required fields
-    if (!userId || !label || !streetAddress || !city || !state || !postalCode || !country || !type) {
+    if (!customerId || !label || !streetAddress || !city || !state || !postalCode || !country || !type) {
       return res.status(400).json({
         success: false,
         message: 'All fields are required',
@@ -223,7 +201,7 @@ router.post('/addresses', async (req, res) => {
       });
     }
 
-    const customer = await Customer.findById(userId);
+    const customer = await Customer.findById(customerId);
     if (!customer) {
       return res.status(404).json({ 
         success: false, 
@@ -284,13 +262,12 @@ router.post('/addresses', async (req, res) => {
 });
 
 // Update address
-router.put('/addresses/:addressId', async (req, res) => {
+router.put('/addresses/:customerId', async (req, res) => {
   try {
-    const { addressId } = req.params;
-    const userId = req.query.userId;
-    const { label, streetAddress, city, state, postalCode, country, isDefault, type } = req.body;
+    const { customerId } = req.params;
+    const { label, streetAddress, city, state, postalCode, country, isDefault, type, addressId } = req.body;
 
-    console.log('Update address request:', { addressId, userId, body: req.body });
+    console.log('Update address request:', { customerId, addressId, body: req.body });
 
     if (!type) {
       return res.status(400).json({
@@ -299,7 +276,7 @@ router.put('/addresses/:addressId', async (req, res) => {
       });
     }
 
-    const customer = await Customer.findById(userId);
+    const customer = await Customer.findById(customerId);
     if (!customer) {
       return res.status(404).json({ 
         success: false, 
@@ -311,7 +288,7 @@ router.put('/addresses/:addressId', async (req, res) => {
     const fullAddress = `${streetAddress}, ${city}, ${state}, ${postalCode}, ${country}`;
     const coordinates = await getCoordinates(fullAddress);
 
-    // Create updated address object with required type field
+    // Create updated address object
     const updatedAddress = {
       label,
       streetAddress,
@@ -319,14 +296,19 @@ router.put('/addresses/:addressId', async (req, res) => {
       state,
       postalCode,
       country,
-      type, // Ensure type is included
+      type,
       coordinates,
-      isDefault: !!isDefault // Convert to boolean
+      isDefault: !!isDefault
     };
 
     if (type === 'pickup') {
-      customer.pickupAddress = updatedAddress;
-    } else if (type === 'delivery') {
+      // Update pickup address
+      customer.pickupAddress = {
+        ...updatedAddress,
+        _id: customer.pickupAddress?._id || new mongoose.Types.ObjectId()
+      };
+    } else {
+      // Find and update delivery address
       const addressIndex = customer.deliveryAddresses.findIndex(
         addr => addr._id.toString() === addressId
       );
@@ -338,25 +320,18 @@ router.put('/addresses/:addressId', async (req, res) => {
         });
       }
 
+      // Handle default address setting
       if (isDefault) {
-        // Reset all other addresses' default status
-        customer.deliveryAddresses.forEach(addr => {
-          if (addr._id.toString() !== addressId) {
-            addr.isDefault = false;
-          }
+        customer.deliveryAddresses.forEach((addr, idx) => {
+          addr.isDefault = (idx === addressIndex);
         });
       }
 
-      // Update the specific address while preserving its _id
+      // Update the specific delivery address while preserving its _id
       customer.deliveryAddresses[addressIndex] = {
         ...customer.deliveryAddresses[addressIndex].toObject(),
         ...updatedAddress
       };
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid address type. Must be 'pickup' or 'delivery'"
-      });
     }
 
     await customer.save();
@@ -364,14 +339,17 @@ router.put('/addresses/:addressId', async (req, res) => {
     res.json({
       success: true,
       message: 'Address updated successfully',
-      address: type === 'pickup' ? customer.pickupAddress : customer.deliveryAddresses[addressIndex]
+      data: {
+        address: type === 'pickup' ? customer.pickupAddress : customer.deliveryAddresses.find(addr => addr._id.toString() === addressId)
+      }
     });
+
   } catch (error) {
     console.error('Update address error:', error);
     res.status(500).json({
       success: false,
-      message: error.message,
-      details: 'Error updating address'
+      message: 'Error updating address',
+      details: error.message
     });
   }
 });
