@@ -9,33 +9,23 @@ import styles from '../styles/Shipping.module.css';
 const DomesticShipping = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [addresses, setAddresses] = useState({
-    pickup: null,
-    delivery: []
-  });
+  const [addresses, setAddresses] = useState([]);
   const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
   const [formData, setFormData] = useState({
     weight: '',
     dimensions: { length: '', width: '', height: '' },
     packageType: 'standard',
     specialInstructions: ''
   });
-  const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState({
-    show: false,
-    type: '',
-    message: ''
-  });
 
-  // Fetch addresses
+  // Fetch saved delivery addresses
+  const [pickupAddress, setPickupAddress] = useState(null);
+
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!user?._id) {
-        setNotification({
-          show: true,
-          type: 'error',
-          message: 'Please log in to continue'
-        });
+        console.error('User ID is not available');
         return;
       }
 
@@ -48,35 +38,30 @@ const DomesticShipping = () => {
         );
 
         if (response.data.success) {
-          setAddresses({
-            pickup: response.data.data.pickup,
-            delivery: response.data.data.delivery || []
-          });
-
-          // Set default delivery address if available
-          const defaultDelivery = response.data.data.delivery?.find(addr => addr.isDefault);
-          if (defaultDelivery) {
-            setSelectedDeliveryAddress(defaultDelivery._id);
+          const { pickup, delivery } = response.data.data;
+          setPickupAddress(pickup);
+          setAddresses(delivery || []);
+          
+          if (delivery?.length === 0) {
+            setShowNotification(true);
+          } else {
+            const defaultAddress = delivery.find(addr => addr.isDefault);
+            if (defaultAddress) {
+              setSelectedDeliveryAddress(defaultAddress._id);
+            }
           }
+        } else {
+          console.error('Failed to fetch addresses:', response.data.message);
+          alert('Unable to fetch delivery addresses. Please try again.');
         }
       } catch (error) {
-        setNotification({
-          show: true,
-          type: 'error',
-          message: 'Failed to fetch addresses'
-        });
-      } finally {
-        setLoading(false);
+        console.error('Failed to fetch addresses:', error.response?.data?.message || error.message);
+        alert('Error fetching addresses. Please try again later.');
       }
     };
 
     fetchAddresses();
-  }, [user]);
-
-  const formatAddress = (address) => {
-    if (!address) return '';
-    return `${address.streetAddress}, ${address.city}, ${address.state} ${address.postalCode}`;
-  };
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,108 +71,87 @@ const DomesticShipping = () => {
       return;
     }
 
+    if (!pickupAddress) {
+      alert('Error: No pickup address found. Please add a pickup address first.');
+      return;
+    }
+
     try {
-      const selectedAddress = addresses.delivery.find(addr => addr._id === selectedDeliveryAddress);
+      const selectedAddress = addresses.find(addr => addr._id === selectedDeliveryAddress);
       
       const shippingDetails = {
         ...formData,
-        pickupAddress: {
-          streetAddress: user.address, // Use user's default address as pickup
-          city: user.city,
-          state: user.state,
-          postalCode: user.postalCode,
-          country: 'India'
-        },
+        pickupAddress,
         deliveryAddress: selectedAddress
       };
 
       navigate('/shipping/confirmation', { state: { shippingDetails } });
     } catch (error) {
       console.error('Shipping submission failed:', error);
+      alert('Error: Failed to process shipping details. Please try again.');
     }
+  };
+
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.streetAddress}, ${address.city}, ${address.state} ${address.postalCode}`;
   };
 
   return (
     <div className={styles.shippingContainer}>
-      {notification.show && (
+      {showNotification && (
         <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification({ ...notification, show: false })}
+          message="You need to add at least one delivery address before proceeding with shipping."
+          type="warning"
+          onClose={() => setShowNotification(false)}
           actionButton={
-            !addresses.pickup && (
-              <button
-                onClick={() => navigate('/settings')}
-                className={styles.actionButton}
-              >
-                Add Address
-              </button>
-            )
+            <button
+              onClick={() => navigate('/customer/addresses')}
+              className={styles.actionButton}
+            >
+              Add Address
+            </button>
           }
         />
       )}
-
-      <div className={styles.shippingHeader}>
-        <h1>Domestic Shipping</h1>
-        <p>Send packages anywhere within the country</p>
-      </div>
+      <h1>Domestic Shipping</h1>
+      <p>Send packages anywhere within the country</p>
 
       <form onSubmit={handleSubmit} className={styles.shippingForm}>
-        <div className={styles.addressSection}>
+        <div className={styles.formSection}>
+          <h3><FaMapMarkerAlt /> Delivery Details</h3>
+          
+          {/* Display pickup address */}
           <div className={styles.pickupAddress}>
-            <h3><FaMapMarkerAlt /> Pickup Address</h3>
-            {addresses.pickup ? (
-              <div className={styles.addressCard}>
-                <div className={styles.addressHeader}>
-                  <span className={styles.addressLabel}>{addresses.pickup.label}</span>
-                  {addresses.pickup.isDefault && (
-                    <span className={styles.defaultBadge}>Default</span>
-                  )}
-                </div>
-                <p>{formatAddress(addresses.pickup)}</p>
-              </div>
-            ) : (
-              <div className={styles.noAddress}>
-                <p>No pickup address set</p>
-                <button
-                  type="button"
-                  onClick={() => navigate('/settings')}
-                  className={styles.addAddressButton}
-                >
-                  Add Pickup Address
-                </button>
-              </div>
-            )}
+            <h4>Pickup Address</h4>
+            <div className={styles.addressDisplay}>
+              {pickupAddress ? (
+                <>
+                  <p>{pickupAddress.streetAddress}</p>
+                  <p>{pickupAddress.city} {pickupAddress.state}</p>
+                  <p>{pickupAddress.postalCode}</p>
+                </>
+              ) : (
+                <p>No pickup address available. Please add one.</p>
+              )}
+            </div>
           </div>
 
+          {/* Delivery address selector */}
           <div className={styles.deliveryAddress}>
-            <h3><FaMapMarkerAlt /> Delivery Address</h3>
-            {addresses.delivery.length > 0 ? (
-              <select
-                value={selectedDeliveryAddress}
-                onChange={(e) => setSelectedDeliveryAddress(e.target.value)}
-                className={styles.addressSelect}
-                required
-              >
-                <option value="">Select delivery address</option>
-                {addresses.delivery.map(addr => (
-                  <option key={addr._id} value={addr._id}>
-                    {addr.label} - {formatAddress(addr)}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className={styles.noAddress}>
-                <p>No delivery addresses added</p>
-                <button
-                  type="button"
-                  onClick={() => navigate('/settings')}
-                  className={styles.addAddressButton}
-                >
-                  Add Delivery Address
-                </button>
-              </div>
-            )}
+            <h4>Select Delivery Address</h4>
+            <select
+              value={selectedDeliveryAddress}
+              onChange={(e) => setSelectedDeliveryAddress(e.target.value)}
+              required
+            >
+              <option value="">Choose delivery address</option>
+              {addresses.map(addr => (
+                <option key={addr._id} value={addr._id}>
+                  {addr.label} - {addr.streetAddress}, {addr.city}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

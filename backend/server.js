@@ -14,6 +14,7 @@ const staffRoutes = require('./routes/staff/staffRoutes') || express.Router();
 const orderRoutes = require('./routes/order/orderRoutes');
 const packageRoutes = require('./routes/order/packageRoutes');
 const notificationRoutes = require('./routes/customer/notificationRoutes') || express.Router();
+const shipmentRoutes = require('./routes/order/shipmentRoutes');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -70,6 +71,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/customer/notifications', notificationRoutes);
 app.use('/api/orders/user/:userId/shipments', orderRoutes);
+app.use('/api/shipments', shipmentRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

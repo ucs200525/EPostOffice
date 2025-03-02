@@ -27,7 +27,7 @@ const ShippingSuccess = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/orders/track/${trackingNumber}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/shipments/track/${trackingNumber}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
