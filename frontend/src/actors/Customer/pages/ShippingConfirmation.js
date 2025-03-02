@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaBox, FaGlobe, FaCheckCircle } from 'react-icons/fa';
 import styles from '../styles/ShippingConfirmation.module.css';
 import Notification from '../../../components/Notification';
+import axios from 'axios';
 
 const ShippingConfirmation = () => {
   const location = useLocation();
@@ -15,18 +16,8 @@ const ShippingConfirmation = () => {
   });
 
   const formatAddress = (address) => {
-    if (!address) return 'No address provided';
-    
-    const addressParts = [
-      address.streetAddress,
-      address.city,
-      address.state,
-      address.postalCode,
-      address.country
-    ];
-  
-    // Filter out undefined or empty values and join with commas
-    return addressParts.filter(part => part && part.trim()).join(', ') || 'Address incomplete';
+    if (!address) return '';
+    return `${address.streetAddress}, ${address.city}, ${address.state} ${address.postalCode}`;
   };
 
   const calculateTotal = () => {
@@ -40,14 +31,32 @@ const ShippingConfirmation = () => {
   const handleConfirm = async () => {
     try {
       // Add your API call to save the shipment here
-      setNotification({
-        show: true,
-        type: 'success',
-        message: 'Shipment created successfully!'
-      });
-      setTimeout(() => {
-        navigate('/shipments');
-      }, 2000);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/shipments/create`,
+        shippingDetails,
+        {
+          headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setNotification({
+          show: true,
+          type: 'success',
+          message: 'Shipment created successfully!'
+        });
+        
+        // Navigate to shipping success page with tracking number
+        navigate('/shipping/success', { 
+          state: { 
+            trackingNumber: response.data.trackingNumber,
+            shipmentDetails: shippingDetails
+          }
+        });
+      }
     } catch (error) {
       setNotification({
         show: true,
@@ -89,21 +98,38 @@ const ShippingConfirmation = () => {
           <div className={styles.detailsGrid}>
             <div className={styles.section}>
               <h2><FaMapMarkerAlt /> Pickup Address</h2>
-              <div className={styles.addressBox}>
-                {shippingDetails.pickupAddress ? (
-                  <>
-                    <p className={styles.addressLabel}>{shippingDetails.pickupAddress.label || 'Pickup Location'}</p>
-                    <p className={styles.addressText}>{formatAddress(shippingDetails.pickupAddress)}</p>
-                  </>
-                ) : (
-                  <p className={styles.noAddress}>No pickup address available</p>
-                )}
-              </div>
+              {shippingDetails.pickupAddress ? (
+                <div className={styles.addressCard}>
+                  <div className={styles.addressHeader}>
+                    <span className={styles.addressLabel}>
+                      {shippingDetails.pickupAddress.label || 'Pickup Location'}
+                    </span>
+                    {shippingDetails.pickupAddress.isDefault && (
+                      <span className={styles.defaultBadge}>Default</span>
+                    )}
+                  </div>
+                  <p>{formatAddress(shippingDetails.pickupAddress)}</p>
+                </div>
+              ) : (
+                <div className={styles.noAddress}>
+                  <p>No pickup address available</p>
+                </div>
+              )}
             </div>
 
-            <div className={styles.addressSection}>
-              <h3><FaMapMarkerAlt /> Delivery Address</h3>
-              <p>{formatAddress(shippingDetails.deliveryAddress)}</p>
+            <div className={styles.section}>
+              <h2><FaMapMarkerAlt /> Delivery Address</h2>
+              <div className={styles.addressCard}>
+                <div className={styles.addressHeader}>
+                  <span className={styles.addressLabel}>
+                    {shippingDetails.deliveryAddress.label || 'Delivery Location'}
+                  </span>
+                  {shippingDetails.deliveryAddress.isDefault && (
+                    <span className={styles.defaultBadge}>Default</span>
+                  )}
+                </div>
+                <p>{formatAddress(shippingDetails.deliveryAddress)}</p>
+              </div>
             </div>
 
             <div className={styles.packageSection}>

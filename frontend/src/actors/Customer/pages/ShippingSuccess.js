@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaBox, FaPrint, FaShare, FaArrowRight, FaExclamationTriangle } from 'react-icons/fa';
-import styles from './styles/ShippingSuccess.module.css';
+import styles from '../styles/ShippingSuccess.module.css';
 import axios from 'axios';
 import Notification from '../../../components/Notification';
 
