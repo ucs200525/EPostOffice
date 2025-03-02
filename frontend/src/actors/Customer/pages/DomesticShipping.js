@@ -9,60 +9,74 @@ import styles from '../styles/Shipping.module.css';
 const DomesticShipping = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [addresses, setAddresses] = useState([]);
+  const [addresses, setAddresses] = useState({
+    pickup: null,
+    delivery: []
+  });
   const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState('');
-  const [showNotification, setShowNotification] = useState(false);
   const [formData, setFormData] = useState({
     weight: '',
     dimensions: { length: '', width: '', height: '' },
     packageType: 'standard',
     specialInstructions: ''
   });
+  const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState({
+    show: false,
+    type: '',
+    message: ''
+  });
 
-  // Fetch saved delivery addresses
+  // Fetch addresses
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!user?._id) {
-        console.error('User ID is not available');
+        setNotification({
+          show: true,
+          type: 'error',
+          message: 'Please log in to continue'
+        });
         return;
       }
 
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user._id}`,
           {
-            params: { userId: user._id },
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
           }
         );
 
-        if (response.data.success === false) {
-          console.error('Failed to fetch addresses:', response.data.message);
-          alert('Unable to fetch delivery addresses. Please try again.');
-          return;
-        }
+        if (response.data.success) {
+          setAddresses({
+            pickup: response.data.data.pickup,
+            delivery: response.data.data.delivery || []
+          });
 
-        const addressList = response.data.addresses || [];
-        setAddresses(addressList);
-        
-        if (addressList.length === 0) {
-          setShowNotification(true);
-          return;
-        }
-
-        // Set default delivery address if exists
-        const defaultAddress = addressList.find(addr => addr.isDefault);
-        if (defaultAddress) {
-          setSelectedDeliveryAddress(defaultAddress._id);
+          // Set default delivery address if available
+          const defaultDelivery = response.data.data.delivery?.find(addr => addr.isDefault);
+          if (defaultDelivery) {
+            setSelectedDeliveryAddress(defaultDelivery._id);
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch addresses:', error.response?.data?.message || error.message);
-        alert('Error fetching addresses. Please try again later.');
+        setNotification({
+          show: true,
+          type: 'error',
+          message: 'Failed to fetch addresses'
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchAddresses();
-  }, [user, navigate]);
+  }, [user]);
+
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.streetAddress}, ${address.city}, ${address.state} ${address.postalCode}`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,7 +87,7 @@ const DomesticShipping = () => {
     }
 
     try {
-      const selectedAddress = addresses.find(addr => addr._id === selectedDeliveryAddress);
+      const selectedAddress = addresses.delivery.find(addr => addr._id === selectedDeliveryAddress);
       
       const shippingDetails = {
         ...formData,
@@ -95,53 +109,85 @@ const DomesticShipping = () => {
 
   return (
     <div className={styles.shippingContainer}>
-      {showNotification && (
+      {notification.show && (
         <Notification
-          message="You need to add at least one delivery address before proceeding with shipping."
-          type="warning"
-          onClose={() => setShowNotification(false)}
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification({ ...notification, show: false })}
           actionButton={
-            <button
-              onClick={() => navigate('/customer/addresses')}
-              className={styles.actionButton}
-            >
-              Add Address
-            </button>
+            !addresses.pickup && (
+              <button
+                onClick={() => navigate('/settings')}
+                className={styles.actionButton}
+              >
+                Add Address
+              </button>
+            )
           }
         />
       )}
-      <h1>Domestic Shipping</h1>
-      <p>Send packages anywhere within the country</p>
+
+      <div className={styles.shippingHeader}>
+        <h1>Domestic Shipping</h1>
+        <p>Send packages anywhere within the country</p>
+      </div>
 
       <form onSubmit={handleSubmit} className={styles.shippingForm}>
-        <div className={styles.formSection}>
-          <h3><FaMapMarkerAlt /> Delivery Details</h3>
-          
-          {/* Display user's default address as pickup location */}
+        <div className={styles.addressSection}>
           <div className={styles.pickupAddress}>
-            <h4>Pickup Address</h4>
-            <div className={styles.addressDisplay}>
-              <p>{user.address}</p>
-              <p>{user.city} {user.state}</p>
-              <p>{user.postalCode}</p>
-            </div>
+            <h3><FaMapMarkerAlt /> Pickup Address</h3>
+            {addresses.pickup ? (
+              <div className={styles.addressCard}>
+                <div className={styles.addressHeader}>
+                  <span className={styles.addressLabel}>{addresses.pickup.label}</span>
+                  {addresses.pickup.isDefault && (
+                    <span className={styles.defaultBadge}>Default</span>
+                  )}
+                </div>
+                <p>{formatAddress(addresses.pickup)}</p>
+              </div>
+            ) : (
+              <div className={styles.noAddress}>
+                <p>No pickup address set</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/settings')}
+                  className={styles.addAddressButton}
+                >
+                  Add Pickup Address
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Delivery address selector */}
           <div className={styles.deliveryAddress}>
-            <h4>Select Delivery Address</h4>
-            <select
-              value={selectedDeliveryAddress}
-              onChange={(e) => setSelectedDeliveryAddress(e.target.value)}
-              required
-            >
-              <option value="">Choose delivery address</option>
-              {addresses.map(addr => (
-                <option key={addr._id} value={addr._id}>
-                  {addr.label} - {addr.streetAddress}, {addr.city}
-                </option>
-              ))}
-            </select>
+            <h3><FaMapMarkerAlt /> Delivery Address</h3>
+            {addresses.delivery.length > 0 ? (
+              <select
+                value={selectedDeliveryAddress}
+                onChange={(e) => setSelectedDeliveryAddress(e.target.value)}
+                className={styles.addressSelect}
+                required
+              >
+                <option value="">Select delivery address</option>
+                {addresses.delivery.map(addr => (
+                  <option key={addr._id} value={addr._id}>
+                    {addr.label} - {formatAddress(addr)}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className={styles.noAddress}>
+                <p>No delivery addresses added</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/settings')}
+                  className={styles.addAddressButton}
+                >
+                  Add Delivery Address
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

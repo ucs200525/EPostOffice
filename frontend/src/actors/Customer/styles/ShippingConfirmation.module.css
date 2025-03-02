@@ -1,35 +1,94 @@
 .confirmationContainer {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 20px;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #f8fafc;
 }
 
 .confirmationCard {
   background: white;
-  padding: 32px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.confirmationHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.confirmationIcon {
+  font-size: 3.5rem;
+  color: #22c55e;
+  margin-bottom: 1.5rem;
+}
+
+.confirmationHeader h1 {
+  color: #1e293b;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.confirmationHeader p {
+  color: #64748b;
+  font-size: 1.1rem;
 }
 
 .section {
-  margin-bottom: 32px;
-  padding: 20px;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .section h2 {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #2c3e50;
-  margin-bottom: 20px;
+  gap: 0.75rem;
+  color: #334155;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .detailsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.addressSection,
+.packageSection,
+.customsSection {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pricingSection {
+  background: #f8f9fa;
+  padding: 2rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.priceBreakdown {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #dee2e6;
 }
 
 .detail {
@@ -56,11 +115,12 @@
 }
 
 .total {
-  border-top: 2px solid #e2e8f0;
-  margin-top: 8px;
-  padding-top: 16px;
-  font-size: 18px;
-  font-weight: 600;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border-top: 2px solid #dee2e6;
+  border-bottom: none;
+  margin-top: 1rem;
+  padding-top: 1rem;
 }
 
 .actions {
@@ -69,36 +129,40 @@
   margin-top: 32px;
 }
 
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
 .backButton,
 .confirmButton {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s;
 }
 
 .backButton {
-  background: transparent;
-  border: 1px solid #3b82f6;
-  color: #3b82f6;
+  background: #e9ecef;
+  border: none;
+  color: #495057;
 }
 
 .confirmButton {
-  background: #3b82f6;
+  background: #1a237e;
   border: none;
   color: white;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .backButton:hover {
-  background: #eff6ff;
+  background: #dee2e6;
 }
 
 .confirmButton:hover {
-  background: #2563eb;
+  background: #283593;
 }
 
 .error {
@@ -107,4 +171,49 @@
   border-radius: 6px;
   background: #fee2e2;
   margin: 16px 0;
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 3rem;
+}
+
+.addressBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.addressLabel {
+  color: #475569;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.addressText {
+  color: #1e293b;
+  line-height: 1.5;
+}
+
+.noAddress {
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .confirmationContainer {
+    padding: 1rem;
+  }
+  
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section {
+    padding: 1rem;
+  }
 }

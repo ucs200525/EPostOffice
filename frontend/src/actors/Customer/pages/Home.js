@@ -6,6 +6,7 @@ import styles from '../styles/Home.module.css';
 import { FaBox, FaTruck, FaMoneyBill, FaUser, FaBell, FaMapMarkerAlt, FaFileAlt, FaStar, FaSearch, FaQuestionCircle, FaArrowRight, FaCalculator, FaClock, FaShieldAlt, FaCheckCircle, FaPlus, FaMinus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useShipments } from '../../../context/ShipmentContext';
+import Notification from '../../../components/Notification';
 
 const SendPackageSection = () => {
   const navigate = useNavigate();
@@ -100,7 +101,11 @@ const Home = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false); // Change to false initially
-  const [showToast, setShowToast] = useState({ show: false, message: '', type: '' });
+  const [notification, setNotification] = useState({
+    show: false,
+    type: 'info',
+    message: ''
+  });
 
   // Add CSS variables
   const cssVariables = {
@@ -114,10 +119,24 @@ const Home = () => {
   };
 
   const [customerData, setCustomerData] = useState({
+    id: '',
     name: '',
     email: '',
-    address: '',
-    balance: 0
+    role: 'customer',
+    phone: '',
+    walletBalance: 0,
+    pickupAddress: {
+      label: '',
+      streetAddress: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: 'India',
+      type: 'pickup',
+      isDefault: false,
+      _id: ''
+    },
+    deliveryAddresses: []
   });
   const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]); // Initialize as empty array
@@ -141,7 +160,6 @@ const Home = () => {
     completed: 0,
     total: 0
   });
-  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -205,7 +223,11 @@ const fetchProfile = async () => {
     setError(null);
   } catch (err) {
     console.error('Profile fetch failed:', err);
-    // setError(err.response?.data?.message || 'Failed to fetch profile');
+    setNotification({
+      show: true,
+      type: 'error',
+      message: err.response?.data?.message || 'Failed to fetch profile'
+    });
     setCustomerData(null);
   }
 };
@@ -249,6 +271,7 @@ const fetchProfile = async () => {
     } catch (error) {
       console.error('Failed to fetch orders:', error);
       setNotification({
+        show: true,
         type: 'error',
         message: 'Failed to fetch orders'
       });
@@ -364,10 +387,10 @@ useEffect(() => {
       });
       
       // Show success message
-      setShowToast({
+      setNotification({
         show: true,
-        message: 'Thank you for your feedback!',
-        type: 'success'
+        type: 'success',
+        message: 'Thank you for your feedback!'
       });
       
       // Reset form
@@ -375,10 +398,10 @@ useEffect(() => {
       setRating(0);
     } catch (err) {
       console.error('Feedback submission failed:', err);
-      setShowToast({
+      setNotification({
         show: true,
-        message: 'Failed to submit feedback. Please try again.',
-        type: 'error'
+        type: 'error',
+        message: 'Failed to submit feedback. Please try again.'
       });
     }
   };
@@ -539,11 +562,59 @@ useEffect(() => {
     </div>
   );
 
-  if (authLoading) return <div className={styles.loader}>Loading...</div>;
-  if (error) return <div className={styles.errorMessage}>{error}</div>;
+  // Add this function to get user data
+  const getUserData = () => {
+    if (customerData?.name) {
+      return customerData;
+    }
+    try {
+      const localUser = JSON.parse(localStorage.getItem('user'));
+      if (localUser) {
+        // Update customerData with full localStorage data
+        setCustomerData({
+          id: localUser.id || '',
+          name: localUser.name || '',
+          email: localUser.email || '',
+          role: localUser.role || 'customer',
+          phone: localUser.phone || '',
+          walletBalance: localUser.walletBalance || 0,
+          pickupAddress: localUser.pickupAddress || {
+            label: '',
+            streetAddress: '',
+            city: '',
+            state: '',
+            postalCode: '',
+            country: 'India',
+            type: 'pickup',
+            isDefault: false,
+            _id: ''
+          },
+          deliveryAddresses: localUser.deliveryAddresses || []
+        });
+        return localUser;
+      }
+    } catch (error) {
+      console.error('Error parsing user data from localStorage:', error);
+    }
+    return null;
+  };
 
+  const formatAddress = (address) => {
+    if (!address) return 'No pickup address set';
+    return `${address.streetAddress}, ${address.city}, ${address.state} ${address.postalCode}`;
+  };
+
+  // Update the profile section JSX
   return isAuthenticated ? (
     <div className={styles.dashboardContainer}>
+      {notification.show && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification({ show: false, type: 'info', message: '' })}
+        />
+      )}
+
       {loading ? (
         <div className={styles.loader}>Loading dashboard...</div>
       ) : (
@@ -552,9 +623,18 @@ useEffect(() => {
             <div className={styles.profileSection}>
               <FaUser className={styles.profileIcon} />
               <div className={styles.profileInfo}>
-                <h1>Welcome back, {customerData?.name}</h1>
-                <p>{customerData?.email}</p>
-                <p><FaMapMarkerAlt /> {customerData?.address}</p>
+                {getUserData() ? (
+                  <>
+                    <h1>Welcome back, {getUserData().name}</h1>
+                    <p>{getUserData().email}</p>
+                    <p>
+                      <FaMapMarkerAlt /> 
+                      {getUserData().pickupAddress ? formatAddress(getUserData().pickupAddress) : 'No pickup address set'}
+                    </p>
+                  </>
+                ) : (
+                  <h1>Welcome</h1>
+                )}
               </div>
             </div>
             <div className={styles.balanceSection}>
@@ -719,13 +799,6 @@ useEffect(() => {
               <a onClick={handleNavigation('/terms')}>Terms of Service</a>
             </div>
           </footer>
-
-          {showToast.show && (
-            <div className={`${styles.toast} ${styles[showToast.type]}`}>
-              {showToast.message}
-              <button onClick={() => setShowToast({ show: false })}>×</button>
-            </div>
-          )}
         </>
       )}
     </div>

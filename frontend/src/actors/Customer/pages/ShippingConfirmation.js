@@ -1,202 +1,163 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaBox, FaMoneyBillWave, FaTruck, FaCheckCircle } from 'react-icons/fa';
-import styles from './styles/ShippingConfirmation.module.css';
-import { useAuth } from '../../../context/AuthContext';
-import axios from 'axios';
+import { FaMapMarkerAlt, FaBox, FaGlobe, FaCheckCircle } from 'react-icons/fa';
+import styles from '../styles/ShippingConfirmation.module.css';
+import Notification from '../../../components/Notification';
 
 const ShippingConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [costBreakdown, setCostBreakdown] = useState({
-    baseRate: 0,
-    serviceFee: 0,
-    packageTypeSurcharge: 0,
-    total: 0
+  const { shippingDetails } = location.state || {};
+  const [notification, setNotification] = useState({
+    show: false,
+    type: '',
+    message: ''
   });
-  const shippingDetails = location.state?.shippingDetails;
 
-  useEffect(() => {
-    if (!shippingDetails) {
-      navigate('/send-package');
-      return;
-    }
-    calculateShippingCost();
-  }, [shippingDetails]);
+  const formatAddress = (address) => {
+    if (!address) return 'No address provided';
+    
+    const addressParts = [
+      address.streetAddress,
+      address.city,
+      address.state,
+      address.postalCode,
+      address.country
+    ];
+  
+    // Filter out undefined or empty values and join with commas
+    return addressParts.filter(part => part && part.trim()).join(', ') || 'Address incomplete';
+  };
 
-  const calculateShippingCost = async () => {
+  const calculateTotal = () => {
+    // Implement your pricing logic here
+    const basePrice = 50;
+    const weightPrice = shippingDetails.weight * 10;
+    const insurancePrice = shippingDetails.customsDeclaration?.value * 0.01 || 0;
+    return basePrice + weightPrice + insurancePrice;
+  };
+
+  const handleConfirm = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/orders/calculate`, 
-        {
-          weight: shippingDetails.weight,
-          dimensions: shippingDetails.dimensions,
-          type: shippingDetails.destinationCountry ? 'international' : 'domestic',
-          destinationCountry: shippingDetails.destinationCountry,
-          packageType: shippingDetails.packageType
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      if (response.data.success) {
-        const calculation = response.data.calculation;
-        setCostBreakdown({
-          baseRate: calculation.baseCost,
-          serviceFee: calculation.serviceFee,
-          packageTypeSurcharge: calculation.packageTypeSurcharge,
-          total: calculation.total
-        });
-      } else {
-        setError('Failed to calculate shipping cost');
-      }
-    } catch (err) {
-      console.error('Calculation error:', err);
-      setError('Error calculating shipping cost: ' + (err.response?.data?.message || err.message));
+      // Add your API call to save the shipment here
+      setNotification({
+        show: true,
+        type: 'success',
+        message: 'Shipment created successfully!'
+      });
+      setTimeout(() => {
+        navigate('/shipments');
+      }, 2000);
+    } catch (error) {
+      setNotification({
+        show: true,
+        type: 'error',
+        message: 'Failed to create shipment. Please try again.'
+      });
     }
   };
 
-  const handleConfirmShipping = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      // First create the order
-      const orderResponse = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/orders/create`,
-        {
-          userId: user._id,
-          shippingDetails: {
-            pickupAddress: shippingDetails.pickupAddress,
-            deliveryAddress: shippingDetails.deliveryAddress,
-            weight: shippingDetails.weight,
-            dimensions: shippingDetails.dimensions,
-            packageType: shippingDetails.packageType,
-            specialInstructions: shippingDetails.specialInstructions,
-            destinationCountry: shippingDetails.destinationCountry || 'India',
-            type: shippingDetails.destinationCountry ? 'international' : 'domestic'
-          },
-          cost: costBreakdown.total
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (orderResponse.data.success) {
-          navigate('/shipping-success', { 
-            state: { 
-              trackingNumber: orderResponse.data.trackingNumber,
-              orderId: orderResponse.data.orderId
-            }
-          });
-      }
-    } catch (err) {
-      setError('Error creating order: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!shippingDetails) {
+    return (
+      <div className={styles.errorContainer}>
+        <h2>No shipping details found</h2>
+        <button onClick={() => navigate(-1)} className={styles.backButton}>
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.container}>
-      <h1>Confirm Your Shipment</h1>
-    
-    <div className={styles.shipmentDetails}>
-      <div className={styles.section}>
-        <h2><FaBox /> Package Details</h2>
-        <div className={styles.detailsGrid}>
-          <div className={styles.detail}>
-            <span>Package Type:</span>
-            <strong>{shippingDetails.packageType}</strong>
-          </div>
-          <div className={styles.detail}>
-            <span>Weight:</span>
-            <strong>{shippingDetails.weight} kg</strong>
-          </div>
-          <div className={styles.detail}>
-            <span>Dimensions:</span>
-            <strong>
-              {shippingDetails.dimensions.length} × {shippingDetails.dimensions.width} × {shippingDetails.dimensions.height} cm
-            </strong>
-          </div>
-        </div>
-      </div>
-
-      <div className={styles.section}>
-        <h2><FaTruck /> Delivery Information</h2>
-        <div className={styles.detailsGrid}>
-          <div className={styles.detail}>
-            <span>From:</span>
-            <strong>{shippingDetails.senderAddress}</strong>
-          </div>
-          <div className={styles.detail}>
-            <span>To:</span>
-            <strong>{shippingDetails.receiverAddress}</strong>
-          </div>
-          {shippingDetails.destinationCountry && (
-            <div className={styles.detail}>
-              <span>Country:</span>
-              <strong>{shippingDetails.destinationCountry}</strong>
-            </div>
+    <>
+      <div className={styles.confirmationContainer}>
+        <div className={styles.confirmationCard}>
+          {notification.show && (
+            <Notification
+              type={notification.type}
+              message={notification.message}
+              onClose={() => setNotification({ ...notification, show: false })}
+            />
           )}
-        </div>
-      </div>
 
-      <div className={styles.section}>
-        <h2><FaMoneyBillWave /> Cost Breakdown</h2>
-        <div className={styles.costBreakdown}>
-          <div className={styles.costItem}>
-            <span>Base Rate:</span>
-            <strong>₹{costBreakdown.baseRate?.toFixed(2)}</strong>
+          <div className={styles.confirmationHeader}>
+            <FaCheckCircle className={styles.confirmationIcon} />
+            <h1>Confirm Your Shipment</h1>
+            <p>Please review your shipping details</p>
           </div>
-          <div className={styles.costItem}>
-            <span>Service Fee:</span>
-            <strong>₹{costBreakdown.serviceFee?.toFixed(2)}</strong>
-          </div>
-          {costBreakdown.packageTypeSurcharge > 0 && (
-            <div className={styles.costItem}>
-              <span>Package Surcharge:</span>
-              <strong>₹{costBreakdown.packageTypeSurcharge?.toFixed(2)}</strong>
+
+          <div className={styles.detailsGrid}>
+            <div className={styles.section}>
+              <h2><FaMapMarkerAlt /> Pickup Address</h2>
+              <div className={styles.addressBox}>
+                {shippingDetails.pickupAddress ? (
+                  <>
+                    <p className={styles.addressLabel}>{shippingDetails.pickupAddress.label || 'Pickup Location'}</p>
+                    <p className={styles.addressText}>{formatAddress(shippingDetails.pickupAddress)}</p>
+                  </>
+                ) : (
+                  <p className={styles.noAddress}>No pickup address available</p>
+                )}
+              </div>
             </div>
-          )}
-          <div className={`${styles.costItem} ${styles.total}`}>
-            <span>Total Cost:</span>
-            <strong>₹{costBreakdown.total?.toFixed(2)}</strong>
+
+            <div className={styles.addressSection}>
+              <h3><FaMapMarkerAlt /> Delivery Address</h3>
+              <p>{formatAddress(shippingDetails.deliveryAddress)}</p>
+            </div>
+
+            <div className={styles.packageSection}>
+              <h3><FaBox /> Package Details</h3>
+              <p>Type: {shippingDetails.packageType}</p>
+              <p>Weight: {shippingDetails.weight} kg</p>
+              <p>Dimensions: {shippingDetails.dimensions.length}x{shippingDetails.dimensions.width}x{shippingDetails.dimensions.height} cm</p>
+            </div>
+
+            {shippingDetails.customsDeclaration && (
+              <div className={styles.customsSection}>
+                <h3><FaGlobe /> Customs Declaration</h3>
+                <p>Contents: {shippingDetails.customsDeclaration.contents}</p>
+                <p>Value: {shippingDetails.customsDeclaration.currency} {shippingDetails.customsDeclaration.value}</p>
+                <p>Purpose: {shippingDetails.customsDeclaration.purpose}</p>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.pricingSection}>
+            <h3>Shipping Cost</h3>
+            <div className={styles.priceBreakdown}>
+              <div className={styles.priceRow}>
+                <span>Base Price</span>
+                <span>$50.00</span>
+              </div>
+              <div className={styles.priceRow}>
+                <span>Weight Charge</span>
+                <span>${(shippingDetails.weight * 10).toFixed(2)}</span>
+              </div>
+              {shippingDetails.customsDeclaration && (
+                <div className={styles.priceRow}>
+                  <span>Insurance (1%)</span>
+                  <span>${(shippingDetails.customsDeclaration.value * 0.01).toFixed(2)}</span>
+                </div>
+              )}
+              <div className={`${styles.priceRow} ${styles.total}`}>
+                <span>Total</span>
+                <span>${calculateTotal().toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.actionButtons}>
+            <button onClick={() => navigate(-1)} className={styles.backButton}>
+              Back
+            </button>
+            <button onClick={handleConfirm} className={styles.confirmButton}>
+              Confirm & Pay
+            </button>
           </div>
         </div>
       </div>
-    </div>
-
-    {error && <div className={styles.error}>{error}</div>}
-
-    <div className={styles.actions}>
-      <button 
-        className={styles.backButton}
-        onClick={() => navigate(-1)}
-      >
-        Modify Details
-      </button>
-      <button
-        className={styles.confirmButton}
-        onClick={handleConfirmShipping}
-        disabled={loading}
-      >
-        {loading ? 'Processing...' : 'Confirm & Pay'}
-        {!loading && <FaCheckCircle />}
-      </button>
-    </div>
-  </div>
+    </>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaBox, FaWeightHanging, FaRuler, FaMapMarkerAlt, FaGlobe } from 'react-icons/fa';
+import Notification from '../../../components/Notification';
 import { useAuth } from '../../../context/AuthContext';
 import axios from 'axios';
 import styles from '../styles/Shipping.module.css';
@@ -8,136 +9,198 @@ import styles from '../styles/Shipping.module.css';
 const InternationalShipping = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [addresses, setAddresses] = useState([]);
+  const [addresses, setAddresses] = useState({
+    pickup: null,
+    delivery: []
+  });
   const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState('');
-  const [countries, setCountries] = useState([]);
   const [formData, setFormData] = useState({
     weight: '',
     dimensions: { length: '', width: '', height: '' },
     packageType: 'standard',
     specialInstructions: '',
-    destinationCountry: '',
     customsDeclaration: {
-      itemDescription: '',
+      contents: '',
       value: '',
-      category: ''
+      currency: 'USD',
+      purpose: 'gift'
     }
   });
+  const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState({
+    show: false,
+    type: '',
+    message: ''
+  });
 
+  // Fetch addresses function
   useEffect(() => {
+    const fetchAddresses = async () => {
+      if (!user?._id) {
+        setNotification({
+          show: true,
+          type: 'error',
+          message: 'Please log in to continue'
+        });
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user._id}`,
+          {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          }
+        );
+
+        if (response.data.success) {
+          setAddresses({
+            pickup: response.data.data.pickup,
+            delivery: response.data.data.delivery || []
+          });
+
+          // Set default delivery address if available
+          const defaultDelivery = response.data.data.delivery?.find(addr => addr.isDefault);
+          if (defaultDelivery) {
+            setSelectedDeliveryAddress(defaultDelivery._id);
+          }
+        }
+      } catch (error) {
+        setNotification({
+          show: true,
+          type: 'error',
+          message: 'Failed to fetch addresses'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAddresses();
-    fetchCountries();
   }, [user]);
 
-  const fetchAddresses = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses?userId=${user._id}`,
-        {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }
-      );
-      setAddresses(response.data.addresses || []);
-      
-      const defaultAddress = response.data.addresses.find(addr => addr.isDefault);
-      if (defaultAddress) {
-        setSelectedDeliveryAddress(defaultAddress._id);
-      }
-    } catch (error) {
-      console.error('Failed to fetch addresses:', error);
-    }
+  // Format address helper
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.streetAddress}, ${address.city}, ${address.state} ${address.postalCode}, ${address.country}`;
   };
 
-  const fetchCountries = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shipping/countries`);
-      setCountries(response.data.countries);
-    } catch (error) {
-      console.error('Failed to fetch countries:', error);
-    }
-  };
-
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedDeliveryAddress || !formData.destinationCountry) {
-      alert('Please fill in all required fields');
+    
+    if (!selectedDeliveryAddress) {
+      setNotification({
+        show: true,
+        type: 'error',
+        message: 'Please select a delivery address'
+      });
       return;
     }
 
     try {
-      const selectedAddress = addresses.find(addr => addr._id === selectedDeliveryAddress);
+      const selectedAddress = addresses.delivery.find(addr => addr._id === selectedDeliveryAddress);
       
       const shippingDetails = {
         ...formData,
-        pickupAddress: {
-          streetAddress: user.address,
-          city: user.city,
-          state: user.state,
-          postalCode: user.postalCode,
-          country: 'India'
-        },
-        deliveryAddress: selectedAddress,
-        type: 'international'
+        pickupAddress: addresses.pickup,
+        deliveryAddress: selectedAddress
       };
 
-      navigate('/shipping/confirmation', { state: { shippingDetails } });
+      navigate('/shipping/international/confirmation', { state: { shippingDetails } });
     } catch (error) {
-      console.error('Shipping submission failed:', error);
+      setNotification({
+        show: true,
+        type: 'error',
+        message: 'Failed to process shipping details'
+      });
     }
   };
 
   return (
     <div className={styles.shippingContainer}>
-      <h1>International Shipping</h1>
-      <p>Send packages worldwide</p>
+      {notification.show && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification({ ...notification, show: false })}
+          actionButton={
+            !addresses.pickup && (
+              <button
+                onClick={() => navigate('/settings')}
+                className={styles.actionButton}
+              >
+                Add Address
+              </button>
+            )
+          }
+        />
+      )}
+
+      <div className={styles.shippingHeader}>
+        <h1>International Shipping</h1>
+        <p>Send packages worldwide with tracking and insurance</p>
+      </div>
 
       <form onSubmit={handleSubmit} className={styles.shippingForm}>
-        <div className={styles.formSection}>
-          <h3><FaMapMarkerAlt /> Delivery Details</h3>
-          
-          {/* Pickup Address Display */}
+        {/* Address Section */}
+        <div className={styles.addressSection}>
+          {/* Pickup Address */}
           <div className={styles.pickupAddress}>
-            <h4>Pickup Address</h4>
-            <div className={styles.addressDisplay}>
-              <p>{user.address}</p>
-              <p>{user.city}, {user.state}</p>
-              <p>{user.postalCode}</p>
-              <p>India</p>
-            </div>
+            <h3><FaMapMarkerAlt /> Pickup Address</h3>
+            {addresses.pickup ? (
+              <div className={styles.addressCard}>
+                <div className={styles.addressHeader}>
+                  <span className={styles.addressLabel}>{addresses.pickup.label}</span>
+                  {addresses.pickup.isDefault && (
+                    <span className={styles.defaultBadge}>Default</span>
+                  )}
+                </div>
+                <p>{formatAddress(addresses.pickup)}</p>
+              </div>
+            ) : (
+              <div className={styles.noAddress}>
+                <p>No pickup address set</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/settings')}
+                  className={styles.addAddressButton}
+                >
+                  Add Pickup Address
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Delivery Address Section */}
+          {/* Delivery Address */}
           <div className={styles.deliveryAddress}>
-            <h4>Select Delivery Address</h4>
-            <select
-              value={selectedDeliveryAddress}
-              onChange={(e) => setSelectedDeliveryAddress(e.target.value)}
-              required
-            >
-              <option value="">Choose delivery address</option>
-              {addresses.map(addr => (
-                <option key={addr._id} value={addr._id}>
-                  {addr.label} - {addr.streetAddress}, {addr.city}
-                </option>
-              ))}
-            </select>
-
-            {/* Destination Country Selection */}
-            <div className={styles.formGroup}>
-              <label><FaGlobe /> Destination Country</label>
+            <h3><FaMapMarkerAlt /> Delivery Address</h3>
+            {addresses.delivery.length > 0 ? (
               <select
-                value={formData.destinationCountry}
-                onChange={(e) => setFormData({...formData, destinationCountry: e.target.value})}
+                value={selectedDeliveryAddress}
+                onChange={(e) => setSelectedDeliveryAddress(e.target.value)}
+                className={styles.addressSelect}
                 required
               >
-                <option value="">Select country</option>
-                {countries.map(country => (
-                  <option key={country.code} value={country.code}>
-                    {country.name}
+                <option value="">Select delivery address</option>
+                {addresses.delivery.map(addr => (
+                  <option key={addr._id} value={addr._id}>
+                    {addr.label} - {formatAddress(addr)}
                   </option>
                 ))}
               </select>
-            </div>
+            ) : (
+              <div className={styles.noAddress}>
+                <p>No delivery addresses added</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/settings')}
+                  className={styles.addAddressButton}
+                >
+                  Add Delivery Address
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -210,64 +273,83 @@ const InternationalShipping = () => {
           </div>
         </div>
 
-        {/* Customs Declaration */}
-        <div className={styles.formSection}>
-          <h3>Customs Declaration</h3>
+        {/* Customs Declaration Section */}
+        <div className={styles.customsSection}>
+          <h3><FaGlobe /> Customs Declaration</h3>
           <div className={styles.formGroup}>
-            <label>Item Description</label>
+            <label>Contents Description</label>
             <textarea
-              value={formData.customsDeclaration.itemDescription}
+              value={formData.customsDeclaration.contents}
               onChange={(e) => setFormData({
                 ...formData,
                 customsDeclaration: {
                   ...formData.customsDeclaration,
-                  itemDescription: e.target.value
+                  contents: e.target.value
                 }
               })}
-              required
-              placeholder="Detailed description of items"
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Declared Value (USD)</label>
-            <input
-              type="number"
-              value={formData.customsDeclaration.value}
-              onChange={(e) => setFormData({
-                ...formData,
-                customsDeclaration: {
-                  ...formData.customsDeclaration,
-                  value: e.target.value
-                }
-              })}
+              placeholder="Describe the contents of your package"
               required
             />
           </div>
 
           <div className={styles.formGroup}>
-            <label>Category</label>
+            <label>Declared Value</label>
+            <div className={styles.currencyInput}>
+              <input
+                type="number"
+                value={formData.customsDeclaration.value}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  customsDeclaration: {
+                    ...formData.customsDeclaration,
+                    value: e.target.value
+                  }
+                })}
+                placeholder="Enter declared value"
+                required
+              />
+              <select
+                value={formData.customsDeclaration.currency}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  customsDeclaration: {
+                    ...formData.customsDeclaration,
+                    currency: e.target.value
+                  }
+                })}
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="INR">INR</option>
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label>Purpose of Shipment</label>
             <select
-              value={formData.customsDeclaration.category}
+              value={formData.customsDeclaration.purpose}
               onChange={(e) => setFormData({
                 ...formData,
                 customsDeclaration: {
                   ...formData.customsDeclaration,
-                  category: e.target.value
+                  purpose: e.target.value
                 }
               })}
               required
             >
-              <option value="">Select category</option>
               <option value="gift">Gift</option>
-              <option value="documents">Documents</option>
-              <option value="commercial">Commercial Goods</option>
+              <option value="commercial">Commercial</option>
               <option value="sample">Sample</option>
+              <option value="documents">Documents</option>
+              <option value="return">Return</option>
+              <option value="other">Other</option>
             </select>
           </div>
         </div>
 
-        <button type="submit" className={styles.submitButton}>
+        <button type="submit" className={styles.submitButton} disabled={loading}>
           Calculate & Proceed
         </button>
       </form>

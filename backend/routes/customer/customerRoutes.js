@@ -262,14 +262,15 @@ router.post('/addresses/:customerId', async (req, res) => {
 });
 
 // Update address
-router.put('/addresses/:customerId', async (req, res) => {
+router.put('/addresses/:customerId/:addressType', async (req, res) => {
   try {
-    const { customerId } = req.params;
+    const { customerId, addressType } = req.params;
+    // const { addressId } = req.query;
     const { label, streetAddress, city, state, postalCode, country, isDefault, type, addressId } = req.body;
 
     console.log('Update address request:', { customerId, addressId, body: req.body });
 
-    if (!type) {
+    if (!addressType) {
       return res.status(400).json({
         success: false,
         message: "Address type is required ('pickup' or 'delivery')"
@@ -296,12 +297,12 @@ router.put('/addresses/:customerId', async (req, res) => {
       state,
       postalCode,
       country,
-      type,
+      addressType,
       coordinates,
       isDefault: !!isDefault
     };
 
-    if (type === 'pickup') {
+    if (addressType === 'pickup') {
       // Update pickup address
       customer.pickupAddress = {
         ...updatedAddress,
@@ -340,7 +341,7 @@ router.put('/addresses/:customerId', async (req, res) => {
       success: true,
       message: 'Address updated successfully',
       data: {
-        address: type === 'pickup' ? customer.pickupAddress : customer.deliveryAddresses.find(addr => addr._id.toString() === addressId)
+        address: addressType === 'pickup' ? customer.pickupAddress : customer.deliveryAddresses.find(addr => addr._id.toString() === addressId)
       }
     });
 

@@ -328,12 +328,13 @@ const Settings = () => {
         }
     };
 
-    const handleEditAddress = async (address) => {
+    const handleEditAddress = async (address,addressId, addressType) => {
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?.id}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user.id}/${addressType}`,
                 address,
                 {
+                    params: { addressId },
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 }
             );

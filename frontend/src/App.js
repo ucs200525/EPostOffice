@@ -27,6 +27,7 @@ import HelpCenter from './actors/Customer/pages/HelpCenter';
 import ContactSupport from './actors/Customer/pages/ContactSupport';
 import TermsOfService from './actors/Customer/pages/TermsOfService';
 import CustomerAddress from './actors/Customer/pages/CustomerAddress';
+import ShippingConfirmation from './actors/Customer/pages/ShippingConfirmation';
 
 import StaffDashboard from './actors/Staff/pages/Dashboard';
 import CustomerManagement from './actors/Staff/pages/CustomerManagement';
@@ -98,6 +99,10 @@ const CustomerLayout = () => {
             <Route path="/send-package" element={<SendPackage />} />
             <Route path="/send-package/domestic" element={<DomesticShipping />} />
             <Route path="/send-package/international" element={<InternationalShipping />} />
+            <Route path="/shipp" element={<CustomerDetails />} />
+            <Route path="/shippi" element={<CustomerVerification />} />
+            <Route path="/shipping/confirmation" element={<ShippingConfirmation />} />
+            <Route path="/shipping/international/confirmation" element={<ShippingConfirmation />} />
             
             <Route path="/shipments" element={<Shipments />} />
             <Route path="/track" element={<TrackTrace />} />
