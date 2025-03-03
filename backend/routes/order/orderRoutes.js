@@ -3,29 +3,32 @@ const router = express.Router();
 const Order = require('../../models/order/Order');
 const auth = require('../../middleware/auth');
 
-// Get all orders for the logged-in user
-router.get('/my-orders', async (req, res) => {
+// Get all orders for the logged-in user - Remove items population
+router.get('/my-orders/:customerId', async (req, res) => {
     try {
-        const orders = await Order.find({ customerId: req.user.id })
-            .populate('items')
+        const { customerId } = req.params;
+        const orders = await Order.find({ customerId })
+            // Remove .populate('items') since it doesn't exist
             .sort({ createdAt: -1 });
 
-        if (!orders) {
-            return res.status(404).json({
-                success: false,
-                message: 'No orders found for this customer'
-            });
-        }
+        // Calculate stats from orders
+        const stats = {
+            active: orders.filter(order => order.status === 'pending').length,
+            transit: orders.filter(order => order.status === 'in-transit').length,
+            completed: orders.filter(order => order.status === 'delivered').length,
+            total: orders.length
+        };
 
         res.json({
             success: true,
-            data: orders
+            data: orders,
+            stats
         });
     } catch (error) {
         console.error('Error fetching orders:', error);
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Error fetching orders'
         });
     }
 });
@@ -50,13 +53,13 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Get order by ID
+// Get order by ID - Remove items population
 router.get('/:id', async (req, res) => {
     try {
         const order = await Order.findOne({
             _id: req.params.id,
             customerId: req.user.id
-        }).populate('items');
+        }); // Remove .populate('items')
         
         if (!order) {
             return res.status(404).json({

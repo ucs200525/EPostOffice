@@ -6,6 +6,7 @@ import {
     FaWallet, FaHistory, FaPlusCircle, FaArrowUp, 
     FaArrowDown, FaFilter, FaSort, FaSearch 
 } from 'react-icons/fa';
+import Notification from '../../../components/Notification';
 
 const Payment = () => {
     const { user } = useAuth();
@@ -20,6 +21,11 @@ const Payment = () => {
     const [filterType, setFilterType] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredTransactions, setFilteredTransactions] = useState([]);
+    const [notification, setNotification] = useState({
+        show: false,
+        type: '',
+        message: ''
+    });
 
     useEffect(() => {
         if (user) {
@@ -36,13 +42,30 @@ const Payment = () => {
 
     const fetchWalletBalance = async () => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('No authentication token found');
+
             const response = await axios.get(
                 `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user._id}/wallet`,
-                { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
+                { 
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
             );
-            setWalletBalance(response.data.balance);
+
+            if (response.data.success) {
+                setWalletBalance(response.data.balance);
+            } else {
+                throw new Error(response.data.message);
+            }
         } catch (err) {
-            setError('Failed to fetch wallet balance');
+            setNotification({
+                show: true,
+                type: 'error',
+                message: err.message || 'Failed to fetch wallet balance'
+            });
         }
     };
 
@@ -62,25 +85,52 @@ const Payment = () => {
         try {
             const amount = parseFloat(topUpAmount);
             if (isNaN(amount) || amount <= 0) {
-                throw new Error('Please enter a valid amount');
+                setNotification({
+                    show: true,
+                    type: 'error',
+                    message: 'Please enter a valid amount'
+                });
+                return;
             }
 
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('No authentication token found');
+
             const response = await axios.post(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/topup`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/wallet/topup`,
                 {
                     customerId: user._id,
                     amount,
                     paymentMethod
                 },
-                { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
+                {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
             );
 
-            setWalletBalance(response.data.newBalance);
-            await fetchTransactions();
-            setShowTopUpModal(false);
-            setTopUpAmount('');
+            if (response.data.success) {
+                setWalletBalance(response.data.newBalance);
+                await fetchTransactions();
+                setShowTopUpModal(false);
+                setTopUpAmount('');
+                setNotification({
+                    show: true,
+                    type: 'success',
+                    message: 'Wallet topped up successfully!'
+                });
+            } else {
+                throw new Error(response.data.message);
+            }
         } catch (err) {
-            setError(err.message);
+            console.error('Top-up error:', err);
+            setNotification({
+                show: true,
+                type: 'error',
+                message: err.response?.data?.message || err.message || 'Failed to top up wallet'
+            });
         }
     };
 
@@ -139,6 +189,14 @@ const Payment = () => {
 
     return (
         <div className={styles.payment_container}>
+            {notification.show && (
+                <Notification
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification({ ...notification, show: false })}
+                />
+            )}
+
             <section className={styles.wallet_section}>
                 <div className={styles.wallet_card}>
                     <FaWallet className={styles.wallet_icon} />
@@ -198,19 +256,19 @@ const Payment = () => {
                 <div className={styles.transactions_list}>
                     {filteredTransactions.length > 0 ? (
                         filteredTransactions.map(transaction => (
-                            <div key={transaction._id} className={styles.transaction_item}>
-                                {transaction.type === 'credit' ? 
-                                    <FaArrowUp className={`${styles.transaction_icon} ${styles.credit}`} /> : 
-                                    <FaArrowDown className={`${styles.transaction_icon} ${styles.debit}`} />
-                                }
+                        <div key={transaction._id} className={styles.transaction_item}>
+                            {transaction.transactionType === 'CREDIT' ? 
+                                <FaArrowUp className={`${styles.transaction_icon} ${styles.credit}`} /> : 
+                                <FaArrowDown className={`${styles.transaction_icon} ${styles.debit}`} />
+                            }
                                 <div className={styles.transaction_details}>
                                     <h3>{transaction.description}</h3>
                                     <p>{new Date(transaction.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <div className={styles.transaction_amount}>
-                                    {transaction.type === 'credit' ? '+' : '-'}
-                                    ${transaction.amount.toFixed(2)}
+                                    {transaction.transactionType === 'CREDIT' ? '+' : '-'}${transaction.amount.toFixed(2)}
                                 </div>
+
                             </div>
                         ))
                     ) : (
@@ -225,8 +283,16 @@ const Payment = () => {
                 <div className={styles.modal}>
                     <div className={styles.modal_content}>
                         <h2>Top Up Wallet</h2>
-                        <button className={styles.close_btn} onClick={() => setShowTopUpModal(false)}>×</button>
-                        {error && <div className={styles.error_message}>{error}</div>}
+                        <button 
+                            className={styles.close_btn} 
+                            onClick={() => {
+                                setShowTopUpModal(false);
+                                setError('');
+                            }}
+                        >
+                            ×
+                        </button>
+                        
                         <input
                             type="number"
                             value={topUpAmount}

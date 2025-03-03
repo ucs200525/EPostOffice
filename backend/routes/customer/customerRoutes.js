@@ -16,8 +16,9 @@ router.get('/:customerId/wallet', async (req, res) => {
         }
 
         res.status(200).json({
+            success: true,
             customerId,
-            balance :  customer.walletBalance
+            balance: customer.walletBalance
         });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching wallet balance', error: error.message });
@@ -53,7 +54,7 @@ router.get('/:customerId/transactions', async (req, res) => {
 // Add a transaction (credit or debit)
 router.post('/add-transaction', async (req, res) => {
     try {
-        const { customerId, type, amount, description } = req.body;
+        const { customerId, transactionType, amount, description } = req.body;
 
         const customer = await Customer.findById(customerId);
         if (!customer) {
@@ -62,7 +63,7 @@ router.post('/add-transaction', async (req, res) => {
 
         const newTransaction = new Transaction({
             customerId,
-            type,
+            transactionType,
             amount,
             description
         });
@@ -81,31 +82,54 @@ router.post('/add-transaction', async (req, res) => {
 });
 
 // Top Up Wallet
-router.post('/topup', async (req, res) => {
+router.post('/wallet/topup', async (req, res) => {
     try {
-        const { customerId, amount, paymentDetails } = req.body;
+        const { customerId, amount, paymentMethod } = req.body;
+
+        if (!customerId || !amount || !paymentMethod) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields'
+            });
+        }
 
         const customer = await Customer.findById(customerId);
         if (!customer) {
-            return res.status(404).json({ message: 'Customer not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Customer not found'
+            });
         }
 
-        const newTransaction = new Transaction({
+        // Create transaction record
+        const transaction = new Transaction({
             customerId,
-            type: 'credit',
-            amount,
-            description: 'Wallet top-up'
+            transactionType: 'CREDIT',
+            amount: parseFloat(amount),
+            description: `Wallet top-up via ${paymentMethod.replace('_', ' ')}`,
+            paymentMethod,
+            status: 'completed'
         });
 
-        await newTransaction.save();
-        await customer.updateWalletBalance(amount);
+        await transaction.save();
+
+        // Update wallet balance
+        const newBalance = customer.walletBalance + parseFloat(amount);
+        await Customer.findByIdAndUpdate(customerId, { walletBalance: newBalance });
 
         res.status(200).json({
+            success: true,
             message: 'Wallet topped up successfully',
-            newBalance: customer.walletBalance
+            newBalance,
+            transaction
         });
     } catch (error) {
-        res.status(500).json({ message: 'Error processing top-up', error: error.message });
+        console.error('Top-up error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error processing top-up',
+            error: error.message
+        });
     }
 });
 
@@ -125,7 +149,7 @@ router.post('/payForOrder', async (req, res) => {
 
         const newTransaction = new Transaction({
             customerId,
-            type: 'debit',
+            transactionType: 'DEBIT',
             amount,
             description: `Payment for order ${orderId}`
         });
@@ -134,6 +158,7 @@ router.post('/payForOrder', async (req, res) => {
         await customer.updateWalletBalance(-amount);
 
         res.status(200).json({
+            success: true,
             message: 'Payment successful',
             newBalance: customer.walletBalance
         });
@@ -141,6 +166,8 @@ router.post('/payForOrder', async (req, res) => {
         res.status(500).json({ message: 'Error processing payment', error: error.message });
     }
 });
+
+
 
 // Get addresses - Updated with better error handling and logging
 router.get('/addresses/:customerId', async (req, res) => {

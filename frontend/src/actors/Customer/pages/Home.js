@@ -248,7 +248,6 @@ const fetchProfile = async () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Use user.id instead of user._id and add null check
       if (!user || !user._id) {
         console.log('No user ID available');
         setOrderStats({ active: 0, transit: 0, completed: 0, total: 0 });
@@ -257,16 +256,17 @@ const fetchProfile = async () => {
       }
 
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/orders/my-orders?userId=${user.id}`, // Changed from _id to id
+        `${process.env.REACT_APP_BACKEND_URL}/api/orders/my-orders/${user._id}`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
       );
 
       if (response.data.success) {
-        const { orders, stats } = response.data;
-        setOrderStats(stats || { active: 0, transit: 0, completed: 0, total: 0 });
-        setOrders(orders || []);
+        // Update to use the correct response structure
+        const { data: orders, stats } = response.data;
+        setOrderStats(stats);
+        setOrders(orders);
       }
     } catch (error) {
       console.error('Failed to fetch orders:', error);
@@ -639,7 +639,8 @@ useEffect(() => {
             </div>
             <div className={styles.balanceSection}>
               <h3>Wallet Balance</h3>
-              <p className={styles.balanceAmount}>${walletBalance?.toFixed(2)}</p>
+              {/* <p className={styles.balanceAmount}>${walletBalance?.toFixed(2)}</p> */}
+              <p className={styles.balanceAmount}>${customerData?.walletBalance?.toFixed(2)}</p>
             </div>
           </header>
 

@@ -47,12 +47,6 @@ const orderSchema = new mongoose.Schema({
     },
     specialInstructions: String
   },
-  customsDeclaration: {
-    contents: String,
-    value: Number,
-    currency: String,
-    purpose: String
-  },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'in-transit', 'delivered', 'cancelled'],

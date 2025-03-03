@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
 const transactionSchema = new mongoose.Schema({
-  customerId: {  // Changed from userId to customerId
+  customerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Customer',
     required: true
   },
-  transactionType: {  // Changed from type to transactionType
+  transactionType: {  
     type: String,
     enum: ['DEBIT', 'CREDIT', 'REFUND'],
     required: true
@@ -30,7 +30,7 @@ const transactionSchema = new mongoose.Schema({
   }
 });
 
-// Create a transaction and update wallet balance
+// Automatically update wallet balance when a transaction is saved
 transactionSchema.pre('save', async function (next) {
     const transaction = this;
     const customer = await mongoose.model('Customer').findById(transaction.customerId);
@@ -39,11 +39,10 @@ transactionSchema.pre('save', async function (next) {
         throw new Error('Customer not found');
     }
 
-    // If it's a debit or credit, update the customer's wallet balance
     if (transaction.transactionType === 'CREDIT') {
-        await customer.updateWalletBalance(transaction.amount); // Add the amount to the wallet balance
+        await customer.updateWalletBalance(transaction.amount);
     } else if (transaction.transactionType === 'DEBIT') {
-        await customer.updateWalletBalance(-transaction.amount); // Subtract the amount from the wallet balance
+        await customer.updateWalletBalance(-transaction.amount);
     }
 
     next();
