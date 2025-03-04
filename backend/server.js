@@ -81,6 +81,17 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
+// Register routes before 404 handler
+app.use('/api/orders', orderRoutes);
+
+// 404 handler should be after all routes
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Route not found'
+    });
+});
+
 // Error Handling Middleware
 app.use((req, res, next) => {
     const error = new Error('Not Found');

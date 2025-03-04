@@ -11,27 +11,15 @@ const orderSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  shippingAddress: {  // Changed from deliveryAddress to shippingAddress
-    label: String,
-    streetAddress: String,
-    city: String,
-    state: String,
-    postalCode: String,
-    country: String,
-    type: String,
-    isDefault: Boolean,
-    _id: mongoose.Schema.Types.ObjectId
+  shippingAddress: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Address',
+    required: true
   },
   pickupAddress: {
-    label: String,
-    streetAddress: String,
-    city: String,
-    state: String,
-    postalCode: String,
-    country: String,
-    type: String,
-    isDefault: Boolean,
-    _id: mongoose.Schema.Types.ObjectId
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Address',
+    required: true
   },
   packageDetails: {
     type: {

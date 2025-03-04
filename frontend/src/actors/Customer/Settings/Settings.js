@@ -260,7 +260,7 @@ const Settings = () => {
             }
 
             const response = await axios.get(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?.id}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?._id}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -294,7 +294,7 @@ const Settings = () => {
         e.preventDefault();
         try {
             const response = await axios.post(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?.id}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?._id}`,
                 newAddressData,
                 {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }

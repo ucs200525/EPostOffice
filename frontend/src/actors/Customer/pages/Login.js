@@ -1,131 +1,136 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Form, Button, Card, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { FcGoogle } from 'react-icons/fc';
+import styles from '../styles/Login.module.css';
 
 const Login = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
-    const { login, googleLogin } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login, googleLogin } = useAuth();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-        try {
-            const result = await login(email, password, rememberMe);
-            if (result.success) {
-                if (result.redirectToAddress) {
-                    navigate('/customer/address');
-                } else {
-                    navigate('/');
-                }
-            } else {
-                setError(result.error || 'Failed to log in');
-            }
-        } catch (error) {
-            setError('Failed to log in');
+    try {
+      const result = await login(email, password, rememberMe);
+      if (result.success) {
+        if (result.redirectToAddress) {
+          navigate('/customer/address');
+        } else {
+          navigate('/');
         }
+      } else {
+        setError(result.error || 'Failed to log in');
+      }
+    } catch (error) {
+      setError('Failed to log in');
+    }
 
-        setLoading(false);
-    };
+    setLoading(false);
+  };
 
-    const handleGoogleLogin = async () => {
-        try {
-            setError('');
-            setLoading(true);
-            const result = await googleLogin();
-            if (result.success) {
-                if (result.redirectToAddress) {
-                    navigate('/customer/address');
-                } else {
-                    navigate('/customer/home');
-                }
-            } else {
-                setError(result.error || 'Failed to log in with Google');
-            }
-        } catch (error) {
-            setError('Failed to log in with Google');
-        } finally {
-            setLoading(false);
+  const handleGoogleLogin = async () => {
+    try {
+      setError('');
+      setLoading(true);
+      const result = await googleLogin();
+      if (result.success) {
+        if (result.redirectToAddress) {
+          navigate('/customer/address');
+        } else {
+          navigate('/customer/home');
         }
-    };
+      } else {
+        setError(result.error || 'Failed to log in with Google');
+      }
+    } catch (error) {
+      setError('Failed to log in with Google');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <Container className="mt-5">
-            <Row className="justify-content-center">
-                <Col md={6}>
-                    <Card>
-                        <Card.Body>
-                            <h2 className="text-center mb-4">Customer Login</h2>
-                            {error && <Alert variant="danger">{error}</Alert>}
-                            <Form onSubmit={handleSubmit}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Email</Form.Label>
-                                    <Form.Control
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                    />
-                                </Form.Group>
+  return (
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <h2>Customer Login</h2>
+          <p>Welcome back! Please login to your account.</p>
+        </div>
+        {error && <div className={styles.errorMessage}>{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className={styles.input}
+              />
+            </div>
+          </div>
 
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Password</Form.Label>
-                                    <Form.Control
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                    />
-                                </Form.Group>
+          <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className={styles.input}
+              />
+            </div>
+          </div>
 
-                                <Form.Group className="mb-3">
-                                    <Form.Check
-                                        type="checkbox"
-                                        label="Remember me"
-                                        checked={rememberMe}
-                                        onChange={(e) => setRememberMe(e.target.checked)}
-                                    />
-                                </Form.Group>
+          <div className={styles.formOptions}>
+            <label className={styles.rememberMe}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              Remember me
+            </label>
+            <Link to="/forgot-password" className={styles.forgotPassword}>
+              Forgot Password?
+            </Link>
+          </div>
 
-                                <Button
-                                    className="w-100 mb-3"
-                                    type="submit"
-                                    disabled={loading}
-                                >
-                                    Log In
-                                </Button>
+          <button type="submit" className={styles.button} disabled={loading}>
+            Log In
+          </button>
 
-                                <Button
-                                    variant="outline-dark"
-                                    className="w-100 mb-3"
-                                    onClick={handleGoogleLogin}
-                                    disabled={loading}
-                                >
-                                    <FcGoogle className="me-2" size={20} />
-                                    Continue with Google
-                                </Button>
-                            </Form>
+          <div className={styles.divider}>
+            <span>or</span>
+          </div>
 
-                            <div className="text-center mt-3">
-                                <Link to="/forgot-password">Forgot Password?</Link>
-                            </div>
-                            <div className="text-center mt-2">
-                                Don't have an account? <Link to="/register">Register</Link>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container>
-    );
+          <button
+            type="button"
+            className={`${styles.button} ${styles.googleButton}`}
+            onClick={handleGoogleLogin}
+            disabled={loading}
+          >
+            <FcGoogle size={20} />
+            Continue with Google
+          </button>
+        </form>
+
+        <div className={styles.registerPrompt}>
+          Don't have an account? <Link to="/register">Register</Link>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;
