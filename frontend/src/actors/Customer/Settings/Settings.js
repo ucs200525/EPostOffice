@@ -51,7 +51,7 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onEdit(editForm);
+    onEdit(editForm, editForm._id, type.toLowerCase());
     setIsEditing(false);
   };
 
@@ -143,7 +143,7 @@ const AddressDisplay = ({ address, type, onEdit, onDelete }) => {
   if (!address && isAdding) {
     return renderAddressForm(newAddressForm, setNewAddressForm, (e) => {
       e.preventDefault();
-      onEdit(newAddressForm);
+      onEdit(newAddressForm, null, type.toLowerCase());
       setIsAdding(false);
     }, true);
   }
@@ -328,10 +328,10 @@ const Settings = () => {
         }
     };
 
-    const handleEditAddress = async (address,addressId, addressType) => {
+    const handleEditAddress = async (address, addressId, addressType) => {
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user.id}/${addressType}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?._id}/${addressType}`,
                 address,
                 {
                     params: { addressId },
@@ -360,7 +360,7 @@ const Settings = () => {
 
         try {
             const response = await axios.delete(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user.id}/${addressType}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user?._id}/${addressType}`,
                 {
                     params: { addressId },
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -385,7 +385,7 @@ const Settings = () => {
     };
 
     useEffect(() => {
-        if (user?.id) {
+        if (user?._id) {
             fetchAddresses();
         }
     }, [user]);

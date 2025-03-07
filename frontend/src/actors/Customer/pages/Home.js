@@ -248,15 +248,15 @@ const fetchProfile = async () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!user || !user._id) {
-        console.log('No user ID available');
-        setOrderStats({ active: 0, transit: 0, completed: 0, total: 0 });
-        setOrders([]);
-        return;
-      }
+      // if (!user || !user._id) {
+      //   console.log('No user ID available');
+      //   setOrderStats({ active: 0, transit: 0, completed: 0, total: 0 });
+      //   setOrders([]);
+      //   return;
+      // }
 
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/orders/my-orders/${user._id}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/orders/my-orders/${customerData.id}`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
