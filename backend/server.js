@@ -73,13 +73,7 @@ app.use('/api/customer/notifications', notificationRoutes);
 app.use('/api/orders/user/:userId/shipments', orderRoutes);
 app.use('/api/shipments', shipmentRoutes);
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../frontend/build')));
-    app.get('*', (req, res) => {
-        res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
-    });
-}
+
 
 // Register routes before 404 handler
 app.use('/api/orders', orderRoutes);
