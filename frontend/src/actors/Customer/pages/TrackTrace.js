@@ -30,7 +30,28 @@ const TrackTrace = () => {
       );
 
       if (response.data.success) {
-        setOrder(response.data.order);
+        const { tracking } = response.data;
+        const transformedOrder = {
+          ...tracking,
+          status: tracking.status,
+          type: tracking.packageDetails.type,
+          shippingDetails: {
+            senderAddress: `${tracking.addresses.pickup.street}, ${tracking.addresses.pickup.city}`,
+            receiverAddress: `${tracking.addresses.delivery.street}, ${tracking.addresses.delivery.city}`
+          },
+          timeline: tracking.history.map(event => ({
+            status: event.status,
+            timestamp: event.timestamp,
+            description: event.status,
+            location: event.location
+          })),
+          packageDetails: tracking.packageDetails,
+          currentLocation: tracking.currentLocation,
+          estimatedDelivery: tracking.estimatedDelivery,
+          progress: tracking.progress,
+          cost: tracking.orderDetails?.cost || {}
+        };
+        setOrder(transformedOrder);
       } else {
         setNotification({
           type: 'error',
@@ -61,6 +82,21 @@ const TrackTrace = () => {
       case 'processing': return <FaBox className={styles.iconWarning} />;
       default: return <FaClock className={styles.iconDefault} />;
     }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getProgressWidth = (progress) => {
+    return `${Math.min(progress * 100, 100)}%`;
   };
 
   return (
@@ -96,33 +132,48 @@ const TrackTrace = () => {
       ) : order ? (
         <div className={styles.trackingResult}>
           <div className={styles.orderHeader}>
-            <h2>Tracking Details</h2>
-            <div className={`${styles.status} ${styles[order.status]}`}>
+            <h2>Tracking Number: {order.trackingNumber}</h2>
+            <div className={`${styles.status} ${styles[order.status.toLowerCase()]}`}>
               {getStatusIcon(order.status)}
               <span>{order.status}</span>
             </div>
           </div>
 
-          <div className={styles.orderInfo}>
-            <div className={styles.infoCard}>
-              <h3><FaBox /> Package Details</h3>
-              <p><strong>Tracking Number:</strong> {order.trackingNumber}</p>
-              <p><strong>Type:</strong> {order.type}</p>
-              <p><strong>Created:</strong> {new Date(order.createdAt).toLocaleString()}</p>
-            </div>
+          <div className={styles.progressBar}>
+            <div 
+              className={styles.progressFill} 
+              style={{ width: `${getProgressWidth(order.progress)}` }}
+            />
+          </div>
 
-            <div className={styles.infoCard}>
-              <h3><FaMapMarkerAlt /> Shipping Details</h3>
-              <div className={styles.addresses}>
-                <div className={styles.address}>
-                  <span>From</span>
-                  <p>{order.shippingDetails?.senderAddress}</p>
-                </div>
-                <div className={styles.address}>
-                  <span>To</span>
-                  <p>{order.shippingDetails?.receiverAddress}</p>
-                </div>
-              </div>
+          <div className={styles.deliveryInfo}>
+            <div className={styles.currentLocation}>
+              <h4>Current Location</h4>
+              <p><FaMapMarkerAlt /> {order.currentLocation}</p>
+            </div>
+            <div className={styles.packageDetails}>
+              <h4>Package Details</h4>
+              <p>Type: {order.packageDetails?.type}</p>
+              <p>Weight: {order.packageDetails?.weight} kg</p>
+            </div>
+            <div className={styles.deliveryDate}>
+              <h4>Estimated Delivery</h4>
+              <p><FaCalendar /> {formatDate(order.estimatedDelivery)}</p>
+            </div>
+          </div>
+
+          <div className={styles.addressSection}>
+            <div className={styles.address}>
+              <h4>From</h4>
+              <p>{order.addresses.pickup.label}</p>
+              <p>{order.addresses.pickup.street}</p>
+              <p>{order.addresses.pickup.city}, {order.addresses.pickup.state} {order.addresses.pickup.pincode}</p>
+            </div>
+            <div className={styles.address}>
+              <h4>To</h4>
+              <p>{order.addresses.delivery.label}</p>
+              <p>{order.addresses.delivery.street}</p>
+              <p>{order.addresses.delivery.city}, {order.addresses.delivery.state} {order.addresses.delivery.pincode}</p>
             </div>
           </div>
 
@@ -136,14 +187,11 @@ const TrackTrace = () => {
                 <div className={styles.timelineContent}>
                   <div className={styles.timelineHeader}>
                     <h4>{event.status}</h4>
-                    <span>{new Date(event.timestamp).toLocaleString()}</span>
+                    <span>{formatDate(event.timestamp)}</span>
                   </div>
-                  <p>{event.description}</p>
-                  {event.location && (
-                    <p className={styles.location}>
-                      <FaMapMarkerAlt /> {event.location}
-                    </p>
-                  )}
+                  <p className={styles.location}>
+                    <FaMapMarkerAlt /> {event.location}
+                  </p>
                 </div>
               </div>
             ))}

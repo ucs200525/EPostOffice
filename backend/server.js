@@ -76,10 +76,6 @@ app.use('/api/orders/user/:userId/shipments', orderRoutes);
 app.use('/api/shipments', shipmentRoutes);
 
 
-
-// Register routes before 404 handler
-app.use('/api/orders', orderRoutes);
-
 // 404 handler should be after all routes
 app.use((req, res) => {
     res.status(404).json({

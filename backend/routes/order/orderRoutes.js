@@ -195,12 +195,14 @@ router.patch('/:id/status', async (req, res) => {
         });
     }
 });
-
-// Add tracking route
 router.get('/track/:trackingNumber', async (req, res) => {
     try {
         const { trackingNumber } = req.params;
-        const order = await Order.findOne({ trackingNumber });
+        const order = await Order.findOne({ trackingNumber })
+            .populate({
+                path: 'customerId',
+                select: 'pickupAddress deliveryAddresses'
+            });
 
         if (!order) {
             return res.status(404).json({
@@ -209,7 +211,12 @@ router.get('/track/:trackingNumber', async (req, res) => {
             });
         }
 
-        // Calculate current location and status based on delivery timeline
+        // Get addresses from customer model using order's address IDs
+        const pickupAddress = order.customerId.pickupAddress;
+        const deliveryAddress = order.customerId.deliveryAddresses.find(
+            addr => addr._id.toString() === order.shippingAddress.toString()
+        );
+
         const currentDate = new Date();
         const createdDate = new Date(order.createdAt);
         const estimatedDelivery = new Date(order.estimatedDeliveryDate);
@@ -219,53 +226,82 @@ router.get('/track/:trackingNumber', async (req, res) => {
             100
         );
 
-        // Generate mock tracking history
+        // Generate tracking history with full addresses
         const history = [
             {
                 status: 'Order Created',
-                location: order.pickupAddress?.city || 'Pickup Location',
-                timestamp: order.createdAt
+                location: `${pickupAddress.city}, ${pickupAddress.state}`,
+                timestamp: order.createdAt,
+                address: {
+                    street: pickupAddress.streetAddress,
+                    city: pickupAddress.city,
+                    state: pickupAddress.state,
+                    pincode: pickupAddress.postalCode
+                }
             }
         ];
 
         if (progress > 25) {
             history.push({
                 status: 'Package Picked Up',
-                location: order.pickupAddress?.city || 'Pickup Location',
-                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.25)
+                location: `${pickupAddress.city}, ${pickupAddress.state}`,
+                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.25),
+                address: {
+                    street: pickupAddress.streetAddress,
+                    city: pickupAddress.city,
+                    state: pickupAddress.state,
+                    pincode: pickupAddress.postalCode
+                }
             });
         }
 
         if (progress > 50) {
             history.push({
                 status: 'In Transit',
-                location: 'Distribution Center',
-                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.5)
+                location: `Distribution Center, ${pickupAddress.state}`,
+                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.5),
+                address: {
+                    street: 'Distribution Hub',
+                    city: pickupAddress.city,
+                    state: pickupAddress.state,
+                    pincode: pickupAddress.postalCode
+                }
             });
         }
 
         if (progress > 75) {
             history.push({
                 status: 'Out for Delivery',
-                location: order.shippingAddress?.city || 'Delivery Location',
-                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.75)
+                location: `${deliveryAddress.city}, ${deliveryAddress.state}`,
+                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.75),
+                address: {
+                    street: deliveryAddress.streetAddress,
+                    city: deliveryAddress.city,
+                    state: deliveryAddress.state,
+                    pincode: deliveryAddress.postalCode
+                }
             });
         }
 
         if (progress === 100) {
             history.push({
                 status: 'Delivered',
-                location: order.shippingAddress?.city || 'Delivery Location',
-                timestamp: estimatedDelivery
+                location: `${deliveryAddress.city}, ${deliveryAddress.state}`,
+                timestamp: estimatedDelivery,
+                address: {
+                    street: deliveryAddress.streetAddress,
+                    city: deliveryAddress.city,
+                    state: deliveryAddress.state,
+                    pincode: deliveryAddress.postalCode
+                }
             });
         }
 
-        // Determine current status
         let currentStatus = 'Pending';
         if (progress >= 100) currentStatus = 'Delivered';
         else if (progress > 75) currentStatus = 'Out for Delivery';
-        else if (progress > 25) currentStatus = 'In Transit';
-        else if (progress > 0) currentStatus = 'Package Picked Up';
+        else if (progress > 50) currentStatus = 'In Transit';
+        else if (progress > 25) currentStatus = 'Package Picked Up';
 
         res.json({
             success: true,
@@ -275,7 +311,32 @@ router.get('/track/:trackingNumber', async (req, res) => {
                 currentLocation: history[history.length - 1].location,
                 estimatedDelivery: order.estimatedDeliveryDate,
                 history: history.reverse(),
-                progress
+                progress,
+                packageDetails: order.packageDetails,
+                addresses: {
+                    pickup: {
+                        label: pickupAddress.label,
+                        street: pickupAddress.streetAddress,
+                        city: pickupAddress.city,
+                        state: pickupAddress.state,
+                        pincode: pickupAddress.postalCode,
+                        country: pickupAddress.country
+                    },
+                    delivery: {
+                        label: deliveryAddress.label,
+                        street: deliveryAddress.streetAddress,
+                        city: deliveryAddress.city,
+                        state: deliveryAddress.state,
+                        pincode: deliveryAddress.postalCode,
+                        country: deliveryAddress.country
+                    }
+                },
+                orderDetails: {
+                    createdAt: order.createdAt,
+                    orderType: order.orderType,
+                    cost: order.cost,
+                    totalAmount: order.totalAmount
+                }
             }
         });
     } catch (error) {
@@ -287,7 +348,6 @@ router.get('/track/:trackingNumber', async (req, res) => {
         });
     }
 });
-
 // Add this new route before module.exports
 router.get('/verify/:trackingNumber', async (req, res) => {
   try {

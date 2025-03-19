@@ -640,7 +640,7 @@ useEffect(() => {
             <div className={styles.balanceSection}>
               <h3>Wallet Balance</h3>
               {/* <p className={styles.balanceAmount}>${walletBalance?.toFixed(2)}</p> */}
-              <p className={styles.balanceAmount}>${customerData?.walletBalance?.toFixed(2)}</p>
+              <p className={styles.balanceAmount}>₹{customerData?.walletBalance?.toFixed(2)}</p>
             </div>
           </header>
 

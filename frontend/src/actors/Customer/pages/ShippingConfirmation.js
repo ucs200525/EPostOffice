@@ -71,28 +71,28 @@ const ShippingConfirmation = () => {
     if (!address) return '';
     return `${address.streetAddress}, ${address.city}, ${address.state} ${address.postalCode}`;
   };
-
   const calculateTotal = () => {
     const weight = parseFloat(shippingDetails.weight) || 0;
-    const basePrice = 50 * 83; // Fixed base price in INR
-    const weightCharge = weight * (10 * 83); // Weight charge per kg in INR
+    // Reduced base price to 500 INR
+    const basePrice = 500;
+    // Reduced weight charge to 100 INR per kg
+    const weightCharge = weight * 100;
     const insuranceCharge = shippingDetails.customsDeclaration?.value 
-      ? parseFloat(shippingDetails.customsDeclaration.value) * 83 * 0.01
+      ? parseFloat(shippingDetails.customsDeclaration.value) * 0.01
       : 0;
     
     return Number((basePrice + weightCharge + insuranceCharge).toFixed(2));
   };
-
   const handleConfirm = async () => {
     const token = localStorage.getItem('token');
     if (!token) throw new Error('No authentication token found');
     
     try {
       const weight = parseFloat(shippingDetails.weight) || 0;
-      const basePrice = Number((50 * 83).toFixed(2));
-      const weightCharge = Number((weight * 10 * 83).toFixed(2));
+      const basePrice = 500; // Fixed base price in INR
+      const weightCharge = weight * 100; // 100 INR per kg
       const insuranceCharge = shippingDetails.customsDeclaration?.value 
-        ? Number((parseFloat(shippingDetails.customsDeclaration.value) * 83 * 0.01).toFixed(2))
+        ? Number((parseFloat(shippingDetails.customsDeclaration.value) * 0.01).toFixed(2))
         : 0;
       const totalAmount = Number((basePrice + weightCharge + insuranceCharge).toFixed(2));
 
@@ -264,16 +264,16 @@ const ShippingConfirmation = () => {
             <div className={styles.priceBreakdown}>
               <div className={styles.priceRow}>
                 <span>Base Price</span>
-                <span>₹{(50 * 83).toFixed(2)}</span>
+                <span>₹500.00</span>
               </div>
               <div className={styles.priceRow}>
                 <span>Weight Charge</span>
-                <span>₹{(Number(shippingDetails.weight) * 10 * 83).toFixed(2)}</span>
+                <span>₹{(Number(shippingDetails.weight) * 100).toFixed(2)}</span>
               </div>
               {shippingDetails.customsDeclaration && (
                 <div className={styles.priceRow}>
                   <span>Insurance (1%)</span>
-                  <span>₹{(Number(shippingDetails.customsDeclaration.value) * 83 * 0.01).toFixed(2)}</span>
+                  <span>₹{(Number(shippingDetails.customsDeclaration.value) * 0.01).toFixed(2)}</span>
                 </div>
               )}
               <div className={`${styles.priceRow} ${styles.total}`}>
