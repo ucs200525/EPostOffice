@@ -6,24 +6,41 @@ const path = require('path');
 const morgan = require('morgan');
 const helmet = require('helmet');
 
-// Import routes with fallbacks
+// Import routes with try-catch fallback
+let adminRoutes, staffRoutes, notificationRoutes;
+try {
+    adminRoutes = require('./routes/admin/adminRoutes');
+} catch (e) {
+    adminRoutes = express.Router();
+}
+
+try {
+    staffRoutes = require('./routes/staff/staffRoutes');
+} catch (e) {
+    staffRoutes = express.Router();
+}
+
+try {
+    notificationRoutes = require('./routes/customer/notificationRoutes');
+} catch (e) {
+    notificationRoutes = express.Router();
+}
+
+// Other routes
 const customerRoutes = require('./routes/customer/customerRoutes');
 const authRoutes = require('./routes/customer/authRoutes');
-const adminRoutes = require('./routes/admin/adminRoutes') || express.Router();
-const staffRoutes = require('./routes/staff/staffRoutes') || express.Router();
 const orderRoutes = require('./routes/order/orderRoutes');
 const packageRoutes = require('./routes/order/packageRoutes');
-const notificationRoutes = require('./routes/customer/notificationRoutes') || express.Router();
 const shipmentRoutes = require('./routes/order/shipmentRoutes');
 
-// Import middleware
+// Middleware
 const errorHandler = require('./middleware/errorHandler');
 const auth = require('./middleware/auth');
 
 // Initialize express app
 const app = express();
 
-// Check for JWT_SECRET at startup
+// Check for JWT_SECRET
 if (!process.env.JWT_SECRET) {
     console.error('JWT_SECRET is missing in environment variables');
     process.exit(1);
@@ -31,8 +48,9 @@ if (!process.env.JWT_SECRET) {
 
 // Security Middleware
 app.use(helmet());
+
 const allowedOrigins = [
-    'http://localhost:3000',  // Your frontend URL (change accordingly)
+    'http://localhost:3000',
     'https://e-post-office.vercel.app'
 ];
 
@@ -47,15 +65,12 @@ app.use(cors({
     credentials: true
 }));
 
-// Middleware
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverSelectionTimeoutMS: 5000
 })
 .then(() => console.log('📦 Connected to MongoDB'))
@@ -72,15 +87,9 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/customer/notifications', notificationRoutes);
-app.use('/api/orders/user/:userId/shipments', orderRoutes);
 app.use('/api/shipments', shipmentRoutes);
 
-
-
-// Register routes before 404 handler
-app.use('/api/orders', orderRoutes);
-
-// 404 handler should be after all routes
+// 404 handler
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -89,12 +98,6 @@ app.use((req, res) => {
 });
 
 // Error Handling Middleware
-app.use((req, res, next) => {
-    const error = new Error('Not Found');
-    error.status = 404;
-    next(error);
-});
-
 app.use(errorHandler);
 
 // Start server
