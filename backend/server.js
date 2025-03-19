@@ -33,7 +33,7 @@ if (!process.env.JWT_SECRET) {
 app.use(helmet());
 const allowedOrigins = [
     'http://localhost:3000',  // Your frontend URL (change accordingly)
-    'https://e-post-office.vercel.app/'
+    'https://e-post-office.vercel.app'
 ];
 
 app.use(cors({
