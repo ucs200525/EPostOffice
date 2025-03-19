@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import '../styles/AdminLogin.css';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const AdminLogin = () => {
 
     try {
       const result = await login(formData.email, formData.password);
+      console.log("Login result:", result); // Add this line
       if (result.success && result.user.role === 'admin') {
         navigate('/admin/dashboard');
       } else {

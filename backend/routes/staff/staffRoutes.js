@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Staff = require('../../models/staff/Staff');
+const Customer = require('../../models/customer/Customer');
+const Order = require('../../models/order/Order');
 const jwt = require('jsonwebtoken');
 const logger = require('../../utils/logger');
 
@@ -216,6 +218,180 @@ router.get('/stats/:staffId',  async (req, res) => {
             success: false,
             message: 'Error fetching staff stats',
             error: error.message
+        });
+    }
+});
+
+/**
+ * @route   GET /api/staff/customers
+ * @desc    Get all customers
+ * @access  Private (Staff only)
+ */
+router.get('/customers', async (req, res) => {
+    try {
+        const customers = await Customer.find()
+            .select('-password')
+            .sort({ createdAt: -1 });
+        
+        const customersWithOrders = await Promise.all(
+            customers.map(async (customer) => {
+                const orderCount = await Order.countDocuments({ customerId: customer._id });
+                return {
+                    ...customer.toObject(),
+                    orderCount,
+                    status: customer.status || 'pending' // Ensure status has a default value
+                };
+            })
+        );
+        res.json({ success: true, customers: customersWithOrders });
+    } catch (error) {
+        logger.error(`Get customers error: ${error.message}`);
+        res.status(500).json({ success: false, message: 'Error fetching customers', error: error.message });
+    }
+});
+
+/**
+ * @route   GET /api/staff/customers/:id
+ * @desc    Get customer details by ID
+ * @access  Private (Staff only)
+ */
+router.get('/customers/:id', async (req, res) => {
+    try {
+        const customer = await Customer.findById(req.params.id).select('-password');
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+        
+        const orders = await Order.find({ customerId: customer._id })
+            .sort({ createdAt: -1 })
+            .limit(10);
+        
+        res.json({
+            success: true,
+            customer: {
+                ...customer.toObject(),
+                recentOrders: orders
+            }
+        });
+    } catch (error) {
+        logger.error(`Get customer details error: ${error.message}`);
+        res.status(500).json({ success: false, message: 'Error fetching customer details', error: error.message });
+    }
+});
+
+/**
+ * @route   PUT /api/staff/customers/:id/status
+ * @desc    Update customer status
+ * @access  Private (Staff only)
+ */
+router.put('/customers/:id/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!['active', 'inactive', 'pending'].includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status' });
+        }
+
+        const customer = await Customer.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        ).select('-password');
+
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Customer status updated successfully',
+            customer
+        });
+    } catch (error) {
+        logger.error(`Update customer status error: ${error.message}`);
+        res.status(500).json({ success: false, message: 'Error updating customer status', error: error.message });
+    }
+});
+
+/**
+ * @route   GET /api/staff/customers/:id/orders
+ * @desc    Get customer orders
+ * @access  Private (Staff only)
+ */
+router.get('/customers/:id/orders', async (req, res) => {
+    try {
+        const orders = await Order.find({ customerId: req.params.id })
+            .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            orders
+        });
+    } catch (error) {
+        logger.error(`Get customer orders error: ${error.message}`);
+        res.status(500).json({ success: false, message: 'Error fetching customer orders', error: error.message });
+    }
+});
+
+/**
+ * @route   DELETE /api/staff/customers/:id
+ * @desc    Delete customer
+ * @access  Private (Staff only)
+ */
+router.delete('/customers/:id', async (req, res) => {
+    try {
+        // First, delete all customer's orders
+        await Order.deleteMany({ customerId: req.params.id });
+        
+        // Then delete the customer
+        const customer = await Customer.findByIdAndDelete(req.params.id);
+        
+        if (!customer) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Customer not found' 
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Customer and all associated orders deleted successfully'
+        });
+    } catch (error) {
+        logger.error(`Delete customer error: ${error.message}`);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error deleting customer', 
+            error: error.message 
+        });
+    }
+});
+
+/**
+ * @route   DELETE /api/staff/orders/:id
+ * @desc    Delete order
+ * @access  Private (Staff only)
+ */
+router.delete('/orders/:id', async (req, res) => {
+    try {
+        const order = await Order.findByIdAndDelete(req.params.id);
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Order not found' 
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Order deleted successfully'
+        });
+    } catch (error) {
+        logger.error(`Delete order error: ${error.message}`);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error deleting order', 
+            error: error.message 
         });
     }
 });

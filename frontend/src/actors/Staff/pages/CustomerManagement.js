@@ -1,75 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StaffNavbar from '../components/StaffNavbar';
 import { Link } from 'react-router-dom';
-// import '../styles/StaffDashboard.css';
+import customerService from '../services/customerService';
+import { toast } from 'react-toastify';
+import styles from '../styles/CustomerManagement.module.css';
 
 const CustomerManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [customers] = useState([
-    { 
-      id: 1, 
-      name: 'John Doe', 
-      email: 'john@example.com', 
-      status: 'Active',
-      orders: 5,
-      joinDate: '2024-01-15'
-    },
-    { 
-      id: 2, 
-      name: 'Jane Smith', 
-      email: 'jane@example.com', 
-      status: 'Pending',
-      orders: 3,
-      joinDate: '2024-01-20'
-    },
-    { 
-      id: 3, 
-      name: 'Mike Johnson', 
-      email: 'mike@example.com', 
-      status: 'Active',
-      orders: 8,
-      joinDate: '2024-01-10'
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await customerService.getCustomers();
+      setCustomers(response.customers);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch customers');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+    // Set up real-time updates
+    const updateInterval = setInterval(fetchCustomers, 30000); // Refresh every 30 seconds
+    return () => clearInterval(updateInterval);
+  }, []);
+
+  const handleStatusUpdate = async (customerId, newStatus) => {
+    try {
+      await customerService.updateCustomerStatus(customerId, newStatus);
+      toast.success('Customer status updated successfully');
+      fetchCustomers(); // Refresh the list
+    } catch (err) {
+      toast.error('Failed to update customer status');
+      console.error(err);
+    }
+  };
 
   const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || customer.status.toLowerCase() === filterStatus.toLowerCase();
+    const matchesSearch = 
+      (customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+       customer.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus = filterStatus === 'all' || (customer.status || 'pending').toLowerCase() === filterStatus.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <div className="staff-dashboard">
+    <div className={styles["staff-dashboard"]}>
       <StaffNavbar />
-      <div className="staff-content">
-        <div className="staff-header">
-          <div className="header-left">
+      <div className={styles["staff-content"]}>
+        <div className={styles["staff-header"]}>
+          <div className={styles["header-left"]}>
             <h1>Customer Management</h1>
             <p>Manage and monitor customer accounts</p>
           </div>
-          <button className="action-btn">
+          <button className={styles["action-btn"]}>
             <i className="fas fa-plus"></i>
             Add New Customer
           </button>
         </div>
 
-        <div className="filter-section">
-          <div className="search-bar">
-            <i className="fas fa-search"></i>
+        <div className={styles["filter-section"]}>
+          <div className={styles["search-bar"]}>
             <input
               type="search"
               placeholder="Search customers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
+              className={styles["search-input"]}
             />
           </div>
           <select 
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="status-filter"
+            className={styles["status-filter"]}
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -78,55 +89,60 @@ const CustomerManagement = () => {
           </select>
         </div>
 
-        <div className="table-container">
-          <table className="staff-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Orders</th>
-                <th>Join Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCustomers.map(customer => (
-                <tr key={customer.id}>
-                  <td>#{customer.id}</td>
-                  <td>{customer.name}</td>
-                  <td>{customer.email}</td>
-                  <td>
-                    <span className={`status-badge ${customer.status.toLowerCase()}`}>
-                      {customer.status}
-                    </span>
-                  </td>
-                  <td>{customer.orders}</td>
-                  <td>{new Date(customer.joinDate).toLocaleDateString()}</td>
-                  <td className="action-buttons">
-                    <Link to={`/staff/customer/${customer.id}`} className="btn-view">
-                      <i className="fas fa-eye"></i>
-                    </Link>
-                    <Link to={`/staff/verify-customer/${customer.id}`} className="btn-verify">
-                      <i className="fas fa-check-circle"></i>
-                    </Link>
-                    <Link to={`/staff/modify-customer/${customer.id}`} className="btn-modify">
-                      <i className="fas fa-edit"></i>
-                    </Link>
-                  </td>
+        {loading ? (
+          <div className={styles["loading-spinner"]}>Loading customers...</div>
+        ) : error ? (
+          <div className={styles["error-message"]}>{error}</div>
+        ) : (
+          <div className={styles["table-container"]}>
+            <table className={styles["staff-table"]}>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Orders</th>
+                  <th>Join Date</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {filteredCustomers.length === 0 && (
-            <div className="no-results">
-              <i className="fas fa-search"></i>
-              <p>No customers found matching your search criteria</p>
-            </div>
-          )}
-        </div>
+              </thead>
+              <tbody>
+                {filteredCustomers.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className={styles["no-results"]}>No customers found</td>
+                  </tr>
+                ) : (
+                  filteredCustomers.map(customer => (
+                    <tr key={customer._id}>
+                      <td>{customer._id}</td>
+                      <td>{customer.name}</td>
+                      <td>{customer.email}</td>
+                      <td>
+                        <select
+                          value={customer.status || 'pending'}
+                          onChange={(e) => handleStatusUpdate(customer._id, e.target.value)}
+                          className={`${styles["status-badge"]} ${styles[(customer.status || 'pending').toLowerCase()]}`}
+                        >
+                          <option value="active">Active</option>
+                          <option value="pending">Pending</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      </td>
+                      <td>{customer.orderCount || 0}</td>
+                      <td>{new Date(customer.createdAt).toLocaleDateString()}</td>
+                      <td className={styles["action-buttons"]}>
+                        <Link to={`/staff/customer/${customer._id}`} className={styles["btn-view"]}>
+                          View Details
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

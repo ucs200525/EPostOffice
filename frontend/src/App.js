@@ -49,13 +49,15 @@ import StaffLogin from './actors/Staff/pages/StaffLogin';
 import StaffNavbar from './actors/Staff/components/StaffNavbar';
 import StaffRegistration from './actors/Admin/components/StaffRegistration';
 import AdminNavbar from './actors/Admin/components/AdminNavbar';  // Change this line
+import OrderAssignment from './actors/Staff/pages/OrderAssignment';
+import CustomerDetailsPage from './actors/Staff/pages/CustomerDetails'; // Add this line
 
 const App = () => {
   return (
     <DarkModeProvider>
-      <AuthProvider>
-        <ShipmentProvider>
-          <Router>
+      <ShipmentProvider>
+        <Router>
+          <AuthProvider>
             <Routes>
               {/* Public routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -75,9 +77,9 @@ const App = () => {
               } />
               <Route path="/*" element={<CustomerLayout />} />
             </Routes>
-          </Router>
-        </ShipmentProvider>
-      </AuthProvider>
+          </AuthProvider>
+        </Router>
+      </ShipmentProvider>
     </DarkModeProvider>
   );
 };
@@ -154,10 +156,15 @@ const StaffRoutes = () => {
       <StaffNavbar />
       <div className="staff-content">
         <Routes>
-          <Route path="/" element={<StaffDashboard />} />
-          <Route path="/dashboard" element={<StaffDashboard />} />
-          <Route path="/customers" element={<CustomerManagement />} />
-          {/* ...other routes... */}
+          <Route index element={<StaffDashboard />} />
+          <Route path="dashboard" element={<StaffDashboard />} />
+          <Route path="customers" element={<CustomerManagement />} />
+          <Route path="customer/:id" element={<CustomerDetailsPage />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="reports" element={<ReportsStaff />} />
+          <Route path="deliveries" element={<Deliveries />} />
+          <Route path="order-assignment/:trackingNumber" element={<OrderAssignment />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </div>

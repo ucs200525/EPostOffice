@@ -18,7 +18,7 @@ const StaffNavbar = () => {
     { to: '/staff/dashboard', icon: <FaUser />, text: 'Dashboard' },
     { to: '/staff/customers', icon: <FaUsers />, text: 'Customers' },
     { to: '/staff/orders', icon: <FaBox />, text: 'Orders' },
-    { to: '/staff/deliveries', icon: <FaTruck />, text: 'Deliveries' },
+    // { to: '/staff/deliveries', icon: <FaTruck />, text: 'Deliveries' },
     { to: '/staff/reports', icon: <FaChartBar />, text: 'Reports' },
   ];
 

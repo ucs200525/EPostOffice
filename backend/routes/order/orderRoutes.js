@@ -195,6 +195,41 @@ router.patch('/:id/status', async (req, res) => {
         });
     }
 });
+
+// Update order status by tracking number
+router.put('/status/:trackingNumber', async (req, res) => {
+    try {
+        const { trackingNumber } = req.params;
+        const { status } = req.body;
+        
+        console.log('Updating order status:', { trackingNumber, status }); // Debug log
+
+        const order = await Order.findOneAndUpdate(
+            { trackingNumber },
+            { status },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: order
+        });
+    } catch (error) {
+        console.error('Status update error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 router.get('/track/:trackingNumber', async (req, res) => {
     try {
         const { trackingNumber } = req.params;
@@ -211,7 +246,7 @@ router.get('/track/:trackingNumber', async (req, res) => {
             });
         }
 
-        // Get addresses from customer model using order's address IDs
+        // Get addresses
         const pickupAddress = order.customerId.pickupAddress;
         const deliveryAddress = order.customerId.deliveryAddresses.find(
             addr => addr._id.toString() === order.shippingAddress.toString()
@@ -221,31 +256,28 @@ router.get('/track/:trackingNumber', async (req, res) => {
         const createdDate = new Date(order.createdAt);
         const estimatedDelivery = new Date(order.estimatedDeliveryDate);
         
-        const progress = Math.min(
-            ((currentDate - createdDate) / (estimatedDelivery - createdDate)) * 100,
-            100
-        );
+        // Initialize history array
+        const history = [];
 
-        // Generate tracking history with full addresses
-        const history = [
-            {
-                status: 'Order Created',
-                location: `${pickupAddress.city}, ${pickupAddress.state}`,
-                timestamp: order.createdAt,
-                address: {
-                    street: pickupAddress.streetAddress,
-                    city: pickupAddress.city,
-                    state: pickupAddress.state,
-                    pincode: pickupAddress.postalCode
-                }
+        // Add events based on order.status instead of progress
+        history.push({
+            status: 'Order Created',
+            location: `${pickupAddress.city}, ${pickupAddress.state}`,
+            timestamp: order.createdAt,
+            address: {
+                street: pickupAddress.streetAddress,
+                city: pickupAddress.city,
+                state: pickupAddress.state,
+                pincode: pickupAddress.postalCode
             }
-        ];
+        });
 
-        if (progress > 25) {
+        if (order.status === 'package_picked_up' || order.status === 'in_transit' || 
+            order.status === 'out_for_delivery' || order.status === 'delivered') {
             history.push({
                 status: 'Package Picked Up',
                 location: `${pickupAddress.city}, ${pickupAddress.state}`,
-                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.25),
+                timestamp: new Date(createdDate.getTime() + 86400000), // +1 day
                 address: {
                     street: pickupAddress.streetAddress,
                     city: pickupAddress.city,
@@ -255,11 +287,12 @@ router.get('/track/:trackingNumber', async (req, res) => {
             });
         }
 
-        if (progress > 50) {
+        if (order.status === 'in_transit' || order.status === 'out_for_delivery' || 
+            order.status === 'delivered') {
             history.push({
                 status: 'In Transit',
                 location: `Distribution Center, ${pickupAddress.state}`,
-                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.5),
+                timestamp: new Date(createdDate.getTime() + 172800000), // +2 days
                 address: {
                     street: 'Distribution Hub',
                     city: pickupAddress.city,
@@ -269,11 +302,11 @@ router.get('/track/:trackingNumber', async (req, res) => {
             });
         }
 
-        if (progress > 75) {
+        if (order.status === 'out_for_delivery' || order.status === 'delivered') {
             history.push({
                 status: 'Out for Delivery',
                 location: `${deliveryAddress.city}, ${deliveryAddress.state}`,
-                timestamp: new Date(createdDate.getTime() + (estimatedDelivery - createdDate) * 0.75),
+                timestamp: new Date(createdDate.getTime() + 259200000), // +3 days
                 address: {
                     street: deliveryAddress.streetAddress,
                     city: deliveryAddress.city,
@@ -283,7 +316,7 @@ router.get('/track/:trackingNumber', async (req, res) => {
             });
         }
 
-        if (progress === 100) {
+        if (order.status === 'delivered') {
             history.push({
                 status: 'Delivered',
                 location: `${deliveryAddress.city}, ${deliveryAddress.state}`,
@@ -297,17 +330,30 @@ router.get('/track/:trackingNumber', async (req, res) => {
             });
         }
 
-        let currentStatus = 'Pending';
-        if (progress >= 100) currentStatus = 'Delivered';
-        else if (progress > 75) currentStatus = 'Out for Delivery';
-        else if (progress > 50) currentStatus = 'In Transit';
-        else if (progress > 25) currentStatus = 'Package Picked Up';
+        // Calculate progress based on status
+        let progress = 0;
+        switch (order.status) {
+            case 'package_picked_up':
+                progress = 25;
+                break;
+            case 'in_transit':
+                progress = 50;
+                break;
+            case 'out_for_delivery':
+                progress = 75;
+                break;
+            case 'delivered':
+                progress = 100;
+                break;
+            default:
+                progress = 0;
+        }
 
         res.json({
             success: true,
             tracking: {
                 trackingNumber,
-                status: currentStatus,
+                status: order.status,
                 currentLocation: history[history.length - 1].location,
                 estimatedDelivery: order.estimatedDeliveryDate,
                 history: history.reverse(),
@@ -348,6 +394,60 @@ router.get('/track/:trackingNumber', async (req, res) => {
         });
     }
 });
+
+// Get all orders for staff - Move this route before other specific routes to avoid conflicts
+router.get('/staff/all', async (req, res) => {
+    console.log('Fetching all orders for staff');  // Debug log
+    try {
+        // Get all orders without populate first to debug
+        const orders = await Order.find().sort({ createdAt: -1 });
+        console.log('Found orders:', orders.length);  // Debug log
+
+        if (!orders.length) {
+            return res.json({
+                success: true,
+                orders: [],
+                stats: {
+                    total: 0,
+                    pending: 0,
+                    inTransit: 0,
+                    delivered: 0
+                }
+            });
+        }
+
+        // Transform orders with basic information first
+        const transformedOrders = orders.map(order => ({
+            _id: order._id,
+            trackingNumber: order.trackingNumber,
+            customerId: order.customerId,
+            orderType: order.orderType,
+            status: order.status,
+            totalAmount: order.totalAmount,
+            createdAt: order.createdAt,
+            estimatedDeliveryDate: order.estimatedDeliveryDate
+        }));
+
+        res.json({
+            success: true,
+            orders: transformedOrders,
+            stats: {
+                total: orders.length,
+                pending: orders.filter(o => o.status === 'pending').length,
+                inTransit: orders.filter(o => o.status === 'in_transit').length,
+                delivered: orders.filter(o => o.status === 'delivered').length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching staff orders:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching orders',
+            error: error.message
+        });
+    }
+});
+
 // Add this new route before module.exports
 router.get('/verify/:trackingNumber', async (req, res) => {
   try {

@@ -1,6 +1,6 @@
 .dashboardContainer {
-  padding: 2rem;
-  background: #f8fafc;
+  padding: 20px;
+  background: #f8f9fa;
   min-height: 100vh;
 }
 
@@ -11,22 +11,22 @@
 
 .profileSection {
   background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2rem;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
 }
 
 .profileHeader {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 15px;
   margin-bottom: 1.5rem;
 }
 
 .avatar {
-  font-size: 4rem;
-  color: #4f46e5;
+  font-size: 3em;
+  color: #4a90e2;
 }
 
 .profileInfo h2 {
@@ -56,76 +56,106 @@
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .statCard {
   background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: transform 0.2s ease;
 }
 
-.statCard h3 {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
+.statCard:hover {
+  transform: translateY(-2px);
+}
+
+.statIcon {
+  font-size: 2em;
+  padding: 10px;
+  border-radius: 50%;
+}
+
+.pending .statIcon { color: #f39c12; background: #fef3c7; }
+.inTransit .statIcon { color: #3498db; background: #dbeafe; }
+.completed .statIcon { color: #2ecc71; background: #dcfce7; }
+.total .statIcon { color: #e74c3c; background: #fee2e2; }
+
+.statInfo h3 {
+  margin: 0;
+  font-size: 0.9em;
+  color: #666;
 }
 
 .statValue {
-  color: #1e293b;
-  font-size: 1.875rem;
-  font-weight: 600;
+  font-size: 1.8em;
+  font-weight: bold;
+  margin: 5px 0 0 0;
+  color: #2d3748;
 }
 
 .tasksSection {
   background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .tasksList {
   display: grid;
-  gap: 1rem;
-  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
 }
 
 .taskCard {
-  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  padding: 15px;
   border-radius: 8px;
-  padding: 1rem;
+  border: 1px solid #e2e8f0;
 }
 
 .taskHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 10px;
 }
 
 .status {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
   font-weight: 500;
 }
 
-.pending {
-  background: #fff7ed;
-  color: #ea580c;
-}
-
-.completed {
-  background: #f0fdf4;
-  color: #16a34a;
-}
+.status.pending { background: #fef3c7; color: #92400e; }
+.status.in_transit { background: #dbeafe; color: #1e40af; }
+.status.delivered { background: #dcfce7; color: #166534; }
 
 .taskDetails p {
   color: #64748b;
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2em;
+  color: #666;
+}
+
+.noTasks {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {

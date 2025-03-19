@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StaffNavbar from '../components/StaffNavbar';
+import styles from '../styles/Reports.module.css';
+import { FaMoneyBillWave, FaBox, FaTruck, FaCheckCircle } from 'react-icons/fa';
 
 const Reports = () => {
   const [reportType, setReportType] = useState('daily');
@@ -8,144 +10,195 @@ const Reports = () => {
     end: new Date().toISOString().split('T')[0]
   });
 
-  const [reportData] = useState({
+  const [reportData, setReportData] = useState({
     stats: {
-      totalOrders: 45,
-      completedDeliveries: 38,
-      pendingDeliveries: 7,
-      revenue: 12500
+      totalOrders: 0,
+      completedDeliveries: 0,
+      pendingDeliveries: 0,
+      totalEarnings: 0,
+      postOfficeRevenue: 0,
+      staffEarnings: 0
     },
-    topPerformers: [
-      { name: 'John Doe', deliveries: 15, rating: 4.8 },
-      { name: 'Jane Smith', deliveries: 12, rating: 4.7 },
-      { name: 'Mike Johnson', deliveries: 11, rating: 4.6 }
-    ],
-    recentTransactions: [
-      { id: 'TRX001', amount: 500, date: '2024-02-05', status: 'Completed' },
-      { id: 'TRX002', amount: 750, date: '2024-02-04', status: 'Processing' },
-      { id: 'TRX003', amount: 300, date: '2024-02-03', status: 'Completed' }
-    ]
+    deliveries: [],
+    earnings: {
+      today: 0,
+      weekly: 0,
+      monthly: 0
+    }
   });
 
-  const handleExportReport = () => {
-    // Add export functionality here
-    console.log('Exporting report...');
+  // Staff commission percentage (30% of delivery charge)
+  const STAFF_COMMISSION = 0.30;
+
+  const fetchReportData = async () => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/orders/staff/all`);
+      const data = await response.json();
+
+      if (data.success) {
+        const orders = data.orders;
+        
+        // Calculate earnings and statistics safely with null checks
+        const completedOrders = orders.filter(order => order.status === 'delivered');
+        const totalAmount = completedOrders.reduce((sum, order) => 
+          sum + (order.totalAmount || 0), 0
+        );
+        const staffEarnings = totalAmount * STAFF_COMMISSION;
+        const postOfficeRevenue = totalAmount - staffEarnings;
+
+        // Today's deliveries with safer date handling
+        const today = new Date().toDateString();
+        const todayDeliveries = orders.filter(order => 
+          order.createdAt && new Date(order.createdAt).toDateString() === today
+        );
+
+        // This week's deliveries
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const weekDeliveries = orders.filter(order => 
+          order.createdAt && new Date(order.createdAt) >= weekStart
+        );
+
+        // Transform orders with safe property access
+        const transformedDeliveries = orders.map(order => ({
+          id: order._id || 'N/A',
+          trackingNumber: order.trackingNumber || 'N/A',
+          date: order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A',
+          amount: order.totalAmount || 0,
+          staffEarning: (order.totalAmount || 0) * STAFF_COMMISSION,
+          status: order.status || 'pending'
+        }));
+
+        setReportData({
+          stats: {
+            totalOrders: orders.length,
+            completedDeliveries: completedOrders.length,
+            pendingDeliveries: orders.filter(o => o.status !== 'delivered').length,
+            totalEarnings: totalAmount,
+            postOfficeRevenue,
+            staffEarnings
+          },
+          deliveries: transformedDeliveries,
+          earnings: {
+            today: todayDeliveries.reduce((sum, order) => 
+              sum + ((order.totalAmount || 0) * STAFF_COMMISSION), 0
+            ),
+            weekly: weekDeliveries.reduce((sum, order) => 
+              sum + ((order.totalAmount || 0) * STAFF_COMMISSION), 0
+            ),
+            monthly: totalAmount * STAFF_COMMISSION
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+    }
   };
 
+  useEffect(() => {
+    fetchReportData();
+    const interval = setInterval(fetchReportData, 300000); // Refresh every 5 minutes
+    return () => clearInterval(interval);
+  }, [dateRange]);
+
   return (
-    <div className="staff-dashboard">
+    <div className={styles.reportsContainer}>
       <StaffNavbar />
-      <div className="dashboard-content">
-        <div className="staff-header">
-          <div className="header-left">
-            <h1>Reports & Analytics</h1>
-            <p>View and generate reports</p>
-          </div>
-          <div className="header-actions">
-            <button className="action-btn" onClick={handleExportReport}>
-              <i className="fas fa-download"></i> Export Report
-            </button>
-          </div>
-        </div>
-
-        <div className="report-filters">
-          <select 
-            value={reportType} 
-            onChange={(e) => setReportType(e.target.value)}
-            className="report-type-select"
-          >
-            <option value="daily">Daily Report</option>
-            <option value="weekly">Weekly Report</option>
-            <option value="monthly">Monthly Report</option>
-            <option value="custom">Custom Range</option>
-          </select>
-
-          <div className="date-range">
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-            />
-            <span>to</span>
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-            />
+      <div className={styles.contentWrapper}>
+        <div className={styles.headerSection}>
+          <h1>Delivery Reports & Earnings</h1>
+          <div className={styles.dateFilter}>
+            <select 
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value)}
+            >
+              <option value="daily">Today's Report</option>
+              <option value="weekly">This Week</option>
+              <option value="monthly">This Month</option>
+            </select>
           </div>
         </div>
 
-        <div className="reports-grid">
-          <div className="report-card">
-            <h3>Delivery Statistics</h3>
-            <div className="stats-content">
-              <div className="stat-item">
-                <span className="stat-label">Total Orders</span>
-                <span className="stat-value">{reportData.stats.totalOrders}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Completed</span>
-                <span className="stat-value">{reportData.stats.completedDeliveries}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Pending</span>
-                <span className="stat-value">{reportData.stats.pendingDeliveries}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Revenue</span>
-                <span className="stat-value">₹{reportData.stats.revenue}</span>
-              </div>
+        <div className={styles.statsGrid}>
+          <div className={`${styles.statCard} ${styles.earnings}`}>
+            <FaMoneyBillWave className={styles.statIcon} />
+            <div className={styles.statInfo}>
+              <h3>Your Earnings ({reportType})</h3>
+              <p className={styles.statValue}>
+                ₹{reportData.earnings[reportType === 'daily' ? 'today' : 
+                   reportType === 'weekly' ? 'weekly' : 'monthly'].toFixed(2)}
+              </p>
             </div>
           </div>
 
-          <div className="report-card">
-            <h3>Top Performers</h3>
-            <table className="performers-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Deliveries</th>
-                  <th>Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reportData.topPerformers.map((performer, index) => (
-                  <tr key={index}>
-                    <td>{performer.name}</td>
-                    <td>{performer.deliveries}</td>
-                    <td>{performer.rating}/5</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className={`${styles.statCard} ${styles.completed}`}>
+            <FaCheckCircle className={styles.statIcon} />
+            <div className={styles.statInfo}>
+              <h3>Completed Deliveries</h3>
+              <p className={styles.statValue}>{reportData.stats.completedDeliveries}</p>
+            </div>
           </div>
 
-          <div className="report-card">
-            <h3>Recent Transactions</h3>
-            <table className="transactions-table">
-              <thead>
+          <div className={`${styles.statCard} ${styles.pending}`}>
+            <FaTruck className={styles.statIcon} />
+            <div className={styles.statInfo}>
+              <h3>Pending Deliveries</h3>
+              <p className={styles.statValue}>{reportData.stats.pendingDeliveries}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.deliveriesTable}>
+          <h2>Recent Deliveries</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Tracking Number</th>
+                <th>Date</th>
+                <th>Total Amount</th>
+                <th>Your Earnings</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reportData.deliveries.length === 0 ? (
                 <tr>
-                  <th>ID</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                  <th>Status</th>
+                  <td colSpan="5" style={{ textAlign: 'center' }}>No deliveries found</td>
                 </tr>
-              </thead>
-              <tbody>
-                {reportData.recentTransactions.map((transaction, index) => (
-                  <tr key={index}>
-                    <td>{transaction.id}</td>
-                    <td>₹{transaction.amount}</td>
-                    <td>{transaction.date}</td>
+              ) : (
+                reportData.deliveries.map(delivery => (
+                  <tr key={delivery.id}>
+                    <td>{delivery.trackingNumber}</td>
+                    <td>{delivery.date}</td>
+                    <td>₹{delivery.amount.toFixed(2)}</td>
+                    <td>₹{delivery.staffEarning.toFixed(2)}</td>
                     <td>
-                      <span className={`status-badge ${transaction.status.toLowerCase()}`}>
-                        {transaction.status}
+                      <span className={`${styles.status} ${styles[delivery.status]}`}>
+                        {delivery.status}
                       </span>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className={styles.earningsSummary}>
+          <h2>Earnings Summary</h2>
+          <div className={styles.summaryContent}>
+            <div className={styles.summaryItem}>
+              <span>Total Deliveries Value:</span>
+              <span>₹{reportData.stats.totalEarnings.toFixed(2)}</span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span>Your Commission (30%):</span>
+              <span>₹{reportData.stats.staffEarnings.toFixed(2)}</span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span>Post Office Revenue:</span>
+              <span>₹{reportData.stats.postOfficeRevenue.toFixed(2)}</span>
+            </div>
           </div>
         </div>
       </div>

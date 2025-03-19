@@ -1,45 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import styles from '../styles/StaffDashboard.module.css';
-import { FaUserCircle, FaMapMarkerAlt, FaPhone, FaClock, FaCalendarAlt } from 'react-icons/fa';
+import { FaUserCircle, FaMapMarkerAlt, FaPhone, FaClock, FaBox, FaTruck, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import StaffNavbar from '../components/StaffNavbar';
 
 const StaffDashboard = () => {
   const { user } = useAuth();
-  const [staffStats, setStaffStats] = useState({
+  const [dashboardStats, setDashboardStats] = useState({
     deliveriesCompleted: 0,
     pendingDeliveries: 0,
-    customerRating: 0,
+    inTransitDeliveries: 0,
+    totalOrders: 0,
     todaysTasks: []
   });
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch orders summary
+      const ordersResponse = await fetch('http://localhost:4000/api/orders/staff/all');
+      const ordersData = await ordersResponse.json();
+
+      if (ordersData.success) {
+        const orders = ordersData.orders;
+        setDashboardStats({
+          deliveriesCompleted: orders.filter(order => order.status === 'delivered').length,
+          pendingDeliveries: orders.filter(order => order.status === 'pending').length,
+          inTransitDeliveries: orders.filter(order => 
+            order.status === 'in_transit' || order.status === 'out_for_delivery'
+          ).length,
+          totalOrders: orders.length,
+          todaysTasks: orders.filter(order => {
+            const today = new Date().toDateString();
+            const orderDate = new Date(order.createdAt).toDateString();
+            return orderDate === today;
+          })
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStaffStats = async () => {
-      try {
-        // Temporary mock data until backend is connected
-        setStaffStats({
-          deliveriesCompleted: 150,
-          pendingDeliveries: 5,
-          customerRating: 4.8,
-          todaysTasks: [
-            {
-              type: 'Delivery',
-              status: 'Pending',
-              scheduledTime: '10:00 AM',
-              location: '123 Main St',
-              description: 'Package delivery'
-            }
-          ]
-        });
-      } catch (error) {
-        console.error('Error fetching staff stats:', error);
-      }
-    };
-
-    fetchStaffStats();
+    fetchDashboardData();
+    // Refresh data every 5 minutes
+    const interval = setInterval(fetchDashboardData, 300000);
+    return () => clearInterval(interval);
   }, []);
+
+  if (loading) {
+    return <div className={styles.loading}>Loading dashboard data...</div>;
+  }
 
   return (
     <div className={styles.dashboardContainer}>
+      <StaffNavbar />
       <div className={styles.contentWrapper}>
         <div className={styles.profileSection}>
           <div className={styles.profileHeader}>
@@ -49,56 +67,64 @@ const StaffDashboard = () => {
               <p className={styles.staffId}>ID: {user?.staffId || 'ST-001'}</p>
             </div>
           </div>
-          
-          <div className={styles.contactInfo}>
-            <div className={styles.infoItem}>
-              <FaMapMarkerAlt />
-              <span>{user?.address || 'Main Branch'}</span>
-            </div>
-            <div className={styles.infoItem}>
-              <FaPhone />
-              <span>{user?.phone || 'Not provided'}</span>
-            </div>
-            <div className={styles.infoItem}>
-              <FaClock />
-              <span>Regular Shift</span>
-            </div>
-          </div>
         </div>
 
         <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <h3>Completed Deliveries</h3>
-            <p className={styles.statValue}>{staffStats.deliveriesCompleted}</p>
+          <div className={`${styles.statCard} ${styles.pending}`}>
+            <FaBox className={styles.statIcon} />
+            <div className={styles.statInfo}>
+              <h3>Pending Orders</h3>
+              <p className={styles.statValue}>{dashboardStats.pendingDeliveries}</p>
+            </div>
           </div>
-          <div className={styles.statCard}>
-            <h3>Pending Deliveries</h3>
-            <p className={styles.statValue}>{staffStats.pendingDeliveries}</p>
+          
+          <div className={`${styles.statCard} ${styles.inTransit}`}>
+            <FaTruck className={styles.statIcon} />
+            <div className={styles.statInfo}>
+              <h3>In Transit</h3>
+              <p className={styles.statValue}>{dashboardStats.inTransitDeliveries}</p>
+            </div>
           </div>
-          <div className={styles.statCard}>
-            <h3>Customer Rating</h3>
-            <p className={styles.statValue}>{staffStats.customerRating.toFixed(1)}/5.0</p>
+          
+          <div className={`${styles.statCard} ${styles.completed}`}>
+            <FaCheckCircle className={styles.statIcon} />
+            <div className={styles.statInfo}>
+              <h3>Completed</h3>
+              <p className={styles.statValue}>{dashboardStats.deliveriesCompleted}</p>
+            </div>
+          </div>
+          
+          <div className={`${styles.statCard} ${styles.total}`}>
+            <FaExclamationTriangle className={styles.statIcon} />
+            <div className={styles.statInfo}>
+              <h3>Total Orders</h3>
+              <p className={styles.statValue}>{dashboardStats.totalOrders}</p>
+            </div>
           </div>
         </div>
 
         <div className={styles.tasksSection}>
-          <h3>Today's Tasks</h3>
+          <h3>Today's Tasks ({dashboardStats.todaysTasks.length})</h3>
           <div className={styles.tasksList}>
-            {staffStats.todaysTasks.map((task, index) => (
-              <div key={index} className={styles.taskCard}>
-                <div className={styles.taskHeader}>
-                  <h4>{task.type}</h4>
-                  <span className={`${styles.status} ${styles[task.status.toLowerCase()]}`}>
-                    {task.status}
-                  </span>
+            {dashboardStats.todaysTasks.length === 0 ? (
+              <p className={styles.noTasks}>No tasks for today</p>
+            ) : (
+              dashboardStats.todaysTasks.map((task, index) => (
+                <div key={task._id || index} className={styles.taskCard}>
+                  <div className={styles.taskHeader}>
+                    <h4>Order #{task.trackingNumber}</h4>
+                    <span className={`${styles.status} ${styles[task.status]}`}>
+                      {task.status}
+                    </span>
+                  </div>
+                  <div className={styles.taskDetails}>
+                    <p><strong>Type:</strong> {task.orderType}</p>
+                    <p><strong>Amount:</strong> ₹{task.totalAmount}</p>
+                    <p><strong>Created:</strong> {new Date(task.createdAt).toLocaleTimeString()}</p>
+                  </div>
                 </div>
-                <div className={styles.taskDetails}>
-                  <p><strong>Time:</strong> {task.scheduledTime}</p>
-                  <p><strong>Location:</strong> {task.location}</p>
-                  <p><strong>Details:</strong> {task.description}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
