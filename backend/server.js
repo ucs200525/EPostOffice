@@ -31,8 +31,19 @@ if (!process.env.JWT_SECRET) {
 
 // Security Middleware
 app.use(helmet());
+const allowedOrigins = [
+    'http://localhost:3000',  // Your frontend URL (change accordingly)
+    'https://e-post-office.vercel.app/'
+];
+
 app.use(cors({
-    origin:'*',
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 
