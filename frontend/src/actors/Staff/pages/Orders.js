@@ -17,7 +17,7 @@ const Orders = () => {
   const fetchOrders = async () => {
     try {
       console.log('Fetching orders...');  // Debug log
-      const response = await fetch('http://localhost:4000/api/orders/staff/all', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/orders/staff/all`, {
         headers: {
           'Accept': 'application/json'
         }
@@ -57,7 +57,7 @@ const Orders = () => {
   const handleOrderClick = async (order) => {
     try {
       console.log('Fetching customer details for order:', order);
-      const response = await fetch(`http://localhost:4000/api/staff/customers/${order.customerId}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/staff/customers/${order.customerId}`);
       const data = await response.json();
       
       if (data.success) {

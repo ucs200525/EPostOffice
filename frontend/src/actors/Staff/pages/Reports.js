@@ -32,7 +32,7 @@ const Reports = () => {
 
   const fetchReportData = async () => {
     try {
-      const response = await fetch(`http://localhost:4000/api/orders/staff/all`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/orders/staff/all`);
       const data = await response.json();
 
       if (data.success) {

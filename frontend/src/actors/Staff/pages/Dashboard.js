@@ -18,7 +18,7 @@ const StaffDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       // Fetch orders summary
-      const ordersResponse = await fetch('http://localhost:4000/api/orders/staff/all');
+      const ordersResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/orders/staff/all`);
       const ordersData = await ordersResponse.json();
 
       if (ordersData.success) {

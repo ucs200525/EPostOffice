@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4000/api/admin'; // Replace with your API base URL
+const API_BASE_URL = `${process.env.REACT_APP_BACKEND_URL}/api/admin`; // Replace with your API base URL
 
 const fetchDashboardStats = async (token) => {
   try {

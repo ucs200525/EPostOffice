@@ -22,7 +22,7 @@ const OrderAssignment = () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch(`http://localhost:4000/api/orders/track/${trackingNumber}`);
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/orders/track/${trackingNumber}`);
             const data = await response.json();
             
             if (data.success) {
@@ -41,7 +41,7 @@ const OrderAssignment = () => {
 
     const updateOrderStatus = async (newStatus) => {
         try {
-            const response = await fetch(`http://localhost:4000/api/orders/status/${trackingNumber}`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/orders/status/${trackingNumber}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
