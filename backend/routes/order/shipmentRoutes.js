@@ -6,7 +6,7 @@ const { auth } = require('../../middleware/auth');
 const { generateTrackingNumber } = require('../../utils/shipmentUtils');
 
 // Create new order
-router.post('/create', auth, async (req, res) => {
+router.post('/create', async (req, res) => {
   try {
     console.log('Request body:', req.body); // Debug log
     console.log('User from auth:', req.user); // Debug log

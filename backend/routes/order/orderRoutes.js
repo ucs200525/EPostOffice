@@ -16,46 +16,6 @@ router.use((req, res, next) => {
   next();
 });
 
-// // Get all orders for the logged-in user - Remove items population
-// router.get('/my-orders/:customerId', async (req, res) => {
-//     try {
-//         const { customerId } = req.params;
-//         console.log('Fetching orders for customer:', customerId); // Debug log
-
-//         if (!customerId) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Customer ID is required'
-//             });
-//         }
-
-//         const orders = await Order.find({ customerId })
-//             // Remove .populate('items') since it doesn't exist
-//             .sort({ createdAt: -1 });
-
-//         console.log('Found orders:', orders.length); // Debug log
-        
-//         // Calculate stats from orders
-//         const stats = {
-//             active: orders.filter(order => order.status === 'pending').length,
-//             transit: orders.filter(order => order.status === 'in-transit').length,
-//             completed: orders.filter(order => order.status === 'delivered').length,
-//             total: orders.length
-//         };
-
-//         res.json({
-//             success: true,
-//             data: orders,
-//             stats
-//         });
-//     } catch (error) {
-//         console.error('Error fetching orders:', error);
-//         res.status(500).json({
-//             success: false,
-//             message: error.message || 'Error fetching orders'
-//         });
-//     }
-// });
 // Get all orders for the logged-in user - Fetch addresses from Customer schema
 router.get('/my-orders/:customerId', async (req, res) => {
     try {
@@ -118,24 +78,66 @@ router.get('/my-orders/:customerId', async (req, res) => {
     }
 });
 
-// Create new order
-router.post('/', async (req, res) => {
-    try {
-        const order = new Order({
-            customerId: req.user.id,
-            ...req.body
-        });
-        await order.save();
-        res.status(201).json({
-            success: true,
-            data: order
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
+// Update the route from '/' to '/create' to match frontend request
+router.post('/create/:customerId', async (req, res) => {
+  try {
+    console.log('Creating new order:', req.body);
+    const { customerId } = req.params;
+
+    // Ensure numeric values
+    const weight = parseFloat(req.body.packageDetails.weight) || 0;
+    const basePrice = Number((50 * 83).toFixed(2));
+    const weightCharge = Number((weight * 10 * 83).toFixed(2));
+    const insuranceCharge = req.body.customsDeclaration?.value 
+      ? Number((parseFloat(req.body.customsDeclaration.value) * 83 * 0.01).toFixed(2))
+      : 0;
+    const totalAmount = Number((basePrice + weightCharge + insuranceCharge).toFixed(2));
+
+    const order = new Order({
+      customerId,
+      trackingNumber: `EP${Math.random().toString().substring(2, 15)}`,
+      pickupAddress: req.body.pickupAddress,
+      shippingAddress: req.body.deliveryAddress,
+      packageDetails: {
+        type: req.body.packageDetails.type,
+        weight: weight,
+        dimensions: {
+          length: parseFloat(req.body.packageDetails.dimensions.length) || 0,
+          width: parseFloat(req.body.packageDetails.dimensions.width) || 0,
+          height: parseFloat(req.body.packageDetails.dimensions.height) || 0
+        },
+        specialInstructions: req.body.packageDetails.specialInstructions
+      },
+      status: 'pending',
+      orderType: req.body.orderType,
+      totalAmount: totalAmount,
+      cost: {
+        basePrice: basePrice,
+        weightCharge: weightCharge,
+        insuranceCharge: insuranceCharge,
+        total: totalAmount
+      },
+      estimatedDeliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+    });
+
+    const savedOrder = await order.save();
+    console.log('Saved order:', savedOrder);
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order: savedOrder,
+      trackingNumber: savedOrder.trackingNumber,
+      orderId: savedOrder._id
+    });
+  } catch (error) {
+    console.error('Order creation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating order',
+      error: error.message
+    });
+  }
 });
 
 // Get order by ID - Remove items population
@@ -284,6 +286,48 @@ router.get('/track/:trackingNumber', async (req, res) => {
             error: error.message
         });
     }
+});
+
+// Add this new route before module.exports
+router.get('/verify/:trackingNumber', async (req, res) => {
+  try {
+    const { trackingNumber } = req.params;
+    const order = await Order.findOne({ trackingNumber });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Calculate status and progress
+    const currentDate = new Date();
+    const createdDate = new Date(order.createdAt);
+    const estimatedDelivery = new Date(order.estimatedDeliveryDate);
+    
+    const progress = Math.min(
+      ((currentDate - createdDate) / (estimatedDelivery - createdDate)) * 100,
+      100
+    );
+
+    res.json({
+      success: true,
+      order: {
+        ...order.toObject(),
+        progress,
+        currentStatus: order.status,
+        estimatedDeliveryDate: order.estimatedDeliveryDate
+      }
+    });
+  } catch (error) {
+    console.error('Order verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error verifying order',
+      error: error.message
+    });
+  }
 });
 
 module.exports = router;

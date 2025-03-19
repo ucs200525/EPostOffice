@@ -204,6 +204,23 @@
   padding: 1rem;
 }
 
+.walletBalance {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 500;
+  color: #2563eb;
+}
+
+.insufficientBalance {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
 @media (max-width: 768px) {
   .confirmationContainer {
     padding: 1rem;

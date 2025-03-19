@@ -15,7 +15,7 @@ import './actors/Customer/styles/DarkMode.css';
 import Login from './actors/Customer/pages/Login';
 import Register from './actors/Customer/pages/Register';
 import PostalCalculator from './actors/Customer/pages/PostalCalculator';
-import Payment from './actors/Customer/pages/Payment';
+import Payment from './actors/Customer/pages/NewPayment';
 import SendPackage from './actors/Customer/pages/SendPackage';
 import Shipments from './actors/Customer/pages/Shipments';
 import TrackTrace from './actors/Customer/pages/TrackTrace';

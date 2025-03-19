@@ -6,6 +6,10 @@ const orderSchema = new mongoose.Schema({
     ref: 'Customer',
     required: true
   },
+  totalAmount: {
+    type: Number,
+    required: true
+  },
   trackingNumber: {
     type: String,
     required: true,
@@ -43,10 +47,6 @@ const orderSchema = new mongoose.Schema({
   orderType: {
     type: String,
     enum: ['domestic', 'international'],
-    required: true
-  },
-  totalAmount: {
-    type: Number,
     required: true
   },
   cost: {

@@ -9,6 +9,7 @@ import styles from '../styles/Shipping.module.css';
 const InternationalShipping = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [customerData, setCustomerData] = useState(null);
   const [addresses, setAddresses] = useState({
     pickup: null,
     delivery: []
@@ -33,10 +34,25 @@ const InternationalShipping = () => {
     message: ''
   });
 
+  useEffect(() => {
+    if (user) {
+      setCustomerData(user);
+    } else {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          setCustomerData(JSON.parse(storedUser));
+        } catch (error) {
+          console.error('Error parsing user from localStorage:', error);
+        }
+      }
+    }
+  }, [user]);
+
   // Fetch addresses function
   useEffect(() => {
     const fetchAddresses = async () => {
-      if (!user?._id) {
+      if (!customerData?.id) {
         setNotification({
           show: true,
           type: 'error',
@@ -47,7 +63,7 @@ const InternationalShipping = () => {
 
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user._id}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${customerData.id}`,
           {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
           }
@@ -76,8 +92,10 @@ const InternationalShipping = () => {
       }
     };
 
-    fetchAddresses();
-  }, [user]);
+    if (customerData?.id) {
+      fetchAddresses();
+    }
+  }, [customerData?.id]);
 
   // Format address helper
   const formatAddress = (address) => {

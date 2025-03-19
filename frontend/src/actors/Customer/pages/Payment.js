@@ -133,7 +133,7 @@ const Payment = () => {
         .filter(t => t.description.toLowerCase().includes(searchTerm.toLowerCase()))
         .sort((a, b) => (sortOrder === 'desc' ? new Date(b.createdAt) - new Date(a.createdAt) : new Date(a.createdAt) - new Date(b.createdAt)));
 
-    if (loading) return <div className={styles.loading}>Loading...</div>;
+    // if (loading) return <div className={styles.loading}>Loading...</div>;
 
     return (
         <div className={styles.payment_container}>

@@ -9,6 +9,7 @@ import styles from '../styles/Shipping.module.css';
 const DomesticShipping = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [customerData, setCustomerData] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState('');
   const [showNotification, setShowNotification] = useState(false);
@@ -23,15 +24,30 @@ const DomesticShipping = () => {
   const [pickupAddress, setPickupAddress] = useState(null);
 
   useEffect(() => {
+    if (user) {
+      setCustomerData(user);
+    } else {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          setCustomerData(JSON.parse(storedUser));
+        } catch (error) {
+          console.error('Error parsing user from localStorage:', error);
+        }
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
     const fetchAddresses = async () => {
-      if (!user?._id) {
+      if (!customerData?.id) {
         console.error('User ID is not available');
         return;
       }
 
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user._id}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${customerData.id}`,
           {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
           }
@@ -60,8 +76,10 @@ const DomesticShipping = () => {
       }
     };
 
-    fetchAddresses();
-  }, [user, navigate]);
+    if (customerData?.id) {
+      fetchAddresses();
+    }
+  }, [customerData?.id, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
