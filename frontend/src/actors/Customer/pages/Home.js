@@ -7,7 +7,7 @@ import { FaBox, FaTruck, FaMoneyBill, FaUser, FaBell, FaMapMarkerAlt, FaFileAlt,
 import { Link } from 'react-router-dom';
 import { useShipments } from '../../../context/ShipmentContext';
 import Notification from '../../../components/Notification';
-
+// import heroImage from '../../../assets/hero-pattern.png';
 const SendPackageSection = () => {
   const navigate = useNavigate();
   
@@ -498,10 +498,9 @@ useEffect(() => {
     <div className={styles.homeGuestContainer} style={cssVariables}>
       <section className={styles.heroSection}>
         <div className={styles.heroContent}>
-          {/* Swap: Place image above text */}
-          <div className={styles.heroImage}>
-            <img src="hero-illustration.png" alt="E-Post Office Services" />
-          </div>
+          {/* <div className={styles.heroImage}>
+            <img src={heroImage} alt="E-Post Office Services" />
+          </div> */}
           <div className={styles.heroText}>
             <h1>Welcome to E-Post Office</h1>
             <p>

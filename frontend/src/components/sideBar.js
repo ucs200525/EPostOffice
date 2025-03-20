@@ -5,13 +5,16 @@ import {
   FaChevronRight, FaChevronLeft 
 } from 'react-icons/fa';
 import './SideBar.css';
+import { useAuth } from '../context/AuthContext';
 
 const SideBar = ({ isOpen, setIsOpen }) => {
   const [showServices, setShowServices] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
   const handleClose = () => {
     setIsOpen(false);
     setShowServices(false);
   };
+
   return (
     <>
       {isOpen && <div className="sidebar-overlay" onClick={handleClose}></div>}
@@ -19,6 +22,16 @@ const SideBar = ({ isOpen, setIsOpen }) => {
       <div className={`sidebar-main ${showServices ? 'slide-left' : ''}`}>
         <ul className="sidebar-items">
           <li><Link to="/" onClick={() => setIsOpen(false)}>Home</Link></li>
+          {isAuthenticated && (
+            <>
+              <li><Link to="/track" onClick={() => setIsOpen(false)}>Track & Trace</Link></li>
+              <li><Link to="/calculator" onClick={() => setIsOpen(false)}>Price Calculator</Link></li>
+              <li><Link to="/dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link></li>
+              <li><Link to="/shipments" onClick={() => setIsOpen(false)}>My Shipments</Link></li>
+              <li><Link to="/payment" onClick={() => setIsOpen(false)}>Payments</Link></li>
+              <li><Link to="/settings" onClick={() => setIsOpen(false)}>Settings</Link></li>
+            </>
+          )}
           <li>
             <button 
               className="service-btn" 
@@ -27,13 +40,23 @@ const SideBar = ({ isOpen, setIsOpen }) => {
               Services <FaChevronRight />
             </button>
           </li>
-          <li><Link to="/track" onClick={() => setIsOpen(false)}>Track & Trace</Link></li>
-          <li><Link to="/calculator" onClick={() => setIsOpen(false)}>Price Calculator</Link></li>
         </ul>
         
         <div className="sidebar-footer">
-          <Link to="/profile" onClick={() => setIsOpen(false)}>My Profile</Link>
-          <Link to="/logout" onClick={() => setIsOpen(false)}>Logout</Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/profile" onClick={() => setIsOpen(false)}>My Profile</Link>
+              <button className="logout" onClick={() => {
+                logout();
+                setIsOpen(false);
+              }}>Logout</button>
+            </>
+          ) : (
+            <div className="auth-buttons-sidebar">
+              <Link to="/login" onClick={() => setIsOpen(false)}>Login</Link>
+              <Link to="/register" onClick={() => setIsOpen(false)}>Register</Link>
+            </div>
+          )}
         </div>
       </div>
 

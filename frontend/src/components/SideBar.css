@@ -119,6 +119,32 @@
   color: #f44336;
 }
 
+.sidebar-footer .logout-button {
+  color: #f44336;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.auth-buttons-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-buttons-sidebar a {
+  display: block;
+  padding: 12px 0;
+  color: var(--text-dark);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.auth-buttons-sidebar a:hover {
+  color: var(--accent-color);
+}
+
 .services-submenu {
   position: absolute;
   top: 0;
