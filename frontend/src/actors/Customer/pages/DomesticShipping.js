@@ -124,7 +124,7 @@ const DomesticShipping = () => {
           onClose={() => setShowNotification(false)}
           actionButton={
             <button
-              onClick={() => navigate('/customer/addresses')}
+              onClick={() => navigate('/settings')}
               className={styles.actionButton}
             >
               Add Address
