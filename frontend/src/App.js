@@ -53,6 +53,25 @@ import OrderAssignment from './actors/Staff/pages/OrderAssignment';
 import CustomerDetailsPage from './actors/Staff/pages/CustomerDetails'; // Add this line
 
 const App = () => {
+  // Site disabled check
+  if (process.env.REACT_APP_SITE_DISABLED === "true") {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign: 'center',
+        padding: '20px'
+      }}>
+        <h1>Site Maintenance</h1>
+        <p>Our site is currently undergoing scheduled maintenance.</p>
+        <p>Please check back later.</p>
+      </div>
+    );
+  }
+
   return (
     <DarkModeProvider>
       <ShipmentProvider>
