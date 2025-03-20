@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
+import IPCheckWrapper from './components/IPCheckWrapper';
 // import AdminSidebar from './actors/Admin/components/AdminSidebar';
 
 import EPostOfficeNavbar from './actors/Customer/components/Navbar';
@@ -73,33 +74,35 @@ const App = () => {
   }
 
   return (
-    <DarkModeProvider>
-      <ShipmentProvider>
-        <Router>
-          <AuthProvider>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/staff/login" element={<StaffLogin />} />
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected routes with layouts */}
-              <Route path="/admin/*" element={
-                <PrivateRoute roles={['admin']}>
-                  <AdminLayout />
-                </PrivateRoute>
-              } />
-              <Route path="/staff/*" element={
-                <PrivateRoute roles={['staff']}>
-                  <StaffRoutes />
-                </PrivateRoute>
-              } />
-              <Route path="/*" element={<CustomerLayout />} />
-            </Routes>
-          </AuthProvider>
-        </Router>
-      </ShipmentProvider>
-    </DarkModeProvider>
+    // <IPCheckWrapper>
+      <DarkModeProvider>
+        <ShipmentProvider>
+          <Router>
+            <AuthProvider>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/staff/login" element={<StaffLogin />} />
+                <Route path="/login" element={<Login />} />
+                
+                {/* Protected routes with layouts */}
+                <Route path="/admin/*" element={
+                  <PrivateRoute roles={['admin']}>
+                    <AdminLayout />
+                  </PrivateRoute>
+                } />
+                <Route path="/staff/*" element={
+                  <PrivateRoute roles={['staff']}>
+                    <StaffRoutes />
+                  </PrivateRoute>
+                } />
+                <Route path="/*" element={<CustomerLayout />} />
+              </Routes>
+            </AuthProvider>
+          </Router>
+        </ShipmentProvider>
+      </DarkModeProvider>
+    // </IPCheckWrapper>
   );
 };
 
