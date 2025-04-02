@@ -85,6 +85,10 @@ const Orders = () => {
     }
   };
 
+  const getStatusClass = (status) => {
+    return `${styles.status} ${styles[status.toLowerCase().replace(/ /g, '_')]}`;
+  };
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
       (order.trackingNumber && order.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -172,8 +176,8 @@ const Orders = () => {
                     <td>{order.customerId}</td>
                     <td>{order.orderType}</td>
                     <td>
-                      <span className={`${styles.statusBadge} ${styles[order.status]}`}>
-                        {order.status}
+                      <span className={getStatusClass(order.status)}>
+                        {order.status.replace(/_/g, ' ')}
                       </span>
                     </td>
                     <td>{new Date(order.createdAt).toLocaleDateString()}</td>

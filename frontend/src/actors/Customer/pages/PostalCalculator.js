@@ -4,7 +4,7 @@ import styles from '../styles/PostalCalculator.module.css';
 const PostalCalculator = () => {
   const [formData, setFormData] = useState({
     location: 'domestic',
-    serviceType: 'normal',
+    serviceType: 'basic_letter',
     weight: '',
     height: '',
     width: '',
@@ -14,21 +14,78 @@ const PostalCalculator = () => {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
 
-  // Define limits
   const LIMITS = {
-    weight: { min: 0.1, max: 30 },
-    height: { min: 1, max: 150 },
-    width: { min: 1, max: 150 },
-    length: { min: 1, max: 150 }
+    weight: { min: 0.1, max: 20 },
+    height: { min: 1, max: 100 },
+    width: { min: 1, max: 100 },
+    length: { min: 1, max: 100 }
   };
 
-  // Service types with their multipliers
-  const SERVICE_TYPES = {
-    normal: { label: 'Normal Delivery', multiplier: 1 },
-    speed: { label: 'Speed Post', multiplier: 1.5 },
-    express: { label: 'Express Delivery', multiplier: 2 },
-    premium: { label: 'Premium Express', multiplier: 2.5 },
-    overnight: { label: 'Overnight Delivery', multiplier: 3 }
+  const PACKAGE_TYPES = {
+    domestic: {
+      basic_letter: { 
+        label: 'Basic Letter', 
+        base: 50, 
+        maxWeight: 0.1,
+        dimensions: '21×15×1'
+      },
+      standard_parcel: { 
+        label: 'Standard Parcel', 
+        base: 150, 
+        maxWeight: 1,
+        dimensions: '30×20×10'
+      },
+      express_parcel: { 
+        label: 'Express Parcel', 
+        base: 300, 
+        maxWeight: 5,
+        dimensions: '40×30×20'
+      },
+      premium_parcel: { 
+        label: 'Premium Parcel', 
+        base: 600, 
+        maxWeight: 10,
+        dimensions: '50×40×30'
+      },
+      bulk_shipment: { 
+        label: 'Bulk Shipment', 
+        base: 1200, 
+        maxWeight: 20,
+        dimensions: '70×50×40'
+      }
+    },
+    international: {
+      basic_intl: { 
+        label: 'Basic International', 
+        base: 250, 
+        maxWeight: 0.1,
+        dimensions: '21×15×1'
+      },
+      standard_intl: { 
+        label: 'Standard International', 
+        base: 800, 
+        maxWeight: 1,
+        dimensions: '30×20×10'
+      },
+      express_intl: { 
+        label: 'Express International', 
+        base: 2000, 
+        maxWeight: 5,
+        dimensions: '40×30×20'
+      },
+      premium_intl: { 
+        label: 'Premium International', 
+        base: 4000, 
+        maxWeight: 10,
+        dimensions: '50×40×30'
+      },
+      bulk_intl: { 
+        label: 'Bulk International', 
+        base: 9000, 
+        maxWeight: 20,
+        dimensions: '70×50×40'
+      }
+    }
   };
 
   const validateInput = (name, value) => {
@@ -46,7 +103,17 @@ const PostalCalculator = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
+    if (name === 'location') {
+      const firstServiceType = Object.keys(PACKAGE_TYPES[value])[0];
+      setFormData(prev => ({
+        ...prev,
+        location: value,
+        serviceType: firstServiceType
+      }));
+      return;
+    }
+
     if (name in LIMITS) {
       const error = validateInput(name, value);
       if (error) {
@@ -54,7 +121,7 @@ const PostalCalculator = () => {
         return;
       }
     }
-    
+
     setError('');
     setFormData(prev => ({
       ...prev,
@@ -63,18 +130,47 @@ const PostalCalculator = () => {
   };
 
   const calculatePrice = () => {
-    let basePrice = formData.location === 'domestic' ? 50 : 200;
-    
-    const serviceMultiplier = SERVICE_TYPES[formData.serviceType].multiplier;
-    const weightPrice = parseFloat(formData.weight) * 10;
-    
-    const volume = (parseFloat(formData.length) * parseFloat(formData.width) * 
-                   parseFloat(formData.height)) / 1000;
-    const volumePrice = volume * 5;
-    
-    const totalPrice = (basePrice + weightPrice + volumePrice) * serviceMultiplier;
-    
-    setResult(totalPrice.toFixed(2));
+    try {
+      if (!PACKAGE_TYPES[formData.location]) {
+        throw new Error('Invalid location type');
+      }
+
+      const packageTypes = PACKAGE_TYPES[formData.location];
+      if (!packageTypes[formData.serviceType]) {
+        formData.serviceType = Object.keys(packageTypes)[0];
+      }
+
+      const selectedPackage = packageTypes[formData.serviceType];
+      let totalCost = selectedPackage.base;
+
+      const weight = parseFloat(formData.weight) || 0;
+      const length = parseFloat(formData.length) || 0;
+      const width = parseFloat(formData.width) || 0;
+      const height = parseFloat(formData.height) || 0;
+
+      const weightCost = weight * (formData.location === 'domestic' ? 80 : 300);
+      const volume = (length * width * height) / 5000;
+      const volumeCost = volume * (formData.location === 'domestic' ? 100 : 400);
+
+      totalCost += weightCost + volumeCost;
+
+      if (formData.location === 'international') {
+        totalCost += totalCost * 0.15;
+      }
+
+      setResult({
+        totalCost: totalCost.toFixed(2),
+        breakdown: {
+          base: selectedPackage.base,
+          weightCost: weightCost.toFixed(2),
+          volumeCost: volumeCost.toFixed(2),
+          customsFee: formData.location === 'international' ? (totalCost * 0.15).toFixed(2) : 0
+        }
+      });
+    } catch (error) {
+      console.error('Price calculation error:', error);
+      setError('Failed to calculate price. Please check your inputs.');
+    }
   };
 
   const handleSubmit = (e) => {
@@ -100,13 +196,13 @@ const PostalCalculator = () => {
         </div>
 
         <div className={styles['form-group']}>
-          <label>Service Type:</label>
+          <label>Package Type:</label>
           <select 
             name="serviceType" 
             value={formData.serviceType}
             onChange={handleInputChange}
           >
-            {Object.entries(SERVICE_TYPES).map(([value, { label }]) => (
+            {Object.entries(PACKAGE_TYPES[formData.location]).map(([value, { label }]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
@@ -170,14 +266,66 @@ const PostalCalculator = () => {
         <button type="submit" className={styles['calculate-btn']} disabled={!!error}>
           Calculate Price
         </button>
-      </form>
 
-      {result && (
-        <div className={styles.result}>
-          <h3>Estimated Price:</h3>
-          <p className={styles.price}>Rs. {result}</p>
+        <div className={styles['info-section']}>
+          <h3>Service Information</h3>
+          <ul>
+            <li>Basic Letter: Up to 0.1kg</li>
+            <li>Standard Parcel: 0.1-1kg</li>
+            <li>Express Parcel: 1-5kg</li>
+            <li>Premium Parcel: 5-10kg</li>
+            <li>Bulk Shipment: 10-20kg</li>
+          </ul>
+          
+          <h3>Weight and Size Limits</h3>
+          <ul>
+            <li>Maximum weight: 20 kg</li>
+            <li>Maximum dimensions: 100 cm × 100 cm × 100 cm</li>
+            <li>Minimum dimensions: 10 cm × 7 cm</li>
+          </ul>
         </div>
-      )}
+
+        {result && (
+          <div className={styles.result}>
+            <h3>Cost Breakdown:</h3>
+            <div className={styles.breakdown}>
+              <p>Base Rate: ₹{result.breakdown.base}</p>
+              <p>Weight Charges: ₹{result.breakdown.weightCost}</p>
+              <p>Volume Charges: ₹{result.breakdown.volumeCost}</p>
+              {formData.location === 'international' && <p>Customs Fee: ₹{result.breakdown.customsFee}</p>}
+              <h4>Total Cost: ₹{result.totalCost}</h4>
+            </div>
+            <div className={styles.notes}>
+              <p>* Prices are approximate and may vary based on exact destination</p>
+              <p>* International shipments may incur additional customs duties</p>
+            </div>
+          </div>
+        )}
+
+        <div className={styles.packageInfo}>
+          <h3>Package Types and Limits</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Weight Limit</th>
+                <th>Dimensions</th>
+                <th>Base Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(PACKAGE_TYPES[formData.location]).map(([key, info]) => (
+                <tr key={key}>
+                  <td>{info.label}</td>
+                  <td>{info.maxWeight} kg</td>
+                  <td>{info.dimensions} cm</td>
+                  <td>₹{info.base}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </form>
     </div>
   );
 };

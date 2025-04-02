@@ -66,6 +66,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/google-login', authRoutes); // Add this line
 app.use('/api/customer', customerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/staff', staffRoutes);
@@ -74,7 +75,6 @@ app.use('/api/packages', packageRoutes);
 app.use('/api/customer/notifications', notificationRoutes);
 app.use('/api/orders/user/:userId/shipments', orderRoutes);
 app.use('/api/shipments', shipmentRoutes);
-
 
 // 404 handler should be after all routes
 app.use((req, res) => {

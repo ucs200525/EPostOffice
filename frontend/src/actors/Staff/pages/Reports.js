@@ -101,6 +101,10 @@ const Reports = () => {
     return () => clearInterval(interval);
   }, [dateRange]);
 
+  const getStatusClass = (status) => {
+    return `${styles.status} ${styles[status.toLowerCase().replace(/ /g, '_')]}`;
+  };
+
   return (
     <div className={styles.reportsContainer}>
       <StaffNavbar />
@@ -173,8 +177,8 @@ const Reports = () => {
                     <td>₹{delivery.amount.toFixed(2)}</td>
                     <td>₹{delivery.staffEarning.toFixed(2)}</td>
                     <td>
-                      <span className={`${styles.status} ${styles[delivery.status]}`}>
-                        {delivery.status}
+                      <span className={getStatusClass(delivery.status)}>
+                        {delivery.status.replace(/_/g, ' ')}
                       </span>
                     </td>
                   </tr>

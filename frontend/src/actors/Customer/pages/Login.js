@@ -45,7 +45,7 @@ const Login = () => {
         if (result.redirectToAddress) {
           navigate('/customer/address');
         } else {
-          navigate('/customer/home');
+          navigate('/');
         }
       } else {
         setError(result.error || 'Failed to log in with Google');

@@ -6,6 +6,7 @@ const adminAuth = require('../../middleware/adminAuth');
 const Staff = require('../../models/staff/Staff');
 const Customer = require('../../models/customer/Customer');
 const Transaction = require('../../models/customer/Transaction');
+const Order = require('../../models/order/Order'); // Added Order model import
 const logger = require('../../utils/logger');
 
 /**
@@ -39,6 +40,30 @@ router.get('/staff', adminAuth, async (req, res) => {
     }
 });
 
+router.get('/staff-list', async (req, res) => {
+    try {
+        const staffMembers = await Staff.find()
+            .select('-password')
+            .sort({ createdAt: -1 });
+        
+        const staffWithDetails = await Promise.all(
+            staffMembers.map(async (staff) => {
+                return {
+                    ...staff.toObject(),
+                    status: staff.status || 'pending',
+                    createdAt: staff.createdAt,
+                    department: staff.department || 'General',
+                    staffId: staff.staffId || staff._id
+                };
+            })
+        );
+        res.json({ success: true, staffList: staffWithDetails });
+    } catch (error) {
+        logger.error(`Get staff list error: ${error.message}`);
+        res.status(500).json({ success: false, message: 'Error fetching staff list', error: error.message });
+    }
+});
+
 /**
  * @route   PUT /api/admin/staff/:id
  * @desc    Update staff member
@@ -68,6 +93,97 @@ router.delete('/staff/:id', adminAuth, async (req, res) => {
     } catch (error) {
         logger.error(`Delete staff error: ${error.message}`);
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+/**
+ * @route   DELETE /api/admin/customers/:id
+ * @desc    Delete customer
+ * @access  Admin only
+ */
+router.delete('/customers/:id', adminAuth, async (req, res) => {
+    try {
+        const customer = await Customer.findByIdAndDelete(req.params.id);
+        if (!customer) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Customer not found' 
+            });
+        }
+        res.json({ 
+            success: true, 
+            message: 'Customer deleted successfully' 
+        });
+    } catch (error) {
+        logger.error(`Delete customer error: ${error.message}`);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server error', 
+            error: error.message 
+        });
+    }
+});
+
+/**
+ * @route   GET /api/admin/customers/:id
+ * @desc    Get customer by ID
+ * @access  Admin only
+ */
+router.get('/customers/:id', adminAuth, async (req, res) => {
+    try {
+        const customer = await Customer.findById(req.params.id).select('-password');
+        if (!customer) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Customer not found' 
+            });
+        }
+        res.json({ 
+            success: true, 
+            customer 
+        });
+    } catch (error) {
+        logger.error(`Get customer error: ${error.message}`);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server error', 
+            error: error.message 
+        });
+    }
+});
+
+/**
+ * @route   PUT /api/admin/customers/:id
+ * @desc    Update customer
+ * @access  Admin only
+ */
+router.put('/customers/:id', adminAuth, async (req, res) => {
+    try {
+        const customer = await Customer.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            { new: true }
+        ).select('-password');
+
+        if (!customer) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Customer not found' 
+            });
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Customer updated successfully',
+            customer 
+        });
+    } catch (error) {
+        logger.error(`Update customer error: ${error.message}`);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server error', 
+            error: error.message 
+        });
     }
 });
 
@@ -168,14 +284,103 @@ router.put('/change-password', async (req, res) => {
  * @desc    Get Dashboard Stats
  * @access  Admin only
  */
-router.get('/dashboard-stats', async (req, res) => {
+router.get('/dashboard-stats', adminAuth, async (req, res) => {
     try {
-        const totalStaff = await Staff.countDocuments();
-        const activeCustomers = await Customer.countDocuments({ status: 'active' });
-        const totalRevenue = (await Transaction.find()).reduce((sum, t) => sum + t.amount, 0);
-        res.json({ success: true, stats: { totalStaff, activeCustomers, totalRevenue } });
+        // For debugging
+        console.log('Fetching dashboard stats...');
+
+        // Calculate date range for data
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30); // Get last 30 days data
+
+        // Fetch all required data concurrently
+        const [orders, customers, staff, transactions] = await Promise.all([
+            Order.find({
+                createdAt: { $gte: startDate, $lte: endDate }
+            }).lean(),
+            Customer.countDocuments({ status: 'active' }),
+            Staff.countDocuments(),
+            Transaction.find({
+                createdAt: { $gte: startDate, $lte: endDate }
+            }).lean()
+        ]);
+
+        // Calculate total revenue
+        const totalRevenue = orders.reduce((sum, order) => {
+            return sum + (Number(order.totalAmount) || 0);
+        }, 0);
+
+        console.log('Orders found:', orders.length);
+        console.log('Total revenue calculated:', totalRevenue);
+
+        // Prepare revenue data for chart
+        const revenueData = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startDate, $lte: endDate }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                    },
+                    amount: { $sum: "$totalAmount" }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        // Prepare order data for chart
+        const orderData = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startDate, $lte: endDate }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        // Format response data
+        const responseData = {
+            success: true,
+            totalRevenue,
+            activeCustomers: customers,
+            totalStaff: staff,
+            orders: {
+                total: orders.length,
+                completed: orders.filter(o => o.status === 'delivered').length,
+                pending: orders.filter(o => o.status !== 'delivered').length
+            },
+            revenueData: revenueData.map(item => ({
+                date: item._id,
+                amount: parseFloat(item.amount || 0)
+            })),
+            orderData: orderData.map(item => ({
+                date: item._id,
+                count: item.count
+            }))
+        };
+
+        console.log('Dashboard stats response:', responseData);
+        res.json(responseData);
+
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching dashboard stats', error: error.message });
+        console.error('Dashboard stats error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching dashboard statistics',
+            error: error.message
+        });
     }
 });
 
@@ -197,5 +402,223 @@ router.post('/register-staff', async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
+
+/**
+ * @route   GET /api/admin/all-users
+ * @desc    Get all users (both customers and staff)
+ * @access  Admin only
+ */
+router.get('/all-users', adminAuth, async (req, res) => {
+    try {
+        // Fetch customers and staff in parallel
+        const [customers, staffMembers] = await Promise.all([
+            Customer.find().select('-password').lean(),
+            Staff.find().select('-password').lean()
+        ]);
+
+        // Transform and combine the data
+        const allUsers = [
+            ...customers.map(customer => ({
+                ...customer,
+                userType: 'customer',
+                status: customer.status || 'active',
+                joinDate: customer.createdAt
+            })),
+            ...staffMembers.map(staff => ({
+                ...staff,
+                userType: 'staff',
+                status: staff.status || 'pending',
+                joinDate: staff.createdAt,
+                department: staff.department || 'General'
+            }))
+        ];
+
+        // Sort by join date, newest first
+        allUsers.sort((a, b) => new Date(b.joinDate) - new Date(a.joinDate));
+
+        res.json({ 
+            success: true, 
+            users: allUsers,
+            counts: {
+                total: allUsers.length,
+                customers: customers.length,
+                staff: staffMembers.length
+            }
+        });
+    } catch (error) {
+        logger.error(`Get all users error: ${error.message}`);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error fetching users', 
+            error: error.message 
+        });
+    }
+});
+
+/**
+ * @route   GET /api/admin/reports
+ * @desc    Generate reports
+ * @access  Admin only
+ */
+router.get('/reports', adminAuth, async (req, res) => {
+    try {
+        const { range } = req.query;
+        const reports = {
+            revenue: await getRevenueData(range),
+            orders: await getOrdersData(range),
+            customers: await getCustomerData(range)
+        };
+        
+        res.json({ success: true, reports });
+    } catch (error) {
+        logger.error(`Reports error: ${error.message}`);
+        res.status(500).json({ success: false, message: 'Error generating reports' });
+    }
+});
+
+/**
+ * @route   GET /api/admin/reports/download
+ * @desc    Download report as PDF
+ * @access  Admin only
+ */
+router.get('/reports/download', adminAuth, async (req, res) => {
+    try {
+        const { range } = req.query;
+        const reportData = await generatePDFReport(range);
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=report-${range}.pdf`);
+        res.send(reportData);
+    } catch (error) {
+        logger.error(`Report download error: ${error.message}`);
+        res.status(500).json({ success: false, message: 'Error downloading report' });
+    }
+});
+
+// Helper functions
+async function calculateTotalRevenue() {
+    const result = await Order.aggregate([
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+    return result[0]?.total || 0;
+}
+
+async function getMonthlyRevenue() {
+    return await Order.aggregate([
+        {
+            $group: {
+                _id: {
+                    month: { $month: "$createdAt" },
+                    year: { $year: "$createdAt" }
+                },
+                amount: { $sum: "$totalAmount" }
+            }
+        },
+        { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+}
+
+// Helper functions for reports
+async function getRevenueData(range) {
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch (range) {
+        case 'week':
+            startDate.setDate(startDate.getDate() - 7);
+            break;
+        case 'month':
+            startDate.setMonth(startDate.getMonth() - 1);
+            break;
+        case 'year':
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            break;
+    }
+
+    return await Order.aggregate([
+        {
+            $match: {
+                createdAt: { $gte: startDate, $lte: endDate }
+            }
+        },
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                totalAmount: { $sum: "$totalAmount" }
+            }
+        },
+        {
+            $sort: { "_id": 1 }
+        }
+    ]);
+}
+
+async function getOrdersData(range) {
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch (range) {
+        case 'week':
+            startDate.setDate(startDate.getDate() - 7);
+            break;
+        case 'month':
+            startDate.setMonth(startDate.getMonth() - 1);
+            break;
+        case 'year':
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            break;
+    }
+
+    return await Order.aggregate([
+        {
+            $match: {
+                createdAt: { $gte: startDate, $lte: endDate }
+            }
+        },
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                count: { $sum: 1 }
+            }
+        },
+        {
+            $sort: { "_id": 1 }
+        }
+    ]);
+}
+
+async function getCustomerData(range) {
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch (range) {
+        case 'week':
+            startDate.setDate(startDate.getDate() - 7);
+            break;
+        case 'month':
+            startDate.setMonth(startDate.getMonth() - 1);
+            break;
+        case 'year':
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            break;
+    }
+
+    return await Customer.aggregate([
+        {
+            $match: {
+                createdAt: { $gte: startDate, $lte: endDate }
+            }
+        },
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                count: { $sum: 1 }
+            }
+        },
+        {
+            $sort: { "_id": 1 }
+        }
+    ]);
+}
 
 module.exports = router;

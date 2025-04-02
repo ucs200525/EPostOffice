@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { FaCog, FaBell, FaLock, FaUser } from 'react-icons/fa';
 import AdminNavbar from '../components/AdminNavbar';
 import Notification from '../../../components/Notification';
+import styles from '../styles/AdminSettings.module.css';  // Make sure this import is correct
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState({
@@ -30,7 +32,7 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="admin-dashboard">
+    <div className={styles.settingsContainer}>
       <AdminNavbar />
       <div className="dashboard-content">
         {showAlert.show && (
@@ -40,17 +42,16 @@ const AdminSettings = () => {
             onClose={() => setShowAlert(prev => ({ ...prev, show: false }))}
           />
         )}
-        <div className="dashboard-header">
-          <div className="header-left">
-            <h1>System Settings</h1>
-            <p>Configure your E-Post Office system settings</p>
-          </div>
+        <div className={styles.header}>
+          <h1>Admin Settings</h1>
+          <p>Manage your admin preferences and system settings</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="settings-container">
-          <div className="settings-grid">
-            <div className="settings-section">
-              <h3>General Settings</h3>
+        <div className={styles.settingsGrid}>
+          {/* General Settings Card */}
+          <div className={styles.settingsCard}>
+            <h2><FaCog /> General Settings</h2>
+            <div className={styles.formGroup}>
               <div className="form-group">
                 <label>Site Title</label>
                 <input
@@ -78,19 +79,13 @@ const AdminSettings = () => {
                 </select>
               </div>
             </div>
+            <button className={styles.actionButton} onClick={handleSubmit}>Save Changes</button>
+          </div>
 
-            <div className="settings-section">
-              <h3>System Preferences</h3>
-              <div className="form-group checkbox">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.maintenanceMode}
-                    onChange={(e) => setSettings({...settings, maintenanceMode: e.target.checked})}
-                  />
-                  Maintenance Mode
-                </label>
-              </div>
+          {/* Notification Settings Card */}
+          <div className={styles.settingsCard}>
+            <h2><FaBell /> Notification Settings</h2>
+            <div className={styles.switchGroup}>
               <div className="form-group checkbox">
                 <label>
                   <input
@@ -101,50 +96,61 @@ const AdminSettings = () => {
                   Enable Notifications
                 </label>
               </div>
-              <div className="form-group checkbox">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.autoBackup}
-                    onChange={(e) => setSettings({...settings, autoBackup: e.target.checked})}
-                  />
-                  Automatic Backup
-                </label>
-              </div>
-            </div>
-
-            <div className="settings-section">
-              <h3>Regional Settings</h3>
-              <div className="form-group">
-                <label>Default Currency</label>
-                <select
-                  value={settings.defaultCurrency}
-                  onChange={(e) => setSettings({...settings, defaultCurrency: e.target.value})}
-                >
-                  <option value="INR">Indian Rupee (₹)</option>
-                  <option value="USD">US Dollar ($)</option>
-                  <option value="EUR">Euro (€)</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Time Zone</label>
-                <select
-                  value={settings.timeZone}
-                  onChange={(e) => setSettings({...settings, timeZone: e.target.value})}
-                >
-                  <option value="Asia/Kolkata">India (IST)</option>
-                  <option value="UTC">UTC</option>
-                  <option value="America/New_York">New York (EST)</option>
-                </select>
-              </div>
             </div>
           </div>
 
-          <div className="form-actions">
-            <button type="submit" className="btn-primary">Save Changes</button>
-            <button type="button" className="btn-secondary">Reset to Default</button>
+          {/* Security Settings Card */}
+          <div className={styles.settingsCard}>
+            <h2><FaLock /> Security Settings</h2>
+            <div className="form-group checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={settings.maintenanceMode}
+                  onChange={(e) => setSettings({...settings, maintenanceMode: e.target.checked})}
+                />
+                Maintenance Mode
+              </label>
+            </div>
+            <div className="form-group checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={settings.autoBackup}
+                  onChange={(e) => setSettings({...settings, autoBackup: e.target.checked})}
+                />
+                Automatic Backup
+              </label>
+            </div>
           </div>
-        </form>
+
+          {/* Profile Settings Card */}
+          <div className={styles.settingsCard}>
+            <h2><FaUser /> Profile Settings</h2>
+            <div className="form-group">
+              <label>Default Currency</label>
+              <select
+                value={settings.defaultCurrency}
+                onChange={(e) => setSettings({...settings, defaultCurrency: e.target.value})}
+              >
+                <option value="INR">Indian Rupee (₹)</option>
+                <option value="USD">US Dollar ($)</option>
+                <option value="EUR">Euro (€)</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Time Zone</label>
+              <select
+                value={settings.timeZone}
+                onChange={(e) => setSettings({...settings, timeZone: e.target.value})}
+              >
+                <option value="Asia/Kolkata">India (IST)</option>
+                <option value="UTC">UTC</option>
+                <option value="America/New_York">New York (EST)</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

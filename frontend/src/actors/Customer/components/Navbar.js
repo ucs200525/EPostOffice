@@ -92,7 +92,7 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <div className="nav-search">
-              <form onSubmit={(e) => {
+              {/* <form onSubmit={(e) => {
                 e.preventDefault();
                 navigate(`/track?id=${searchQuery}`);
               }}>
@@ -105,7 +105,7 @@ const Navbar = () => {
                 <button type="submit">
                   <FaSearch />
                 </button>
-              </form>
+              </form> */}
             </div>
           ) : null}
 
@@ -183,7 +183,7 @@ const Navbar = () => {
                     <span>{user?.name || 'My Account'}</span>
                   </button>
                   <div className={`dropdown-menu ${showUserMenu ? 'show' : ''}`}>
-                    <Link to="/dashboard">Dashboard</Link>
+                    {/* <Link to="/dashboard">Dashboard</Link> */}
                     <Link to="/shipments">My Shipments</Link>
                     <Link to="/payment">Payments</Link>
                     <Link to="/settings">Settings</Link>

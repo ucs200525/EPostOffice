@@ -211,19 +211,27 @@ router.get('/:customerId/profile', async (req, res) => {
 });
 
 // Google authentication route
-router.post('/google', async (req, res) => {
+router.post('/google-login', async (req, res) => {
   try {
-    const { email, displayName, photoURL, uid } = req.body;
+    const { email, name, googleId } = req.body;
+
+    if (!email || !googleId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email and Google ID are required' 
+      });
+    }
 
     // Find or create user
     let user = await User.findOne({ email });
+    
     if (!user) {
       user = await User.create({
-        name: displayName,
+        name: name || email.split('@')[0], // Use name from Google or create from email
         email,
-        password: uid, // Using Firebase UID as password
+        password: googleId, // Using Google ID as password
+        phone: "0000000000", // Default phone number
         role: 'customer',
-        photoURL,
         walletBalance: 0,
         pickupAddress: null,
         deliveryAddresses: []
@@ -231,7 +239,12 @@ router.post('/google', async (req, res) => {
       logger.info(`New user registered via Google: ${email}`);
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT, { expiresIn: '1h' });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      JWT,
+      { expiresIn: '24h' }
+    );
+
     logger.info(`User logged in via Google: ${email}`);
 
     res.status(200).json({

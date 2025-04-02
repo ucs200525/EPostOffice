@@ -49,7 +49,7 @@ const PickupSection = () => {
 
   return (
     <div className={styles.serviceSection}>
-      <h2>Schedule a Pickup</h2>
+      {/* <h2>Schedule a Pickup</h2>
       <div className={styles.pickupScheduler}>
         <div className={styles.schedulerCard}>
           <FaClock className={styles.cardIcon} />
@@ -75,7 +75,7 @@ const PickupSection = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
@@ -413,9 +413,6 @@ useEffect(() => {
     { question: "What payment methods are accepted?", 
       answer: "We accept credit cards, debit cards, digital wallets (Google Pay, Apple Pay), net banking, and UPI payments." },
     
-    { question: "How do I schedule a pickup?", 
-      answer: "Click the 'Send Package' button, fill in the pickup details, and choose your preferred time slot. We offer same-day pickup if scheduled before 2 PM." },
-    
     { question: "What are your delivery hours?", 
       answer: "Regular deliveries are made between 9 AM and 6 PM on working days. Express deliveries may be made until 8 PM." },
     
@@ -541,19 +538,19 @@ useEffect(() => {
       <section className={styles.statsSection}>
         <div className={styles.statsGrid}>
           <div className={styles.statItem}>
-            <div className={styles.statNumber}>5M+</div>
+            <div className={styles.statNumber}>0M+</div>
             <div className={styles.statLabel}>Active Users</div>
           </div>
           <div className={styles.statItem}>
-            <div className={styles.statNumber}>10K+</div>
+            <div className={styles.statNumber}>0K+</div>
             <div className={styles.statLabel}>Daily Deliveries</div>
           </div>
           <div className={styles.statItem}>
-            <div className={styles.statNumber}>98%</div>
+            <div className={styles.statNumber}>0%</div>
             <div className={styles.statLabel}>Satisfaction Rate</div>
           </div>
           <div className={styles.statItem}>
-            <div className={styles.statNumber}>500+</div>
+            <div className={styles.statNumber}>0+</div>
             <div className={styles.statLabel}>Post Offices</div>
           </div>
         </div>

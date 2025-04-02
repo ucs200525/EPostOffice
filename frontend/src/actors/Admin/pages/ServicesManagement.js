@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
-import '../styles/ServicesAndReports.css';
+import { FaPlus, FaEdit, FaTrash, FaBox, FaShippingFast, FaMoneyBill } from 'react-icons/fa';
+import styles from '../styles/ServicesManagement.module.css';
 
 const ServicesManagement = () => {
   const [services] = useState([
@@ -8,41 +8,62 @@ const ServicesManagement = () => {
       id: 1,
       name: 'Express Delivery',
       description: 'Next day delivery service',
-      price: 500,
+      basePrice: 500,
       status: 'active'
     },
     {
       id: 2,
       name: 'Standard Post',
       description: '3-5 business days delivery',
-      price: 100,
+      basePrice: 100,
       status: 'active'
     }
   ]);
 
   return (
-    <div className="services-container">
-      <div className="services-header">
-        <h1>Services Management</h1>
-        <button className="add-service-btn">
-          <FaPlus /> Add New Service
-        </button>
+    <div className={styles.servicesContainer}>
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.headerLeft}>
+            <h1>Services Management</h1>
+            <p>Manage postal and financial services</p>
+          </div>
+          <button className={styles.addServiceBtn}>
+            <FaPlus /> Add New Service
+          </button>
+        </div>
       </div>
 
-      <div className="services-grid">
+      <div className={styles.servicesGrid}>
         {services.map(service => (
-          <div key={service.id} className="service-card">
-            <div className="service-header">
-              <h3>{service.name}</h3>
-              <span className={`service-status status-${service.status}`}>
-                {service.status}
-              </span>
+          <div key={service.id} className={styles.serviceCard}>
+            <div className={styles.serviceHeader}>
+              <h3 className={styles.serviceTitle}>
+                <FaBox className={styles.serviceIcon} />
+                {service.name}
+              </h3>
             </div>
-            <p>{service.description}</p>
-            <p className="service-price">₹{service.price}</p>
-            <div className="service-actions">
-              <button className="edit-btn"><FaEdit /> Edit</button>
-              <button className="delete-btn"><FaTrash /> Delete</button>
+            <div className={styles.serviceContent}>
+              <div className={styles.serviceInfo}>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Status</span>
+                  <span className={`${styles.statusBadge} ${styles[service.status]}`}>
+                    {service.status}
+                  </span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Base Price</span>
+                  <span className={styles.infoValue}>₹{service.basePrice}</span>
+                </div>
+              </div>
+              <div className={styles.serviceActions}>
+                <button className={styles.editBtn}>
+                  <FaEdit /> Edit
+                </button>
+                <button className={styles.deleteBtn}>
+                  <FaTrash /> Delete
+                </button>
+              </div>
             </div>
           </div>
         ))}

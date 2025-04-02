@@ -52,6 +52,7 @@ import StaffRegistration from './actors/Admin/components/StaffRegistration';
 import AdminNavbar from './actors/Admin/components/AdminNavbar';  // Change this line
 import OrderAssignment from './actors/Staff/pages/OrderAssignment';
 import CustomerDetailsPage from './actors/Staff/pages/CustomerDetails'; // Add this line
+import CustomerEdit from './actors/Admin/pages/CustomerEdit'; // Add this line
 
 const App = () => {
   // Site disabled check
@@ -164,6 +165,7 @@ const AdminLayout = () => {
           <Route path="services" element={<ServicesManagement />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="customer/:id/edit" element={<CustomerEdit />} /> {/* Add this route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

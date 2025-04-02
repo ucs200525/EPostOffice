@@ -123,6 +123,41 @@
 .statusBadge.in_transit { background: #dbeafe; color: #1e40af; }
 .statusBadge.delivered { background: #dcfce7; color: #166534; }
 
+.status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.status.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status.package_picked_up {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.status.in_transit {
+  background-color: #e2e3ff;
+  color: #2f318b;
+}
+
+.status.delivered {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status.cancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
 .actions {
   display: flex;
   gap: 8px;
