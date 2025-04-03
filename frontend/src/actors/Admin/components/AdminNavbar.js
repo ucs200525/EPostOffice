@@ -11,7 +11,7 @@ const AdminNavbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    navigate('/');  // Changed from '/admin/login' to '/'
   };
 
   const isActive = (path) => {

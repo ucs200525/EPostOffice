@@ -15,6 +15,7 @@ const orderRoutes = require('./routes/order/orderRoutes');
 const packageRoutes = require('./routes/order/packageRoutes');
 const notificationRoutes = require('./routes/customer/notificationRoutes') || express.Router();
 const shipmentRoutes = require('./routes/order/shipmentRoutes');
+const paymentRoutes = require('./routes/customer/paymentRoutes'); // Import payment routes
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -68,6 +69,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/google-login', authRoutes); // Add this line
 app.use('/api/customer', customerRoutes);
+app.use('/api/customer', paymentRoutes); // Register payment routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/orders', orderRoutes);

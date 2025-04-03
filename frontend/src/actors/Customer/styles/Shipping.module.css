@@ -1,39 +1,88 @@
+/* Container and Header Styles */
 .shippingContainer {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
+  background: #ffffff;
+  min-height: 100vh;
 }
 
-.shippingContainer h1 {
-  color: #1f2937;
-  margin-bottom: 0.5rem;
+.shippingHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
 }
 
-.shippingContainer p {
-  color: #6b7280;
+.shippingHeader h1 {
+  font-size: 2.5rem;
+  color: #1a237e;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.shippingHeader p {
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+/* Add styles for shipping description */
+.shippingContainer > p {
+  text-align: center;
+  color: #64748b;
+  font-size: 1.1rem;
   margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+  background: linear-gradient(to right, transparent, #f8fafc, transparent);
+  padding: 1rem;
+  border-radius: 8px;
 }
 
+/* Form Container */
 .shippingForm {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+/* Form Sections */
 .formSection {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.formSection:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: #94a3b8;
 }
 
 .formSection h3 {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #374151;
+  gap: 0.75rem;
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 600;
   margin-bottom: 1.5rem;
 }
 
+.formSection h3 svg {
+  color: #1a237e;
+}
+
+/* Form Groups */
 .formGroup {
   margin-bottom: 1.5rem;
 }
@@ -41,29 +90,46 @@
 .formGroup label {
   display: block;
   font-weight: 500;
+  color: #334155;
   margin-bottom: 0.5rem;
-  color: #4b5563;
+  font-size: 0.95rem;
 }
 
 .formGroup input,
 .formGroup select,
 .formGroup textarea {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #f9fafb;
-  transition: border-color 0.2s;
+  padding: 0.875rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #1e293b;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.formGroup input:hover,
+.formGroup select:hover,
+.formGroup textarea:hover {
+  border-color: #94a3b8;
 }
 
 .formGroup input:focus,
 .formGroup select:focus,
 .formGroup textarea:focus {
-  border-color: #3b82f6;
+  border-color: #1a237e;
   outline: none;
-  background: white;
+  box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
 }
 
+.helperText {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+/* Dimensions Group */
 .dimensionsGroup {
   margin-bottom: 1.5rem;
 }
@@ -74,141 +140,25 @@
   gap: 1rem;
 }
 
-.pickupAddress,
-.deliveryAddress {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 6px;
-  margin-bottom: 1.5rem;
-}
-
-.addressDisplay {
-  margin-top: 0.5rem;
-  color: #4b5563;
-}
-
-.addressDisplay p {
-  margin: 0.25rem 0;
-}
-
-.submitButton {
-  width: 100%;
-  padding: 1rem;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 1rem;
-}
-
-.submitButton:hover {
-  background: #2563eb;
-}
-
-.customsSection {
-  background: #f8fafc;
-  padding: 1.5rem;
-  border-radius: 6px;
-  margin-top: 1.5rem;
-}
-
-.customsSection h3 {
-  color: #0f172a;
-  margin-bottom: 1rem;
-}
-
-.formGroup textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-/* Error states */
-.error {
-  border-color: #ef4444 !important;
-}
-
-.errorText {
-  color: #ef4444;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-/* Loading state */
-.loading {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-/* Responsive design */
-@media (max-width: 640px) {
-  .shippingContainer {
-    padding: 1rem;
-  }
-
-  .dimensionsInputs {
-    grid-template-columns: 1fr;
-  }
-
-  .formRow {
-    flex-direction: column;
-  }
-
-  .formGroup {
-    width: 100%;
-  }
-}
-
-.notificationCard {
-  max-width: 500px;
-  margin: 2rem auto;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  background-color: white;
-}
-
-.redirectNotice {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  color: #6c757d;
-}
-
-.shippingHeader {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.shippingHeader h1 {
-  font-size: 2.5rem;
-  color: #1a237e;
-  margin-bottom: 0.5rem;
-}
-
-.shippingHeader p {
-  color: #666;
-  font-size: 1.1rem;
-}
-
+/* Address Sections */
 .addressSection {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
   margin-bottom: 2rem;
 }
 
 .addressCard {
-  background: #f8f9fa;
+  background: white;
   padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.addressCard:hover {
+  border-color: #1a237e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .addressHeader {
@@ -220,24 +170,186 @@
 
 .addressLabel {
   font-weight: 600;
-  color: #2c3e50;
+  color: #1e293b;
   font-size: 1.1rem;
 }
 
 .defaultBadge {
-  background: #4caf50;
+  background: #10b981;
   color: white;
   padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
+/* Delivery Address Styles */
+.deliveryAddress {
+  margin-bottom: 2rem;
+}
+
+.deliveryAddress h4 {
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.deliveryAddress select {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  color: #1e293b;
+  background-color: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231e293b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deliveryAddress select:hover {
+  border-color: #94a3b8;
+}
+
+.deliveryAddress select:focus {
+  outline: none;
+  border-color: #1a237e;
+  box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+}
+
+.deliveryAddress select option {
+  padding: 0.5rem;
+  font-size: 1rem;
+  background-color: white;
+  color: #1e293b;
+}
+
+.deliveryAddress select option:first-child {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Pickup Address Display */
+.pickupAddress {
+  margin-bottom: 2rem;
+}
+
+.pickupAddress h4 {
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.addressDisplay {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.addressDisplay:hover {
+  border-color: #1a237e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.addressDisplay p {
+  color: #475569;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.addressDisplay p:last-child {
+  margin-bottom: 0;
+}
+
+/* Customs Section */
+.customsSection {
+  background: #f8fafc;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-top: 2rem;
+}
+
+.currencyInput {
+  display: flex;
+  gap: 1rem;
+}
+
+.currencyInput input {
+  flex: 3;
+}
+
+.currencyInput select {
+  flex: 1;
+}
+
+/* Buttons */
+.submitButton {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.submitButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 35, 126, 0.2);
+}
+
+.submitButton:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.actionButton {
+  background: #1a237e;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  background: #283593;
+  transform: translateY(-1px);
+}
+
+/* Empty States */
 .noAddress {
   text-align: center;
   padding: 2rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 2px dashed #dee2e6;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+}
+
+.noAddress p {
+  color: #64748b;
+  margin-bottom: 1rem;
 }
 
 .addAddressButton {
@@ -245,43 +357,71 @@
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .addAddressButton:hover {
   background: #283593;
+  transform: translateY(-1px);
 }
 
-.addressSelect {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  font-size: 1rem;
-  color: #495057;
-  background-color: white;
+/* Error States */
+.error {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 
-.addressSelect:focus {
-  border-color: #1a237e;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.2);
+/* Loading States */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
 }
 
-.actionButton {
-  background: #1a237e;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+/* Notification */
+.notificationCard {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.actionButton:hover {
-  background: #283593;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .shippingContainer {
+    padding: 1rem;
+  }
+
+  .shippingHeader {
+    padding: 1rem 0;
+  }
+
+  .shippingHeader h1 {
+    font-size: 2rem;
+  }
+
+  .addressSection {
+    grid-template-columns: 1fr;
+  }
+
+  .dimensionsInputs {
+    grid-template-columns: 1fr;
+  }
+
+  .formSection {
+    padding: 1.5rem;
+  }
+
+  .currencyInput {
+    flex-direction: column;
+  }
+
+  .submitButton {
+    padding: 0.875rem;
+  }
 }

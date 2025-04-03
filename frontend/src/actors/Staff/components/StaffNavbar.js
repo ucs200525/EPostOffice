@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { FaBars, FaTimes, FaUser, FaUsers, FaBox, 
          FaTruck, FaChartBar, FaSignOutAlt } from 'react-icons/fa';
@@ -8,10 +8,16 @@ import styles from '../styles/StaffNavbar.module.css';
 const StaffNavbar = () => {
   const { logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleNavbar = () => {
     setIsCollapsed(!isCollapsed);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');  // Changed from '/staff/login' to '/'
   };
 
   const navLinks = [
@@ -49,7 +55,7 @@ const StaffNavbar = () => {
       </div>
 
       <button 
-        onClick={logout} 
+        onClick={handleLogout} 
         className={styles.logoutBtn}
       >
         <FaSignOutAlt />

@@ -1,16 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const Order = require('../../models/order/Order'); // Changed to use Order model
+const Order = require('../../models/order/Order');
 const Customer = require('../../models/customer/Customer');
 const { auth } = require('../../middleware/auth');
 const { generateTrackingNumber } = require('../../utils/shipmentUtils');
+const { validatePackageDetails, PACKAGE_PRICING } = require('../../middleware/orderValidation');
 
-// Create new order
-router.post('/create', async (req, res) => {
+// Create new order - Add validatePackageDetails middleware
+router.post('/create', auth, validatePackageDetails, async (req, res) => {
   try {
-    console.log('Request body:', req.body); // Debug log
-    console.log('User from auth:', req.user); // Debug log
-
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         success: false,
@@ -25,8 +23,25 @@ router.post('/create', async (req, res) => {
       weight,
       dimensions,
       specialInstructions,
-      customsDeclaration
+      customsDeclaration,
+      totalAmount
     } = req.body;
+
+    // Check wallet balance first
+    const customer = await Customer.findById(req.user.id);
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found'
+      });
+    }
+
+    if (customer.walletBalance < totalAmount) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient funds. Wallet balance (₹${customer.walletBalance}) is less than order total (₹${totalAmount})`
+      });
+    }
 
     if (!pickupAddress || !deliveryAddress) {
       return res.status(400).json({
@@ -35,50 +50,46 @@ router.post('/create', async (req, res) => {
       });
     }
 
-    // Calculate total amount
-    const basePrice = 50;
-    const weightCharge = weight * 10;
-    const insuranceCharge = customsDeclaration ? customsDeclaration.value * 0.01 : 0;
-    const internationalCharge = customsDeclaration ? 100 : 0;
-    const totalAmount = basePrice + weightCharge + insuranceCharge + internationalCharge;
+    const { packagePricing, orderType } = req;
+    const { calculatedCosts } = packagePricing;
 
     const trackingNumber = generateTrackingNumber();
 
     const order = new Order({
-      customerId: req.user.id, // Use req.user.id instead of req.user._id
+      customerId: req.user.id,
       trackingNumber,
-      shippingAddress: deliveryAddress, // Changed to match schema
+      shippingAddress: deliveryAddress,
       pickupAddress,
       packageDetails: {
-        type: packageType || 'standard',
-        weight,
+        type: packageType,
+        weight: parseFloat(weight),
         dimensions,
         specialInstructions
       },
       customsDeclaration,
       status: 'pending',
-      orderType: customsDeclaration ? 'international' : 'domestic',
-      totalAmount, // Added required field
-      estimatedDeliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+      orderType,
+      totalAmount: calculatedCosts.total,
+      estimatedDeliveryDate: new Date(Date.now() + (orderType === 'international' ? 7 : 3) * 24 * 60 * 60 * 1000),
       cost: {
-        basePrice: 50,
-        weightCharge: weight * 10,
-        insuranceCharge: customsDeclaration ? customsDeclaration.value * 0.01 : 0,
-        internationalCharge: customsDeclaration ? 100 : 0,
-        total: totalAmount
+        basePrice: calculatedCosts.basePrice,
+        weightCharge: calculatedCosts.weightCharge,
+        volumeCharge: calculatedCosts.volumeCharge,
+        insuranceCharge: calculatedCosts.insuranceCharge,
+        internationalCharge: calculatedCosts.internationalCharge,
+        total: calculatedCosts.total
       }
     });
 
-    console.log('Order object before save:', order); // Debug log
-
     const savedOrder = await order.save();
-    console.log('Saved order:', savedOrder); // Debug log
 
     res.status(201).json({
       success: true,
       message: 'Order created successfully',
       trackingNumber: savedOrder.trackingNumber,
-      orderId: savedOrder._id
+      orderId: savedOrder._id,
+      estimatedDelivery: savedOrder.estimatedDeliveryDate,
+      cost: savedOrder.cost
     });
 
   } catch (error) {
@@ -86,7 +97,7 @@ router.post('/create', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating order',
-      error: error.message // Include error message for debugging
+      error: error.message
     });
   }
 });
@@ -124,33 +135,25 @@ router.get('/verify/:trackingNumber', async (req, res) => {
   }
 });
 
-// Calculate shipping cost
-router.post('/calculate-cost', async (req, res) => {
+// Calculate shipping cost - Add validatePackageDetails middleware
+router.post('/calculate-cost', validatePackageDetails, async (req, res) => {
   try {
-    const { weight, packageType, customsDeclaration, type } = req.body;
-
-    const basePrice = 50;
-    const weightPrice = weight * 10;
-    const insurancePrice = customsDeclaration?.value * 0.01 || 0;
-    const internationalSurcharge = type === 'international' ? 100 : 0;
-
-    const total = basePrice + weightPrice + insurancePrice + internationalSurcharge;
+    const { packagePricing } = req;
 
     res.json({
       success: true,
-      cost: {
-        basePrice,
-        weightPrice,
-        insurancePrice,
-        internationalSurcharge,
-        total
+      cost: packagePricing.calculatedCosts,
+      details: {
+        maxWeight: packagePricing.maxWeight,
+        orderType: req.orderType
       }
     });
   } catch (error) {
     console.error('Cost calculation error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error calculating shipping cost'
+      message: 'Error calculating shipping cost',
+      error: error.message
     });
   }
 });

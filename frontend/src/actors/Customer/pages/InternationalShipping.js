@@ -18,7 +18,7 @@ const InternationalShipping = () => {
   const [formData, setFormData] = useState({
     weight: '',
     dimensions: { length: '', width: '', height: '' },
-    packageType: 'standard',
+    packageType: 'standard_intl',
     specialInstructions: '',
     customsDeclaration: {
       contents: '',
@@ -33,6 +33,19 @@ const InternationalShipping = () => {
     type: '',
     message: ''
   });
+
+  const PACKAGE_TYPES = {
+    basic_intl: { label: 'Basic International', maxWeight: 0.1 },
+    standard_intl: { label: 'Standard International', maxWeight: 1 },
+    express_intl: { label: 'Express International', maxWeight: 5 },
+    premium_intl: { label: 'Premium International', maxWeight: 10 },
+    bulk_intl: { label: 'Bulk International', maxWeight: 20 }
+  };
+
+  const validateWeight = (weight, packageType) => {
+    const maxWeight = PACKAGE_TYPES[packageType].maxWeight;
+    return weight <= maxWeight;
+  };
 
   useEffect(() => {
     if (user) {
@@ -112,6 +125,15 @@ const InternationalShipping = () => {
         show: true,
         type: 'error',
         message: 'Please select a delivery address'
+      });
+      return;
+    }
+
+    if (!validateWeight(parseFloat(formData.weight), formData.packageType)) {
+      setNotification({
+        show: true,
+        type: 'error',
+        message: `Maximum weight for ${PACKAGE_TYPES[formData.packageType].label} is ${PACKAGE_TYPES[formData.packageType].maxWeight}kg`
       });
       return;
     }
@@ -230,11 +252,17 @@ const InternationalShipping = () => {
             <select
               value={formData.packageType}
               onChange={(e) => setFormData({...formData, packageType: e.target.value})}
+              required
             >
-              <option value="standard">Standard Package</option>
-              <option value="fragile">Fragile</option>
-              <option value="document">Document</option>
+              {Object.entries(PACKAGE_TYPES).map(([value, { label }]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
+            <small className={styles.helperText}>
+              Max weight: {PACKAGE_TYPES[formData.packageType].maxWeight}kg
+            </small>
           </div>
 
           <div className={styles.formGroup}>
@@ -244,6 +272,10 @@ const InternationalShipping = () => {
               value={formData.weight}
               onChange={(e) => setFormData({...formData, weight: e.target.value})}
               placeholder="Enter package weight"
+              step="0.1"
+              min="0.1"
+              max={PACKAGE_TYPES[formData.packageType].maxWeight}
+              required
             />
           </div>
 

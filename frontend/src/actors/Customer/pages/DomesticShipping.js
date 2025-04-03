@@ -16,9 +16,22 @@ const DomesticShipping = () => {
   const [formData, setFormData] = useState({
     weight: '',
     dimensions: { length: '', width: '', height: '' },
-    packageType: 'standard',
+    packageType: 'standard_parcel',
     specialInstructions: ''
   });
+
+  const PACKAGE_TYPES = {
+    basic_letter: { label: 'Basic Letter', maxWeight: 0.1 },
+    standard_parcel: { label: 'Standard Parcel', maxWeight: 1 },
+    express_parcel: { label: 'Express Parcel', maxWeight: 5 },
+    premium_parcel: { label: 'Premium Parcel', maxWeight: 10 },
+    bulk_shipment: { label: 'Bulk Shipment', maxWeight: 20 }
+  };
+
+  const validateWeight = (weight, packageType) => {
+    const maxWeight = PACKAGE_TYPES[packageType].maxWeight;
+    return weight <= maxWeight;
+  };
 
   // Fetch saved delivery addresses
   const [pickupAddress, setPickupAddress] = useState(null);
@@ -94,6 +107,11 @@ const DomesticShipping = () => {
       return;
     }
 
+    if (!validateWeight(parseFloat(formData.weight), formData.packageType)) {
+      alert(`Maximum weight for ${PACKAGE_TYPES[formData.packageType].label} is ${PACKAGE_TYPES[formData.packageType].maxWeight}kg`);
+      return;
+    }
+
     try {
       const selectedAddress = addresses.find(addr => addr._id === selectedDeliveryAddress);
       
@@ -132,8 +150,10 @@ const DomesticShipping = () => {
           }
         />
       )}
-      <h1>Domestic Shipping</h1>
-      <p>Send packages anywhere within the country</p>
+      <div className={styles.shippingHeader}>
+        <h1>Domestic Shipping</h1>
+        <p>Send packages anywhere within the country</p>
+      </div>
 
       <form onSubmit={handleSubmit} className={styles.shippingForm}>
         <div className={styles.formSection}>
@@ -180,11 +200,17 @@ const DomesticShipping = () => {
             <select
               value={formData.packageType}
               onChange={(e) => setFormData({...formData, packageType: e.target.value})}
+              required
             >
-              <option value="standard">Standard Package</option>
-              <option value="fragile">Fragile</option>
-              <option value="document">Document</option>
+              {Object.entries(PACKAGE_TYPES).map(([value, { label }]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
+            <small className={styles.helperText}>
+              Max weight: {PACKAGE_TYPES[formData.packageType].maxWeight}kg
+            </small>
           </div>
 
           <div className={styles.formGroup}>
@@ -194,6 +220,10 @@ const DomesticShipping = () => {
               value={formData.weight}
               onChange={(e) => setFormData({...formData, weight: e.target.value})}
               placeholder="Enter package weight"
+              step="0.1"
+              min="0.1"
+              max={PACKAGE_TYPES[formData.packageType].maxWeight}
+              required
             />
           </div>
 

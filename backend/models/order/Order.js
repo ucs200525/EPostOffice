@@ -28,8 +28,11 @@ const orderSchema = new mongoose.Schema({
   packageDetails: {
     type: {
       type: String,
-      enum: ['standard', 'fragile', 'document'],
-      default: 'standard'
+      enum: [
+        'basic_letter', 'standard_parcel', 'express_parcel', 'premium_parcel', 'bulk_shipment', // Domestic
+        'basic_intl', 'standard_intl', 'express_intl', 'premium_intl', 'bulk_intl' // International
+      ],
+      required: true
     },
     weight: Number,
     dimensions: {
@@ -41,7 +44,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'in-transit', 'delivered', 'cancelled'],
+    enum: ['pending', 'confirmed', 'package_picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'cancelled'],
     default: 'pending'
   },
   orderType: {

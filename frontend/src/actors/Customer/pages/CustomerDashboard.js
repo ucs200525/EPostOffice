@@ -8,7 +8,7 @@ const CustomerDashboard = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');  // Changed from '/login' to '/'
   };
 
   return (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 import IPCheckWrapper from './components/IPCheckWrapper';
 // import AdminSidebar from './actors/Admin/components/AdminSidebar';
 
@@ -17,6 +18,7 @@ import Login from './actors/Customer/pages/Login';
 import Register from './actors/Customer/pages/Register';
 import PostalCalculator from './actors/Customer/pages/PostalCalculator';
 import Payment from './actors/Customer/pages/NewPayment';
+import NewPayment from './actors/Customer/pages/Payment';
 import SendPackage from './actors/Customer/pages/SendPackage';
 import Shipments from './actors/Customer/pages/Shipments';
 import TrackTrace from './actors/Customer/pages/TrackTrace';
@@ -49,10 +51,10 @@ import AdminLogin from './actors/Admin/pages/AdminLogin';
 import StaffLogin from './actors/Staff/pages/StaffLogin';
 import StaffNavbar from './actors/Staff/components/StaffNavbar';
 import StaffRegistration from './actors/Admin/components/StaffRegistration';
-import AdminNavbar from './actors/Admin/components/AdminNavbar';  // Change this line
+import AdminNavbar from './actors/Admin/components/AdminNavbar';
 import OrderAssignment from './actors/Staff/pages/OrderAssignment';
-import CustomerDetailsPage from './actors/Staff/pages/CustomerDetails'; // Add this line
-import CustomerEdit from './actors/Admin/pages/CustomerEdit'; // Add this line
+import CustomerDetailsPage from './actors/Staff/pages/CustomerDetails';
+import CustomerEdit from './actors/Admin/pages/CustomerEdit';
 
 const App = () => {
   // Site disabled check
@@ -75,35 +77,74 @@ const App = () => {
   }
 
   return (
-    // <IPCheckWrapper>
-      <DarkModeProvider>
-        <ShipmentProvider>
-          <Router>
-            <AuthProvider>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/staff/login" element={<StaffLogin />} />
-                <Route path="/login" element={<Login />} />
-                
-                {/* Protected routes with layouts */}
-                <Route path="/admin/*" element={
-                  <PrivateRoute roles={['admin']}>
-                    <AdminLayout />
-                  </PrivateRoute>
-                } />
-                <Route path="/staff/*" element={
-                  <PrivateRoute roles={['staff']}>
-                    <StaffRoutes />
-                  </PrivateRoute>
-                } />
-                <Route path="/*" element={<CustomerLayout />} />
-              </Routes>
-            </AuthProvider>
-          </Router>
-        </ShipmentProvider>
-      </DarkModeProvider>
-    // </IPCheckWrapper>
+    <DarkModeProvider>
+      <ShipmentProvider>
+        <Router>
+          <AuthProvider>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={
+                <>
+                  <EPostOfficeNavbar />
+                  <Home />
+                </>
+              } />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/staff/login" element={<StaffLogin />} />
+              <Route path="/login" element={
+                <>
+                  <EPostOfficeNavbar />
+                  <Login />
+                </>
+              } />
+              <Route path="/register" element={
+                <>
+                  <EPostOfficeNavbar />
+                  <Register />
+                </>
+              } />
+
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/*" element={
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              } />
+              <Route path="/staff/*" element={
+                <ProtectedRoute>
+                  <StaffRoutes />
+                </ProtectedRoute>
+              } />
+              <Route path="/calculator" element={
+                <ProtectedRoute>
+                  <PostalCalculator />
+                </ProtectedRoute>
+              } />
+              <Route path="/send-package/domestic" element={
+                <ProtectedRoute>
+                  <DomesticShipping />
+                </ProtectedRoute>
+              } />
+              <Route path="/send-package/international" element={
+                <ProtectedRoute>
+                  <InternationalShipping />
+                </ProtectedRoute>
+              } />
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <CustomerLayout />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </AuthProvider>
+        </Router>
+      </ShipmentProvider>
+    </DarkModeProvider>
   );
 };
 
@@ -120,6 +161,7 @@ const CustomerLayout = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/calculator" element={<PostalCalculator />} />
             <Route path="/payment" element={<Payment />} />
+            <Route path="/newpayment" element={<NewPayment />} />
             
             {/* Add these new routes */}
             <Route path="/send-package" element={<SendPackage />} />
@@ -155,7 +197,7 @@ const CustomerLayout = () => {
 const AdminLayout = () => {
   return (
     <div className="admin-layout">
-      <AdminNavbar />  {/* Add the AdminNavbar here */}
+      <AdminNavbar />
       <div className="admin-content">
         <Routes>
           <Route index element={<AdminDashboard />} />
@@ -165,7 +207,7 @@ const AdminLayout = () => {
           <Route path="services" element={<ServicesManagement />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="customer/:id/edit" element={<CustomerEdit />} /> {/* Add this route */}
+          <Route path="customer/:id/edit" element={<CustomerEdit />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
@@ -195,12 +237,48 @@ const StaffRoutes = () => {
   );
 };
 
-// Add a simple NotFound component
+// Enhance the NotFound component
 const NotFound = () => {
   return (
-    <div className="not-found">
-      <h1>404 - Page Not Found</h1>
-      <p>The page you are looking for does not exist.</p>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      textAlign: 'center',
+      backgroundColor: '#f8fafc',
+      color: '#1e293b',
+      fontFamily: 'Arial, sans-serif',
+    }}>
+      <h1 style={{
+        fontSize: '4rem',
+        fontWeight: 'bold',
+        marginBottom: '1rem',
+        color: '#3b82f6',
+      }}>
+        404
+      </h1>
+      <p style={{
+        fontSize: '1.5rem',
+        marginBottom: '1.5rem',
+        color: '#64748b',
+      }}>
+        Oops! The page you're looking for doesn't exist.
+      </p>
+      <a href="/" style={{
+        padding: '0.75rem 1.5rem',
+        backgroundColor: '#3b82f6',
+        color: '#ffffff',
+        textDecoration: 'none',
+        borderRadius: '0.5rem',
+        fontWeight: 'bold',
+        transition: 'background-color 0.3s',
+      }}
+      onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+      onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}>
+        Go Back to Home
+      </a>
     </div>
   );
 };

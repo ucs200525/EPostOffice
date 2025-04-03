@@ -28,6 +28,15 @@ const Payment = () => {
 
     const [customerData, setCustomerData] = useState(null);
 
+    const topUpOptions = [
+        { amount: 100, label: '₹100' },
+        { amount: 200, label: '₹200' },
+        { amount: 500, label: '₹500' },
+        { amount: 1000, label: '₹1,000' },
+        { amount: 2000, label: '₹2,000' },
+        { amount: 5000, label: '₹5,000' }
+    ];
+
     useEffect(() => {
         if (user) {
             setCustomerData(user);
@@ -128,12 +137,21 @@ const Payment = () => {
         setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
     };
 
+    const handleTopUpAmountSelect = (amount) => {
+        setTopUpAmount(amount);
+    };
+
+    const handleCustomAmount = (e) => {
+        const value = e.target.value;
+        if (value === '' || (/^\d+$/.test(value) && parseInt(value) <= 10000)) {
+            setTopUpAmount(value);
+        }
+    };
+
     const filteredTransactions = transactions
         .filter(t => (filterType === 'all' ? true : t.transactionType === filterType))
         .filter(t => t.description.toLowerCase().includes(searchTerm.toLowerCase()))
         .sort((a, b) => (sortOrder === 'desc' ? new Date(b.createdAt) - new Date(a.createdAt) : new Date(a.createdAt) - new Date(b.createdAt)));
-
-    // if (loading) return <div className={styles.loading}>Loading...</div>;
 
     return (
         <div className={styles.payment_container}>
@@ -151,6 +169,97 @@ const Payment = () => {
                     </button>
                 </div>
             </section>
+
+            {showTopUpModal && (
+                <div className={styles.modal}>
+                    <div className={styles.modal_content}>
+                        <button 
+                            className={styles.close_btn}
+                            onClick={() => setShowTopUpModal(false)}
+                        >
+                            ×
+                        </button>
+                        <h2>Top Up Wallet</h2>
+                        
+                        <div className={styles.amount_options}>
+                            {topUpOptions.map((option) => (
+                                <button
+                                    key={option.amount}
+                                    className={`${styles.amount_btn} ${
+                                        parseInt(topUpAmount) === option.amount ? styles.selected : ''
+                                    }`}
+                                    onClick={() => handleTopUpAmountSelect(option.amount)}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className={styles.custom_amount}>
+                            <label>Or enter custom amount:</label>
+                            <input
+                                type="number"
+                                value={topUpAmount}
+                                onChange={handleCustomAmount}
+                                placeholder="Enter amount (max ₹10,000)"
+                                min="1"
+                                max="10000"
+                            />
+                            <small>Maximum amount: ₹10,000</small>
+                        </div>
+
+                        <div className={styles.payment_methods}>
+                            <h3>Select Payment Method</h3>
+                            <div className={styles.payment_options}>
+                                <label className={styles.payment_option}>
+                                    <input
+                                        type="radio"
+                                        value="credit_card"
+                                        checked={paymentMethod === 'credit_card'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    <span>Credit Card</span>
+                                </label>
+                                <label className={styles.payment_option}>
+                                    <input
+                                        type="radio"
+                                        value="debit_card"
+                                        checked={paymentMethod === 'debit_card'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    <span>Debit Card</span>
+                                </label>
+                                <label className={styles.payment_option}>
+                                    <input
+                                        type="radio"
+                                        value="upi"
+                                        checked={paymentMethod === 'upi'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    <span>UPI</span>
+                                </label>
+                                <label className={styles.payment_option}>
+                                    <input
+                                        type="radio"
+                                        value="net_banking"
+                                        checked={paymentMethod === 'net_banking'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    <span>Net Banking</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button
+                            className={styles.proceed_btn}
+                            onClick={handleTopUp}
+                            disabled={!topUpAmount || parseInt(topUpAmount) <= 0}
+                        >
+                            Proceed to Pay ₹{topUpAmount || 0}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <section className={styles.transactions_section}>
                 <div className={styles.transactions_header}>
