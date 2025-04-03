@@ -9,16 +9,19 @@ import Notification from '../../../components/Notification';
 const CustomerAddress = () => {
     const { user, token } = useAuth();
     const navigate = useNavigate();
-    const [addresses, setAddresses] = useState([]);
+    const [addresses, setAddresses] = useState({ pickup: null, delivery: [] });
     const [showForm, setShowForm] = useState(false);
+    const [editMode, setEditMode] = useState(false);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [formData, setFormData] = useState({
-        street: '',
+        label: '',
+        streetAddress: '',
         city: '',
         state: '',
         postalCode: '',
-        country: '',
-        addressType: 'delivery'
+        country: 'India',
+        type: 'delivery',
+        isDefault: false
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -32,10 +35,14 @@ const CustomerAddress = () => {
         setError(null);
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user._id}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            setAddresses(response.data);
+            if (response.data.success) {
+                setAddresses(response.data.data);
+            } else {
+                throw new Error(response.data.message || 'Failed to fetch addresses');
+            }
         } catch (error) {
             const errorMessage = error.response?.data?.message || 'Failed to fetch addresses';
             setError(errorMessage);
@@ -46,12 +53,13 @@ const CustomerAddress = () => {
     };
 
     const validateForm = () => {
-        if (!formData.street.trim()) return 'Street address is required';
+        if (!formData.label.trim()) return 'Address label is required';
+        if (!formData.streetAddress.trim()) return 'Street address is required';
         if (!formData.city.trim()) return 'City is required';
         if (!formData.state.trim()) return 'State is required';
         if (!formData.postalCode.trim()) return 'Postal code is required';
         if (!formData.country.trim()) return 'Country is required';
-        if (!['delivery', 'pickup'].includes(formData.addressType)) return 'Invalid address type';
+        if (!['delivery', 'pickup'].includes(formData.type)) return 'Invalid address type';
         return null;
     };
 
@@ -65,41 +73,70 @@ const CustomerAddress = () => {
 
         setLoading(true);
         try {
-            await axios.post(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses`,
-                formData,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            showNotification('Address added successfully', 'success');
-            setShowForm(false);
-            setFormData({
-                street: '',
-                city: '',
-                state: '',
-                postalCode: '',
-                country: '',
-                addressType: 'delivery'
-            });
-            fetchAddresses();
+            const baseUrl = `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user._id}`;
+            let response;
+            
+            if (editMode) {
+                // Fix: Send the correct address type in the URL and addressId in the body
+                response = await axios.put(
+                    `${baseUrl}/${formData.type}`,
+                    {
+                        ...formData,
+                        addressId: formData._id // Include addressId in the body
+                    },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+            } else {
+                response = await axios.post(
+                    baseUrl,
+                    formData,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+            }
+            
+            if (response.data.success) {
+                showNotification(`Address ${editMode ? 'updated' : 'added'} successfully`, 'success');
+                setShowForm(false);
+                setEditMode(false);
+                setFormData({
+                    label: '',
+                    streetAddress: '',
+                    city: '',
+                    state: '',
+                    postalCode: '',
+                    country: 'India',
+                    type: 'delivery',
+                    isDefault: false
+                });
+                fetchAddresses();
+            }
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Failed to add address';
+            const errorMessage = error.response?.data?.message || `Failed to ${editMode ? 'update' : 'add'} address`;
             showNotification(errorMessage, 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (addressId) => {
+    const handleDelete = async (addressId, type) => {
         if (!window.confirm('Are you sure you want to delete this address?')) return;
 
         setLoading(true);
         try {
-            await axios.delete(
-                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${addressId}`,
-                { headers: { Authorization: `Bearer ${token}` } }
+            const response = await axios.delete(
+                `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${user._id}/${type}`,
+                { 
+                    headers: { Authorization: `Bearer ${token}` },
+                    params: { addressId }
+                }
             );
-            showNotification('Address deleted successfully', 'success');
-            fetchAddresses();
+            
+            if (response.data.success) {
+                showNotification('Address deleted successfully', 'success');
+                fetchAddresses();
+            } else {
+                throw new Error(response.data.message || 'Failed to delete address');
+            }
         } catch (error) {
             const errorMessage = error.response?.data?.message || 'Failed to delete address';
             showNotification(errorMessage, 'error');
@@ -108,26 +145,90 @@ const CustomerAddress = () => {
         }
     };
 
+    const handleEdit = (address, type) => {
+        console.log('Edit clicked:', address); // Add this debug log
+        setFormData({
+            _id: address._id,
+            label: address.label || '',
+            streetAddress: address.streetAddress || '',
+            city: address.city || '',
+            state: address.state || '',
+            postalCode: address.postalCode || '',
+            country: address.country || 'India',
+            type: type,
+            isDefault: address.isDefault || false
+        });
+        setEditMode(true);
+        setShowForm(true);
+    };
+
+    const handleAddClick = () => {
+        setFormData({
+            label: '',
+            streetAddress: '',
+            city: '',
+            state: '',
+            postalCode: '',
+            country: 'India',
+            type: 'delivery',
+            isDefault: false
+        });
+        setEditMode(false);
+        setShowForm(true);
+    };
+
     const showNotification = (message, type) => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
     };
 
-    if (loading && !addresses.length) {
+    if (loading && !addresses.delivery.length && !addresses.pickup) {
         return <div className={styles.loading}>Loading addresses...</div>;
     }
+
+    const renderAddress = (address, type) => (
+        <div key={address._id} className={`${styles.addressCard} ${styles[`${type}Card`]}`}>
+            <div className={styles.addressHeader}>
+                <h3>{address.label || type}</h3>
+                {address.isDefault && <span className={styles.defaultBadge}>Default</span>}
+            </div>
+            <div className={styles.addressDetails}>
+                <p><FaMapMarkerAlt className={styles.icon} /> {address.streetAddress}</p>
+                <p>{address.city}, {address.state} {address.postalCode}</p>
+                <p>{address.country}</p>
+            </div>
+            <div className={styles.addressActions}>
+                <button 
+                    className={styles.editButton} 
+                    onClick={() => handleEdit(address, type)}
+                    disabled={loading}
+                >
+                    <FaEdit /> Edit
+                </button>
+                <button 
+                    className={styles.deleteButton} 
+                    onClick={() => handleDelete(address._id, type)}
+                    disabled={loading}
+                >
+                    <FaTrash /> Delete
+                </button>
+            </div>
+        </div>
+    );
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
                 <h1>My Addresses</h1>
-                <button
-                    className={styles.addButton}
-                    onClick={() => setShowForm(true)}
-                    disabled={loading}
-                >
-                    <FaPlus /> Add New Address
-                </button>
+                {(!addresses.pickup || formData.type === 'delivery') && (
+                    <button
+                        className={styles.addButton}
+                        onClick={handleAddClick}
+                        disabled={loading}
+                    >
+                        <FaPlus /> Add New Address
+                    </button>
+                )}
             </div>
 
             {notification.show && (
@@ -142,13 +243,25 @@ const CustomerAddress = () => {
 
             {showForm && (
                 <div className={styles.formContainer}>
+                    <h2>{editMode ? 'Edit Address' : 'Add New Address'}</h2>
                     <form onSubmit={handleSubmit} className={styles.form}>
+                        <div className={styles.formGroup}>
+                            <label>Address Label</label>
+                            <input
+                                type="text"
+                                value={formData.label}
+                                onChange={(e) => setFormData({...formData, label: e.target.value})}
+                                placeholder="e.g., Home, Office"
+                                required
+                                disabled={loading}
+                            />
+                        </div>
                         <div className={styles.formGroup}>
                             <label>Street Address</label>
                             <input
                                 type="text"
-                                value={formData.street}
-                                onChange={(e) => setFormData({...formData, street: e.target.value})}
+                                value={formData.streetAddress}
+                                onChange={(e) => setFormData({...formData, streetAddress: e.target.value})}
                                 required
                                 disabled={loading}
                             />
@@ -184,40 +297,38 @@ const CustomerAddress = () => {
                                     onChange={(e) => setFormData({...formData, postalCode: e.target.value})}
                                     required
                                     disabled={loading}
-                                    pattern="[0-9]{5,6}"
-                                    title="Postal code must be 5-6 digits"
                                 />
                             </div>
                             <div className={styles.formGroup}>
-                                <label>Country</label>
-                                <input
-                                    type="text"
-                                    value={formData.country}
-                                    onChange={(e) => setFormData({...formData, country: e.target.value})}
+                                <label>Address Type</label>
+                                <select
+                                    value={formData.type}
+                                    onChange={(e) => setFormData({...formData, type: e.target.value})}
                                     required
                                     disabled={loading}
-                                />
+                                >
+                                    <option value="delivery">Delivery</option>
+                                    <option value="pickup">Pickup</option>
+                                </select>
                             </div>
                         </div>
                         <div className={styles.formGroup}>
-                            <label>Address Type</label>
-                            <select
-                                value={formData.addressType}
-                                onChange={(e) => setFormData({...formData, addressType: e.target.value})}
-                                required
-                                className={styles.select}
-                                disabled={loading}
-                            >
-                                <option value="delivery">Delivery Location</option>
-                                <option value="pickup">Pickup Location</option>
-                            </select>
+                            <label className={styles.checkboxLabel}>
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isDefault}
+                                    onChange={(e) => setFormData({...formData, isDefault: e.target.checked})}
+                                    disabled={loading}
+                                />
+                                Set as default address
+                            </label>
                         </div>
                         <div className={styles.formActions}>
                             <button type="submit" className={styles.submitButton} disabled={loading}>
-                                {loading ? 'Saving...' : 'Save Address'}
+                                {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update Address' : 'Add Address')}
                             </button>
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className={styles.cancelButton}
                                 onClick={() => setShowForm(false)}
                                 disabled={loading}
@@ -231,72 +342,22 @@ const CustomerAddress = () => {
 
             <div className={styles.addressSections}>
                 <div className={styles.addressSection}>
-                    <h2>Pickup Addresses</h2>
-                    <div className={styles.addressGrid}>
-                        {addresses.filter(address => address.addressType === 'pickup').map((address) => (
-                            <div key={address._id} className={`${styles.addressCard} ${styles.pickupCard}`}>
-                                <div className={styles.addressHeader}>
-                                    <FaMapMarkerAlt className={styles.icon} />
-                                    <span className={styles.addressTypeBadge}>Pickup Location</span>
-                                </div>
-                                <div className={styles.addressDetails}>
-                                    <p>{address.street}</p>
-                                    <p>{address.city}, {address.state} {address.postalCode}</p>
-                                    <p>{address.country}</p>
-                                </div>
-                                <div className={styles.addressActions}>
-                                    <button 
-                                        className={styles.editButton}
-                                        onClick={() => {/* TODO: Implement edit */}}
-                                        disabled={loading}
-                                    >
-                                        <FaEdit /> Edit
-                                    </button>
-                                    <button 
-                                        className={styles.deleteButton}
-                                        onClick={() => handleDelete(address._id)}
-                                        disabled={loading}
-                                    >
-                                        <FaTrash /> Delete
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <h2>Pickup Address</h2>
+                    {addresses.pickup ? (
+                        renderAddress(addresses.pickup, 'pickup')
+                    ) : (
+                        <p className={styles.noAddress}>No pickup address set</p>
+                    )}
                 </div>
 
                 <div className={styles.addressSection}>
                     <h2>Delivery Addresses</h2>
                     <div className={styles.addressGrid}>
-                        {addresses.filter(address => address.addressType === 'delivery').map((address) => (
-                            <div key={address._id} className={`${styles.addressCard} ${styles.deliveryCard}`}>
-                                <div className={styles.addressHeader}>
-                                    <FaMapMarkerAlt className={styles.icon} />
-                                    <span className={styles.addressTypeBadge}>Delivery Location</span>
-                                </div>
-                                <div className={styles.addressDetails}>
-                                    <p>{address.street}</p>
-                                    <p>{address.city}, {address.state} {address.postalCode}</p>
-                                    <p>{address.country}</p>
-                                </div>
-                                <div className={styles.addressActions}>
-                                    <button 
-                                        className={styles.editButton}
-                                        onClick={() => {/* TODO: Implement edit */}}
-                                        disabled={loading}
-                                    >
-                                        <FaEdit /> Edit
-                                    </button>
-                                    <button 
-                                        className={styles.deleteButton}
-                                        onClick={() => handleDelete(address._id)}
-                                        disabled={loading}
-                                    >
-                                        <FaTrash /> Delete
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                        {addresses.delivery && addresses.delivery.length > 0 ? (
+                            addresses.delivery.map(address => renderAddress(address, 'delivery'))
+                        ) : (
+                            <p className={styles.noAddress}>No delivery addresses added</p>
+                        )}
                     </div>
                 </div>
             </div>

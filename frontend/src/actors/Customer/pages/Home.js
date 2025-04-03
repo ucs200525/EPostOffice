@@ -213,7 +213,7 @@ const fetchProfile = async () => {
     }
     
     const response = await axios.get(
-      `${process.env.REACT_APP_BACKEND_URL}/api/customers/${user._id}`,
+      `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user._id}`,
       {
         headers: { 'Authorization': `Bearer ${token}` }
       }
@@ -315,7 +315,7 @@ const fetchProfile = async () => {
       }
 
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user.id}/wallet`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user._id}/wallet`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }

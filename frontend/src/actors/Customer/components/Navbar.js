@@ -123,10 +123,10 @@ const Navbar = () => {
               </button>
               {showMobileUserMenu && (
                 <div className={styles.mobileUserMenu}>
-                  <Link to="/dashboard">Dashboard</Link>
                   <Link to="/shipments">My Shipments</Link>
                   <Link to="/payment">Payments</Link>
                   <Link to="/settings">Settings</Link>
+                  <Link to="/customer/addresses">Addresses</Link>
                   <button onClick={logout} className={styles.logout}>
                     <FaSignOutAlt /> Sign Out
                   </button>
@@ -182,6 +182,7 @@ const Navbar = () => {
                     <Link to="/shipments">My Shipments</Link>
                     <Link to="/payment">Payments</Link>
                     <Link to="/settings">Settings</Link>
+                    <Link to="/customer/addresses">Addresses</Link>
                     <div className={styles.divider}></div>
                     <button onClick={logout} className={styles.logout}>
                       <FaSignOutAlt /> Sign Out

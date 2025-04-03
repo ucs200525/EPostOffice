@@ -101,62 +101,6 @@
   background-color: #cbd5e0;
 }
 
-.addressCard {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 8px;
-  border-left: 4px solid #4299e1;
-}
-
-.addressHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.addressLabel {
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.defaultBadge {
-  background-color: #48bb78;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-}
-
-.addressDetail {
-  color: #718096;
-  margin: 0.25rem 0;
-}
-
-.actionButtons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.iconButton {
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  background: transparent;
-  color: #4a5568;
-  transition: all 0.2s ease;
-}
-
-.iconButton:hover {
-  background-color: #f7fafc;
-  color: #2d3748;
-}
-
-.deleteButton:hover {
-  color: #e53e3e;
-  border-color: #e53e3e;
-}
-
 @media (max-width: 768px) {
   .settingsContainer {
     padding: 1rem;

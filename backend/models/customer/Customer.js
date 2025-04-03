@@ -40,26 +40,6 @@ const addressSchema = new mongoose.Schema({
     }
 });
 
-const notificationSchema = new mongoose.Schema({
-    message: {
-        type: String,
-        required: true
-    },
-    type: {
-        type: String,
-        enum: ['order', 'delivery', 'system', 'promotional'],
-        required: true
-    },
-    isRead: {
-        type: Boolean,
-        default: false
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-});
-
 const customerSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -110,7 +90,11 @@ const customerSchema = new mongoose.Schema({
             default: false
         }
     },
-    notifications: [notificationSchema]
+    notifications: {
+        type: [Object],
+        required: false,
+        default: []
+    }
 }, {
     timestamps: true
 });
