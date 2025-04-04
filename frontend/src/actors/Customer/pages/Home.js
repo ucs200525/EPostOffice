@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import axios from 'axios';
 import styles from '../styles/Home.module.css';
@@ -10,7 +10,7 @@ import Notification from '../../../components/Notification';
 // import heroImage from '../../../assets/hero-pattern.png';
 const SendPackageSection = () => {
   const navigate = useNavigate();
-  
+  const location = useLocation();
   return (
     <div className={styles.serviceSection}>
       <h2>Send Package</h2>
@@ -160,6 +160,8 @@ const Home = () => {
     completed: 0,
     total: 0
   });
+  const location = useLocation();
+
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -232,9 +234,14 @@ const fetchProfile = async () => {
   }
 };
 
-  // useEffect(() => {
-  //   fetchProfile();
-  // }, []);
+
+  useEffect(() => {
+    fetchProfile();
+    fetchOrders();
+    fetchNotifications();
+    fetchWalletBalance();
+    fetchPackageStats();
+  }, [location.pathname]);
 
   // if (error) {
   //   return <div className="error-message">{error}</div>;
@@ -284,6 +291,7 @@ const fetchProfile = async () => {
     // Only fetch orders if user exists and has id
     if (isAuthenticated && user?.id) {
       fetchOrders();
+      fetchWalletBalance();
     }
   }, [isAuthenticated, user]);
 
@@ -307,15 +315,8 @@ const fetchProfile = async () => {
   const fetchWalletBalance = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Check if user and user.id exist
-      if (!user || !user._id) {
-        console.log('No user ID available');
-        setWalletBalance(0);
-        return;
-      }
-
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/customer/${user._id}/wallet`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/customer/${customerData.id}/wallet`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
@@ -636,7 +637,8 @@ useEffect(() => {
             <div className={styles.balanceSection}>
               <h3>Wallet Balance</h3>
               {/* <p className={styles.balanceAmount}>${walletBalance?.toFixed(2)}</p> */}
-              <p className={styles.balanceAmount}>₹{customerData?.walletBalance?.toFixed(2)}</p>
+              {/* <p className={styles.balanceAmount}>₹{customerData?.walletBalance?.toFixed(2)}</p> */}
+              <p className={styles.balanceAmount}>₹{walletBalance?.toFixed(2)}</p>
             </div>
           </header>
 

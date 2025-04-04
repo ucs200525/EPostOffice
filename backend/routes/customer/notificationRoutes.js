@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Customer = require('../../models/customer/Customer');
 const auth = require('../../middleware/auth');
-
+const authenticateUser = require("../../middleware/authenticateUser");
 // Get notification settings
 router.get('/settings', async (req, res) => {
     try {
@@ -72,9 +72,9 @@ router.put('/settings', async (req, res) => {
 });
 
 // Get notifications
-router.get('/', async (req, res) => {
+router.get('/:userId', async (req, res) => {
     try {
-        const customer = await Customer.findById(req.user.id)
+        const customer = await Customer.findById(req.params.user.id)
             .select('notifications')
             .populate('notifications');
 

@@ -9,7 +9,26 @@ import styles from '../styles/Shipping.module.css';
 const InternationalShipping = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [customerData, setCustomerData] = useState(null);
+  const [customerData, setCustomerData] = useState({
+      id: '',
+      name: '',
+      email: '',
+      role: 'customer',
+      phone: '',
+      walletBalance: 0,
+      pickupAddress: {
+        label: '',
+        streetAddress: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'India',
+        type: 'pickup',
+        isDefault: false,
+        _id: ''
+      },
+      deliveryAddresses: []
+    });
   const [addresses, setAddresses] = useState({
     pickup: null,
     delivery: []
@@ -61,6 +80,47 @@ const InternationalShipping = () => {
       }
     }
   }, [user]);
+
+  // Add this function to get user data
+  const getUserData = () => {
+    if (customerData?.name) {
+      return customerData;
+    }
+    try {
+      const localUser = JSON.parse(localStorage.getItem('user'));
+      if (localUser) {
+        // Update customerData with full localStorage data
+        setCustomerData({
+          id: localUser.id || '',
+          name: localUser.name || '',
+          email: localUser.email || '',
+          role: localUser.role || 'customer',
+          phone: localUser.phone || '',
+          walletBalance: localUser.walletBalance || 0,
+          pickupAddress: localUser.pickupAddress || {
+            label: '',
+            streetAddress: '',
+            city: '',
+            state: '',
+            postalCode: '',
+            country: 'India',
+            type: 'pickup',
+            isDefault: false,
+            _id: ''
+          },
+          deliveryAddresses: localUser.deliveryAddresses || []
+        });
+        return localUser;
+      }
+    } catch (error) {
+      console.error('Error parsing user data from localStorage:', error);
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    getUserData(); // Always fetch data on page load
+  }, []); 
 
   // Fetch addresses function
   useEffect(() => {

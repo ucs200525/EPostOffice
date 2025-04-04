@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation} from 'react-router-dom';
 import { FaBox, FaWeightHanging, FaRuler, FaMapMarkerAlt } from 'react-icons/fa';
 import Notification from '../../../components/Notification';
 import { useAuth } from '../../../context/AuthContext';
@@ -8,8 +8,27 @@ import styles from '../styles/Shipping.module.css';
 
 const DomesticShipping = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [customerData, setCustomerData] = useState(null);
+  const { user ,isAuthenticated} = useAuth();
+   const [customerData, setCustomerData] = useState({
+      id: '',
+      name: '',
+      email: '',
+      role: 'customer',
+      phone: '',
+      walletBalance: 0,
+      pickupAddress: {
+        label: '',
+        streetAddress: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'India',
+        type: 'pickup',
+        isDefault: false,
+        _id: ''
+      },
+      deliveryAddresses: []
+    });
   const [addresses, setAddresses] = useState([]);
   const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState('');
   const [showNotification, setShowNotification] = useState(false);
@@ -35,7 +54,7 @@ const DomesticShipping = () => {
 
   // Fetch saved delivery addresses
   const [pickupAddress, setPickupAddress] = useState(null);
-
+  const location = useLocation();
   useEffect(() => {
     if (user) {
       setCustomerData(user);
@@ -51,48 +70,100 @@ const DomesticShipping = () => {
     }
   }, [user]);
 
+  
+  // Add this function to get user data
+  const getUserData = () => {
+    if (customerData?.name) {
+      return customerData;
+    }
+    try {
+      const localUser = JSON.parse(localStorage.getItem('user'));
+      if (localUser) {
+        // Update customerData with full localStorage data
+        setCustomerData({
+          id: localUser.id || '',
+          name: localUser.name || '',
+          email: localUser.email || '',
+          role: localUser.role || 'customer',
+          phone: localUser.phone || '',
+          walletBalance: localUser.walletBalance || 0,
+          pickupAddress: localUser.pickupAddress || {
+            label: '',
+            streetAddress: '',
+            city: '',
+            state: '',
+            postalCode: '',
+            country: 'India',
+            type: 'pickup',
+            isDefault: false,
+            _id: ''
+          },
+          deliveryAddresses: localUser.deliveryAddresses || []
+        });
+        return localUser;
+      }
+    } catch (error) {
+      console.error('Error parsing user data from localStorage:', error);
+    }
+    return null;
+  };
+
   useEffect(() => {
-    const fetchAddresses = async () => {
-      if (!customerData?.id) {
-        console.error('User ID is not available');
-        return;
-      }
+    getUserData(); // Always fetch data on page load
+  }, []); 
 
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${customerData.id}`,
-          {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-          }
-        );
+  const fetchAddresses = async () => {
+    try {
 
-        if (response.data.success) {
-          const { pickup, delivery } = response.data.data;
-          setPickupAddress(pickup);
-          setAddresses(delivery || []);
-          
-          if (delivery?.length === 0) {
-            setShowNotification(true);
-          } else {
-            const defaultAddress = delivery.find(addr => addr.isDefault);
-            if (defaultAddress) {
-              setSelectedDeliveryAddress(defaultAddress._id);
-            }
-          }
-        } else {
-          console.error('Failed to fetch addresses:', response.data.message);
-          alert('Unable to fetch delivery addresses. Please try again.');
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/customer/addresses/${customerData.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-      } catch (error) {
-        console.error('Failed to fetch addresses:', error.response?.data?.message || error.message);
-        alert('Error fetching addresses. Please try again later.');
-      }
-    };
+      );
 
+      if (response.data.success) {
+        const { pickup, delivery } = response.data.data;
+        setPickupAddress(pickup);
+        setAddresses(delivery || []);
+
+        if (delivery?.length === 0) {
+          setShowNotification(true);
+        } else {
+          const defaultAddress = delivery.find((addr) => addr.isDefault);
+          if (defaultAddress) {
+            setSelectedDeliveryAddress(defaultAddress._id);
+          }
+        }
+      } else {
+        console.error("Failed to fetch addresses:", response.data.message);
+        alert("Unable to fetch delivery addresses. Please try again.");
+      }
+    } catch (error) {
+      console.error(
+        "Failed to fetch addresses:",
+        error.response?.data?.message || error.message
+      );
+      
+    }
+  };
+  useEffect(() => {
+    // Only fetch wallet balance if user is authenticated and has an ID
+    if (isAuthenticated && user?.id) {
+      fetchAddresses();
+    }
+  }, [isAuthenticated, user]);
+  useEffect(() => {
+    fetchAddresses()
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (customerData?.id) {
       fetchAddresses();
     }
-  }, [customerData?.id, navigate]);
+  }, [customerData?.id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
