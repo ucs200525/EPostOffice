@@ -42,19 +42,22 @@ const Orders = () => {
   }, []);
 
   const handleDeleteOrder = async (orderId) => {
-    if (window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
-      try {
-        await customerService.deleteCustomerOrder(orderId);
-        toast.success('Order deleted successfully');
-        fetchOrders(); // Refresh the list
-      } catch (err) {
-        toast.error('Failed to delete order');
-        console.error(err);
-      }
+    try {
+      await customerService.deleteCustomerOrder(orderId);
+      // Immediately refresh the orders list without showing confirmation
+      fetchOrders();
+    } catch (err) {
+      toast.error('Failed to delete order');
+      console.error(err);
     }
   };
 
   const handleOrderClick = async (order) => {
+    // Don't show order details if the order is being deleted
+    if (!orders.find(o => o._id === order._id)) {
+      return;
+    }
+    
     try {
       console.log('Fetching customer details for order:', order);
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/staff/customers/${order.customerId}`);
@@ -190,7 +193,10 @@ const Orders = () => {
                         Manage
                       </Link>
                       <button
-                        onClick={() => handleDeleteOrder(order._id)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent row click event
+                          handleDeleteOrder(order._id);
+                        }}
                         className={styles.deleteButton}
                       >
                         Delete
